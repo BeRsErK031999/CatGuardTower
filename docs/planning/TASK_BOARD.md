@@ -1,0 +1,294 @@
+# Task Board
+
+Only mark tasks as done when they are actually present in the repository or verified in Unity.
+
+## Phase 0 - Unity Setup And Scaffold Migration
+
+### Todo
+
+* [ ] Install or verify Unity Hub.
+* [ ] Install or verify Unity 6 LTS.
+* [ ] Install or verify Android Build Support, Android SDK/NDK, and OpenJDK.
+* [ ] Create a real Unity 2D project in the repository root.
+* [ ] Move `_project_scaffold/` contents into `Assets/_Project/`.
+* [ ] Verify `ProjectSettings/`, `Packages/`, and `Assets/`.
+* [ ] Configure Android-first target.
+
+### In Progress
+
+* [ ] None.
+
+### Done
+
+* [x] Git repository initialized.
+* [x] Base documentation scaffold created.
+* [x] `_project_scaffold/` folder structure created for future `Assets/_Project/`.
+
+## Phase 1 - Unity Bootstrap
+
+### Todo
+
+* [ ] Create `Boot` scene through Unity Editor.
+* [ ] Create `MainMenu` scene through Unity Editor.
+* [ ] Create `Level` scene through Unity Editor.
+* [ ] Add scenes to Build Settings.
+* [ ] Implement minimal `GameBootstrap`.
+* [ ] Implement minimal `SceneLoader`.
+* [ ] Verify `Boot -> MainMenu -> Level` flow.
+
+### In Progress
+
+* [ ] None.
+
+### Done
+
+* [ ] None.
+
+## Phase 2 - First Playable Prototype
+
+### Todo
+
+* [ ] Create simple level map.
+* [ ] Create enemy path.
+* [ ] Create tower grid.
+* [ ] Implement one basic tower.
+* [ ] Implement one basic enemy.
+* [ ] Implement one wave.
+* [ ] Implement HUD.
+* [ ] Implement win state.
+* [ ] Implement lose state.
+
+### In Progress
+
+* [ ] None.
+
+### Done
+
+* [ ] None.
+
+## Phase 3 - Tower Defense Core
+
+### Todo
+
+* [ ] Create `TowerConfig`.
+* [ ] Create `EnemyConfig`.
+* [ ] Create `WaveConfig`.
+* [ ] Create `LevelConfig`.
+* [ ] Implement 3 tower types.
+* [ ] Implement 3 enemy types.
+* [ ] Move balance values into configs.
+
+### In Progress
+
+* [ ] None.
+
+### Done
+
+* [ ] None.
+
+## Phase 4 - Progression And Saves
+
+### Todo
+
+* [ ] Implement local JSON save service.
+* [ ] Add Fish Coins currency.
+* [ ] Create upgrades screen.
+* [ ] Implement 3 permanent upgrades.
+* [ ] Create level selection.
+* [ ] Implement level unlocks.
+* [ ] Persist progress after app restart.
+
+### In Progress
+
+* [ ] None.
+
+### Done
+
+* [ ] None.
+
+## Phase 5 - Daily Loop
+
+### Todo
+
+* [ ] Implement daily reward state.
+* [ ] Create 7-day reward chain.
+* [ ] Add daily missions.
+* [ ] Create Daily Rewards screen.
+* [ ] Add fake/future hook for rewarded x2 daily reward.
+
+### In Progress
+
+* [ ] None.
+
+### Done
+
+* [ ] None.
+
+## Phase 6 - Game Feel And Polish
+
+### Todo
+
+* [ ] Add placeholder or free visual assets.
+* [ ] Add basic sounds.
+* [ ] Add basic music.
+* [ ] Add basic VFX.
+* [ ] Add UI animations.
+* [ ] Add sound settings.
+* [ ] Add language settings.
+* [ ] Add RU/EN localization coverage.
+
+### In Progress
+
+* [ ] None.
+
+### Done
+
+* [ ] None.
+
+## Phase 7 - Analytics
+
+### Todo
+
+* [ ] Create analytics service wrapper.
+* [ ] Create Editor/fake analytics implementation.
+* [ ] Connect Firebase Analytics.
+* [ ] Connect Crashlytics if feasible.
+* [ ] Track `level_start`.
+* [ ] Track `level_complete`.
+* [ ] Track `level_fail`.
+* [ ] Track `tower_place`.
+* [ ] Track `tower_upgrade`.
+* [ ] Track `daily_reward_claim`.
+* [ ] Track rewarded ad events.
+* [ ] Track `shop_open` and `upgrade_purchase`.
+
+### In Progress
+
+* [ ] None.
+
+### Done
+
+* [ ] None.
+
+## Phase 8 - Rewarded Ads
+
+### Todo
+
+* [ ] Create ad service wrapper.
+* [ ] Create Editor/fake ad implementation.
+* [ ] Add x2 reward after victory.
+* [ ] Add revive after defeat.
+* [ ] Add x2 daily reward.
+* [ ] Add free coins placement.
+* [ ] Add duplicate reward protection.
+* [ ] Verify no forced interstitial ads exist.
+
+### In Progress
+
+* [ ] None.
+
+### Done
+
+* [ ] None.
+
+## Phase 9 - MVP Content
+
+### Todo
+
+* [ ] Build 10-20 level configs.
+* [ ] Expand to 3-5 towers.
+* [ ] Expand to 5-8 enemies.
+* [ ] Add baseline balance.
+* [ ] Add clear difficulty ramp.
+* [ ] Add onboarding/tutorial level.
+* [ ] Verify full MVP progression path.
+
+### In Progress
+
+* [ ] None.
+
+### Done
+
+* [ ] None.
+
+## Phase 10 - Android Build And QA
+
+### Todo
+
+* [ ] Configure Android build settings.
+* [ ] Produce APK.
+* [ ] Produce AAB.
+* [ ] Test on real Android device.
+* [ ] Verify saves.
+* [ ] Verify offline mode.
+* [ ] Check FPS.
+* [ ] Check critical Unity Console/runtime errors.
+
+### In Progress
+
+* [ ] None.
+
+### Done
+
+* [ ] None.
+
+## Phase 11 - Google Play Preparation
+
+### Todo
+
+* [ ] Choose package name.
+* [ ] Set `versionCode` and `versionName`.
+* [ ] Prepare icon.
+* [ ] Prepare screenshots.
+* [ ] Draft privacy policy.
+* [ ] Draft Data Safety answers.
+* [ ] Draft short description.
+* [ ] Draft full description.
+* [ ] Prepare closed testing checklist.
+
+### In Progress
+
+* [ ] None.
+
+### Done
+
+* [ ] None.
+
+## Phase 12 - Closed Testing
+
+### Todo
+
+* [ ] Recruit at least 12 testers.
+* [ ] Run 14 days of testing.
+* [ ] Collect tester feedback.
+* [ ] Review analytics and crashes.
+* [ ] Fix critical bugs.
+* [ ] Document continue/change/pivot decision.
+
+### In Progress
+
+* [ ] None.
+
+### Done
+
+* [ ] None.
+
+## Phase 13 - Soft Launch
+
+### Todo
+
+* [ ] Release production build.
+* [ ] Monitor crashes.
+* [ ] Monitor analytics.
+* [ ] Spend test budget up to 10,000 RUB carefully.
+* [ ] Review retention.
+* [ ] Review monetization potential.
+* [ ] Decide whether to develop further.
+
+### In Progress
+
+* [ ] None.
+
+### Done
+
+* [ ] None.

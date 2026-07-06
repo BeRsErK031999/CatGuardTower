@@ -1,5 +1,54 @@
 # Next Codex Prompts
 
+## Phase 0 - Unity Setup And Scaffold Migration
+
+Use this prompt after Unity Hub / Unity 6 LTS is installed or when the owner is ready to verify the Unity installation.
+
+Do not execute this prompt during planning work.
+
+```text
+Ты работаешь в локальном репозитории:
+
+C:\Users\Borodin_Artem\Desktop\Mobile Games\CatGuardTowerDefense
+
+Задача: выполнить только Phase 0 — Unity setup and scaffold migration.
+
+Перед изменениями:
+1. Прочитай AGENTS.md.
+2. Прочитай docs/planning/MASTER_PLAN.md.
+3. Прочитай docs/planning/PHASES.md.
+4. Прочитай docs/planning/TASK_BOARD.md.
+5. Прочитай docs/planning/REVIEW_GATES.md.
+6. Проверь git status.
+7. Напиши file-level plan.
+
+Сделай только Phase 0:
+1. Проверь наличие Unity Hub.
+2. Проверь наличие Unity Editor / Unity 6 LTS.
+3. Проверь доступность Unity через командную строку, если возможно.
+4. Проверь наличие Android Build Support, Android SDK/NDK Tools и OpenJDK.
+5. Если Unity-проект уже создан, проверь структуру проекта.
+6. Если Unity-проект создан корректно, перенеси _project_scaffold в Assets/_Project.
+7. Создай или проверь ProjectSettings только через корректный Unity workflow.
+8. Настрой Android target, если Unity доступен и это можно сделать безопасно.
+9. Создай первичные сцены Boot, MainMenu, Level только через корректный Unity workflow.
+10. Если Unity недоступен, не создавай фейковый Unity-проект и напиши точную ручную инструкцию.
+
+Важно:
+- Не делай gameplay.
+- Не подключай Firebase, Ads, IAP или сервер.
+- Не создавай iOS.
+- Не создавай forced interstitial ads.
+- Не создавай .unity файлы вручную как текстовые заглушки.
+- Не переходи к Phase 1 автоматически.
+
+После изменений:
+1. Обнови TASK_BOARD только по реально выполненным задачам.
+2. Подготовь REVIEW GATE 0 отчёт.
+3. Запусти доступные проверки.
+4. Сделай git commit.
+```
+
 ## Project Bootstrap In Unity
 
 Use this prompt after a real Unity 6 LTS 2D project has been created in:

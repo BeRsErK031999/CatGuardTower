@@ -1,6 +1,45 @@
 # Next Codex Prompts
 
+## Phase 1 - Unity Bootstrap
+
+Use this prompt after REVIEW GATE 0 is checked by the owner.
+
+Do not execute this prompt during Phase 0 verification work.
+
+```text
+Ты работаешь в локальном Unity-репозитории:
+
+C:\Users\Borodin_Artem\Desktop\Mobile Games\CatGuardTowerDefense
+
+Задача: выполнить только Phase 1 — Unity Bootstrap.
+
+Перед изменениями:
+1. Прочитай AGENTS.md.
+2. Прочитай docs/planning/MASTER_PLAN.md.
+3. Прочитай docs/planning/PHASES.md.
+4. Прочитай docs/planning/TASK_BOARD.md.
+5. Проверь git status.
+6. Напиши file-level plan.
+
+Сделай только Phase 1:
+1. Проверь, что Unity-проект открывается.
+2. Проверь сцены Assets/_Project/Scenes/Boot.unity, MainMenu.unity, Level.unity.
+3. Реализуй минимальный GameBootstrap.
+4. Реализуй минимальный SceneLoader.
+5. Настрой переход Boot -> MainMenu -> Level.
+6. Добавь минимальную UI-кнопку Play в MainMenu, если это нужно для ручной проверки перехода.
+7. Не реализуй combat, towers, enemies, waves, economy, saves, SDK или ads.
+
+После изменений:
+1. Обнови TASK_BOARD только по реально выполненным задачам.
+2. Подготовь REVIEW GATE 1 отчёт.
+3. Запусти доступные Unity/CLI проверки.
+4. Сделай git commit.
+```
+
 ## Phase 0 - Unity Setup And Scaffold Migration
+
+Status: completed in this repository. Keep this prompt as historical recovery context.
 
 Use this prompt after Unity Hub / Unity 6 LTS is installed or when the owner is ready to verify the Unity installation.
 

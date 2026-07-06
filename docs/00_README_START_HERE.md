@@ -8,8 +8,11 @@ The current goal is not to build full gameplay yet. The goal is to prepare a cle
 
 - Git repository is initialized in the project folder.
 - Documentation lives in `docs/`.
-- Unity project files may be created later through Unity Hub or a verified Unity Editor CLI.
-- `_project_scaffold/` mirrors the intended future `Assets/_Project/` structure.
+- Unity Hub and Unity 6 LTS `6000.4.12f1` are installed locally.
+- A real Unity project exists in this repository.
+- Android Build Support, Android SDK/NDK, CMake, and OpenJDK are installed under the Unity editor.
+- `Assets/_Project/` contains the project scaffold that was previously staged in `_project_scaffold/`.
+- Initial scenes exist: `Boot`, `MainMenu`, and `Level`.
 
 ## Recommended Reading Order
 
@@ -23,4 +26,4 @@ The current goal is not to build full gameplay yet. The goal is to prepare a cle
 
 ## Next Safe Step
 
-Create a real Unity 6 LTS 2D project in this folder, then move `_project_scaffold/` into `Assets/_Project/`.
+Open the project in Unity Hub or Unity Editor, confirm REVIEW GATE 0 details, then continue with Phase 1 bootstrap: `GameBootstrap`, `SceneLoader`, and `Boot -> MainMenu -> Level` flow.

@@ -6,11 +6,11 @@ Use this file as a short entry point only. The phase-by-phase source of truth is
 
 ## Legacy Short Backlog
 
-* [ ] Создать Unity 2D проект
-* [ ] Настроить Android Build Settings
-* [ ] Создать Boot scene
-* [ ] Создать MainMenu scene
-* [ ] Создать Level scene
+* [x] Создать Unity 2D проект
+* [x] Настроить Android Build Settings
+* [x] Создать Boot scene
+* [x] Создать MainMenu scene
+* [x] Создать Level scene
 * [ ] Реализовать SceneLoader
 * [ ] Реализовать SaveService
 * [ ] Реализовать первый playable level

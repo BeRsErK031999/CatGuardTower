@@ -2,9 +2,9 @@
 
 ## Project Layout
 
-Future Unity project code and assets should live under `Assets/_Project/`.
+Unity project code and assets live under `Assets/_Project/`.
 
-Until a real Unity project is created, `_project_scaffold/` mirrors that future structure and can be moved into `Assets/_Project/`.
+The previous `_project_scaffold/` contents have been moved into `Assets/_Project/` through the Phase 0 setup.
 
 ## Main Runtime Areas
 
@@ -23,8 +23,8 @@ Until a real Unity project is created, `_project_scaffold/` mirrors that future 
 
 ## Initial Scenes
 
-- `Boot`: initializes services and loads the next scene.
-- `MainMenu`: entry point, continue/play buttons, daily reward access later.
-- `Level`: playable tower defense scene.
+- `Boot`: initial bootstrap scene, currently empty except for a 2D camera.
+- `MainMenu`: future entry point, currently empty except for a 2D camera.
+- `Level`: future gameplay scene, currently empty except for a 2D camera.
 
-Actual `.unity` scene files must be created in Unity Editor, not as hand-written placeholders.
+The `.unity` scene files were created through Unity Editor batchmode, not as hand-written placeholders.

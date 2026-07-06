@@ -6,13 +6,7 @@ Only mark tasks as done when they are actually present in the repository or veri
 
 ### Todo
 
-* [ ] Install or verify Unity Hub.
-* [ ] Install or verify Unity 6 LTS.
-* [ ] Install or verify Android Build Support, Android SDK/NDK, and OpenJDK.
-* [ ] Create a real Unity 2D project in the repository root.
-* [ ] Move `_project_scaffold/` contents into `Assets/_Project/`.
-* [ ] Verify `ProjectSettings/`, `Packages/`, and `Assets/`.
-* [ ] Configure Android-first target.
+* [ ] None.
 
 ### In Progress
 
@@ -23,15 +17,18 @@ Only mark tasks as done when they are actually present in the repository or veri
 * [x] Git repository initialized.
 * [x] Base documentation scaffold created.
 * [x] `_project_scaffold/` folder structure created for future `Assets/_Project/`.
+* [x] Unity Hub installed and verified.
+* [x] Unity 6 LTS `6000.4.12f1` installed and verified.
+* [x] Android Build Support, Android SDK/NDK, CMake, and OpenJDK installed under the Unity editor.
+* [x] Real Unity project created in the repository root.
+* [x] `_project_scaffold/` contents moved into `Assets/_Project/`.
+* [x] `ProjectSettings/`, `Packages/`, and `Assets/` verified.
+* [x] Android build target selected through Unity batchmode.
 
 ## Phase 1 - Unity Bootstrap
 
 ### Todo
 
-* [ ] Create `Boot` scene through Unity Editor.
-* [ ] Create `MainMenu` scene through Unity Editor.
-* [ ] Create `Level` scene through Unity Editor.
-* [ ] Add scenes to Build Settings.
 * [ ] Implement minimal `GameBootstrap`.
 * [ ] Implement minimal `SceneLoader`.
 * [ ] Verify `Boot -> MainMenu -> Level` flow.
@@ -42,7 +39,10 @@ Only mark tasks as done when they are actually present in the repository or veri
 
 ### Done
 
-* [ ] None.
+* [x] Create `Boot` scene through Unity Editor workflow.
+* [x] Create `MainMenu` scene through Unity Editor workflow.
+* [x] Create `Level` scene through Unity Editor workflow.
+* [x] Add scenes to Build Settings.
 
 ## Phase 2 - First Playable Prototype
 

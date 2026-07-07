@@ -241,6 +241,7 @@ Only mark tasks as done when they are actually present in the repository or veri
 * [x] Verify offline launch on Android emulator fallback.
 * [x] Verify saves on debuggable QA build.
 * [x] Check critical Unity/AndroidRuntime errors during emulator smoke.
+* [x] Prepare repeatable real-device Android QA runner.
 
 ## Phase 11 - Google Play Preparation
 

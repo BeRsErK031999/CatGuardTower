@@ -209,4 +209,5 @@ This phase still uses the existing prototype combat behavior; the new content is
 - Build artifacts are intentionally ignored by Git.
 - Emulator fallback smoke verified APK install, offline launch, MainMenu rendering, and no fatal app crash signatures in logcat.
 - Debuggable QA APK save persistence was verified across app restart by reading `/sdcard/Android/data/com.catguard.towerdefense.qa/files/catguard-save.json`.
+- Real-device QA can be run with `tools/android/run-device-qa.ps1`, which installs and launches the APK, collects logcat, display/gfxinfo data, screenshot output, and save-file evidence under `Builds/Android/qa-device/`.
 - Full FPS and touch-device QA still requires a physical Android device.

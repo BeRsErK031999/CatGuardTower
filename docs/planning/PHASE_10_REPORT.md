@@ -14,6 +14,7 @@
 - Verified save persistence across app restart on the debuggable QA APK.
 - Verified MainMenu rendering on emulator screenshot after launch.
 - Checked app logcat for fatal Unity/AndroidRuntime crash signatures.
+- Added a repeatable real-device QA runner for install, launch, logcat, display, screenshot, and save-file checks.
 
 ## Local Artifacts
 
@@ -52,6 +53,14 @@ Build only the debuggable QA APK:
 ```text
 Unity.exe -batchmode -nographics -quit -projectPath "C:\Users\Borodin_Artem\Desktop\Mobile Games\CatGuardTowerDefense" -executeMethod Phase10ProjectSetup.BuildDebugApk -logFile "%TEMP%\catguard-phase10-debug-apk.log"
 ```
+
+Run real-device QA when a USB-debugging Android device is connected:
+
+```text
+powershell -ExecutionPolicy Bypass -File tools\android\run-device-qa.ps1 -ApkPath Builds\Android\CatGuardTowerDefense-qa.apk
+```
+
+If multiple devices are connected, pass `-DeviceSerial <serial>`. Use `-Offline` only when an explicit offline run is required because it disables Wi-Fi and mobile data on the target device. The runner writes timestamped artifacts under `Builds/Android/qa-device/`, including `qa-summary.json`, `logcat.txt`, `dumpsys-display.txt`, `dumpsys-gfxinfo.txt`, and `screen.png` when screenshot capture succeeds.
 
 Expected validation result:
 

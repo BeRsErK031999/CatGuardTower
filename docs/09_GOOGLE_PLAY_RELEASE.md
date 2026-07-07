@@ -26,6 +26,8 @@ Current QA artifacts are generated locally through `Phase10ProjectSetup` into `B
 
 These files are ignored by Git. The QA application id is `com.catguard.towerdefense.qa`; the final store package name remains a Phase 11 decision.
 
+Before moving to closed-testing preparation, run physical-device QA with `tools/android/run-device-qa.ps1` and keep its generated evidence under ignored `Builds/Android/qa-device/` artifacts.
+
 ## Store Risks To Resolve Later
 
 - Ad SDK declarations.

@@ -233,6 +233,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CatGuard.UI.Screens.MainMenuController
   levelCatalog: {fileID: 11400000, guid: 2c2efa743e9f0a44abd852bff184311e, type: 2}
   upgradeCatalog: {fileID: 11400000, guid: 178ece264f1131c4e975f73ae793e13c, type: 2}
+  dailyRewardChain: {fileID: 11400000, guid: fc522bfed5bff07469794fa4bcb557ee, type: 2}
+  dailyMissionCatalog: {fileID: 11400000, guid: df2d3aa3d43fe9842b3d0ad8e86a89fa, type: 2}
 --- !u!4 &997235069
 Transform:
   m_ObjectHideFlags: 0

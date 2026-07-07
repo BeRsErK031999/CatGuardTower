@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a7a8a149420e81d4db2cc8f53b10d853, type: 3}
+  m_Name: DailyMissionCatalog
+  m_EditorClassIdentifier: Assembly-CSharp::CatGuard.Meta.DailyRewards.DailyMissionCatalogConfig
+  missions:
+  - missionId: win_level
+    displayName: Win 1 Level
+    missionType: 0
+    targetAmount: 1
+    rewardFishCoins: 15
+  - missionId: place_towers
+    displayName: Place 3 Towers
+    missionType: 1
+    targetAmount: 3
+    rewardFishCoins: 10
+  - missionId: claim_daily
+    displayName: Claim Daily Reward
+    missionType: 2
+    targetAmount: 1
+    rewardFishCoins: 8

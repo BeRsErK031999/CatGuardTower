@@ -19,6 +19,7 @@ The current goal is not to build full gameplay yet. The goal is to prepare a cle
 - Phase 4 progression exists: local JSON save data stores Fish Coins, selected/unlocked/completed levels, and permanent upgrades.
 - `MainMenu` now has level selection, upgrades, and a reset-save action.
 - The level scene uses the selected level from saved progression when available.
+- Phase 5 daily loop exists: 7-day local rewards, daily missions, and a fake rewarded x2 hook.
 
 ## Recommended Reading Order
 
@@ -32,4 +33,4 @@ The current goal is not to build full gameplay yet. The goal is to prepare a cle
 
 ## Next Safe Step
 
-Open the project in Unity Hub or Unity Editor, confirm REVIEW GATE 4 details, then continue with Phase 5 daily loop only after owner approval.
+Open the project in Unity Hub or Unity Editor, verify the Phase 5 daily loop, then continue with Phase 6 game feel and polish only after owner approval.

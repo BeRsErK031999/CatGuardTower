@@ -11,6 +11,10 @@ namespace CatGuard.Core.Save
         public List<string> unlockedLevelIds = new();
         public List<string> completedLevelIds = new();
         public List<UpgradeSaveEntry> upgrades = new();
+        public string lastDailyRewardClaimDateKey;
+        public int dailyRewardStreakIndex;
+        public string dailyMissionDateKey;
+        public List<DailyMissionSaveEntry> dailyMissions = new();
 
         public static GameSaveData CreateDefault(string firstLevelId)
         {
@@ -43,6 +47,23 @@ namespace CatGuard.Core.Save
         {
             upgradeId = id;
             level = upgradeLevel;
+        }
+    }
+
+    [Serializable]
+    public sealed class DailyMissionSaveEntry
+    {
+        public string missionId;
+        public int progress;
+        public bool rewardClaimed;
+
+        public DailyMissionSaveEntry()
+        {
+        }
+
+        public DailyMissionSaveEntry(string id)
+        {
+            missionId = id;
         }
     }
 }

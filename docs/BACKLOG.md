@@ -26,6 +26,10 @@ Use this file as a short entry point only. The phase-by-phase source of truth is
 * [x] Implement level selection and unlocks.
 * [x] Implement 3 permanent upgrades.
 * [x] Persist local progress in JSON.
+* [x] Implement 7-day daily rewards.
+* [x] Implement daily missions.
+* [x] Add Daily screen to MainMenu.
+* [x] Add fake rewarded x2 daily reward hook.
 
 ## Planning References
 

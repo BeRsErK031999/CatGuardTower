@@ -115,11 +115,7 @@ Only mark tasks as done when they are actually present in the repository or veri
 
 ### Todo
 
-* [ ] Implement daily reward state.
-* [ ] Create 7-day reward chain.
-* [ ] Add daily missions.
-* [ ] Create Daily Rewards screen.
-* [ ] Add fake/future hook for rewarded x2 daily reward.
+* [ ] None.
 
 ### In Progress
 
@@ -127,7 +123,12 @@ Only mark tasks as done when they are actually present in the repository or veri
 
 ### Done
 
-* [ ] None.
+* [x] Implement daily reward state.
+* [x] Create 7-day reward chain.
+* [x] Add daily missions.
+* [x] Create Daily Rewards screen.
+* [x] Add fake/future hook for rewarded x2 daily reward.
+* [x] Verify daily loop configuration through Unity batchmode validation.
 
 ## Phase 6 - Game Feel And Polish
 

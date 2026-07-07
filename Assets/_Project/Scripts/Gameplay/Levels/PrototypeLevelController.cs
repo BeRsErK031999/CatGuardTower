@@ -118,6 +118,7 @@ namespace CatGuard.Gameplay.Levels
             var tower = towerObject.AddComponent<BasicTower>();
             tower.Initialize(this, towerConfig);
             towers.Add(tower);
+            ProgressionService.RecordTowerPlaced();
         }
 
         public void SpawnEnemy(EnemyConfig enemyConfig)

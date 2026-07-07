@@ -81,3 +81,34 @@ Current level unlock chain:
 - `Porch Stand` does not unlock another level yet.
 
 The Phase 4 slice intentionally does not include cloud saves, server validation, IAP, daily rewards, ad rewards, or SDK integration.
+
+## Phase 5 Daily Loop
+
+- `GameSaveData` now stores `lastDailyRewardClaimDateKey`, `dailyRewardStreakIndex`, `dailyMissionDateKey`, and daily mission progress entries.
+- Daily date keys use the device clock in UTC day format `yyyy-MM-dd`; there is no server clock in this MVP slice.
+- `DailyRewardChain.asset` defines the 7-day Fish Coins reward chain.
+- `DailyMissionCatalog.asset` defines the current daily missions and mission rewards.
+- `ProgressionService` owns daily reward claims, duplicate-claim prevention, mission progress, and mission reward claims.
+- `MainMenuController` shows a `Daily` tab with the current reward, the 7-day chain, daily missions, and mission claim buttons.
+- `PrototypeLevelController` records tower placement and level-completion mission progress through `ProgressionService`.
+- `IRewardedAdService` is the ad boundary for future rewarded placements.
+- `FakeRewardedAdService` is the current no-SDK implementation used by the daily reward x2 hook.
+
+Current daily rewards:
+
+- Day 1: 20 Fish Coins.
+- Day 2: 25 Fish Coins.
+- Day 3: 30 Fish Coins.
+- Day 4: 35 Fish Coins.
+- Day 5: 45 Fish Coins.
+- Day 6: 55 Fish Coins.
+- Day 7: 75 Fish Coins.
+
+Current daily missions:
+
+- `Win 1 Level`: complete one level.
+- `Place 3 Towers`: place three towers.
+- `Claim Daily Reward`: claim the daily reward.
+
+Local date changes can affect daily availability because this phase intentionally does not use a server clock.
+The Phase 5 slice intentionally does not include a real ad SDK, Firebase, analytics, IAP, server validation, or forced interstitial ads.

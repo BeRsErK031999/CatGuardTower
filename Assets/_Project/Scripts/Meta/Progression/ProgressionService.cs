@@ -1,25 +1,63 @@
+using System;
 using System.Collections.Generic;
+using System.Globalization;
 using CatGuard.Core.Save;
 using CatGuard.Gameplay.Levels;
+using CatGuard.Meta.DailyRewards;
 using CatGuard.Meta.Upgrades;
+using CatGuard.SDK.Ads;
 
 namespace CatGuard.Meta.Progression
 {
     public static class ProgressionService
     {
+        private const string DateKeyFormat = "yyyy-MM-dd";
+
         private static LevelCatalogConfig levelCatalog;
         private static UpgradeCatalogConfig upgradeCatalog;
+        private static DailyRewardChainConfig dailyRewardChain;
+        private static DailyMissionCatalogConfig dailyMissionCatalog;
+        private static IRewardedAdService rewardedAdService;
         private static GameSaveData saveData;
         private static LevelConfig selectedLevel;
 
         public static bool IsInitialized => saveData != null;
         public static int FishCoins => EnsureSave().fishCoins;
         public static string SavePath => GameSaveService.SavePath;
+        public static bool HasDailyLoop => dailyRewardChain != null
+            && dailyRewardChain.IsValid()
+            && dailyMissionCatalog != null
+            && dailyMissionCatalog.IsValid();
+        public static bool IsDailyRewardDoubleAvailable => rewardedAdService != null
+            && rewardedAdService.IsRewardedAdAvailable(RewardedAdPlacementIds.DailyRewardDouble);
+
+        public static DailyRewardConfig CurrentDailyReward
+        {
+            get
+            {
+                var data = EnsureSave();
+                NormalizeDailyRewardState(data);
+                return dailyRewardChain?.GetRewardForIndex(data.dailyRewardStreakIndex);
+            }
+        }
 
         public static void Initialize(LevelCatalogConfig levels, UpgradeCatalogConfig upgrades)
         {
+            Initialize(levels, upgrades, null, null, new FakeRewardedAdService());
+        }
+
+        public static void Initialize(
+            LevelCatalogConfig levels,
+            UpgradeCatalogConfig upgrades,
+            DailyRewardChainConfig dailyRewards,
+            DailyMissionCatalogConfig dailyMissions,
+            IRewardedAdService ads)
+        {
             levelCatalog = levels;
             upgradeCatalog = upgrades;
+            dailyRewardChain = dailyRewards;
+            dailyMissionCatalog = dailyMissions;
+            rewardedAdService = ads ?? new FakeRewardedAdService();
             selectedLevel = null;
             saveData = GameSaveService.LoadOrCreate(levelCatalog?.FirstLevel?.LevelId);
             EnsureDefaults();
@@ -48,6 +86,7 @@ namespace CatGuard.Meta.Progression
             GameSaveService.DeleteSave();
             saveData = GameSaveData.CreateDefault(levelCatalog?.FirstLevel?.LevelId);
             selectedLevel = levelCatalog?.FirstLevel;
+            EnsureDefaults();
             Save();
         }
 
@@ -109,8 +148,14 @@ namespace CatGuard.Meta.Progression
                 unlockedNames.Add(levelCatalog?.FindById(nextLevelId)?.DisplayName ?? nextLevelId);
             }
 
+            AddDailyMissionProgress(DailyMissionType.CompleteLevels, 1, false);
             Save();
             return new LevelCompletionResult(earnedCoins, firstClear, unlockedNames);
+        }
+
+        public static void RecordTowerPlaced()
+        {
+            AddDailyMissionProgress(DailyMissionType.PlaceTowers, 1, true);
         }
 
         public static int GetUpgradeLevel(UpgradeConfig upgrade)
@@ -164,6 +209,113 @@ namespace CatGuard.Meta.Progression
             return true;
         }
 
+        public static DailyRewardClaimResult ClaimDailyReward(bool requestRewardedDouble)
+        {
+            if (!CanClaimDailyReward())
+            {
+                return new DailyRewardClaimResult(false, 0, 0, false);
+            }
+
+            var reward = CurrentDailyReward;
+            if (reward == null)
+            {
+                return new DailyRewardClaimResult(false, 0, 0, false);
+            }
+
+            var usedRewardedDouble = requestRewardedDouble
+                && IsDailyRewardDoubleAvailable
+                && rewardedAdService.TryShowRewardedAd(RewardedAdPlacementIds.DailyRewardDouble);
+            var multiplier = usedRewardedDouble ? 2 : 1;
+            var earnedCoins = reward.FishCoins * multiplier;
+            var data = EnsureSave();
+
+            data.fishCoins += earnedCoins;
+            data.lastDailyRewardClaimDateKey = TodayDateKey();
+            data.dailyRewardStreakIndex = GetNextDailyRewardIndex(data.dailyRewardStreakIndex);
+
+            AddDailyMissionProgress(DailyMissionType.ClaimDailyReward, 1, false);
+            Save();
+
+            return new DailyRewardClaimResult(true, earnedCoins, reward.DayNumber, usedRewardedDouble);
+        }
+
+        public static bool CanClaimDailyReward()
+        {
+            if (dailyRewardChain == null || !dailyRewardChain.IsValid())
+            {
+                return false;
+            }
+
+            var data = EnsureSave();
+            NormalizeDailyRewardState(data);
+
+            if (string.IsNullOrWhiteSpace(data.lastDailyRewardClaimDateKey))
+            {
+                return true;
+            }
+
+            return GetDaysSinceDateKey(data.lastDailyRewardClaimDateKey) >= 1;
+        }
+
+        public static int GetDailyMissionProgress(DailyMissionConfig mission)
+        {
+            if (mission == null)
+            {
+                return 0;
+            }
+
+            var data = EnsureSave();
+            EnsureDailyMissionsForToday(data);
+            var entry = GetDailyMissionEntry(data, mission);
+            return entry == null ? 0 : Math.Min(entry.progress, mission.TargetAmount);
+        }
+
+        public static bool IsDailyMissionComplete(DailyMissionConfig mission)
+        {
+            return mission != null && GetDailyMissionProgress(mission) >= mission.TargetAmount;
+        }
+
+        public static bool IsDailyMissionRewardClaimed(DailyMissionConfig mission)
+        {
+            if (mission == null)
+            {
+                return false;
+            }
+
+            var data = EnsureSave();
+            EnsureDailyMissionsForToday(data);
+            var entry = GetDailyMissionEntry(data, mission);
+            return entry != null && entry.rewardClaimed;
+        }
+
+        public static bool CanClaimDailyMissionReward(DailyMissionConfig mission)
+        {
+            return mission != null
+                && IsDailyMissionComplete(mission)
+                && !IsDailyMissionRewardClaimed(mission);
+        }
+
+        public static bool ClaimDailyMissionReward(DailyMissionConfig mission)
+        {
+            if (!CanClaimDailyMissionReward(mission))
+            {
+                return false;
+            }
+
+            var data = EnsureSave();
+            var entry = GetDailyMissionEntry(data, mission);
+            if (entry == null)
+            {
+                return false;
+            }
+
+            data.fishCoins += mission.RewardFishCoins;
+            entry.rewardClaimed = true;
+            Save();
+
+            return true;
+        }
+
         public static float GetTowerDamageMultiplier()
         {
             return 1f + GetSummedUpgradeEffect(UpgradeEffectType.TowerDamageMultiplier);
@@ -197,6 +349,11 @@ namespace CatGuard.Meta.Progression
                 data.upgrades = new List<UpgradeSaveEntry>();
             }
 
+            if (data.dailyMissions == null)
+            {
+                data.dailyMissions = new List<DailyMissionSaveEntry>();
+            }
+
             var firstLevelId = levelCatalog?.FirstLevel?.LevelId;
             if (!string.IsNullOrWhiteSpace(firstLevelId) && !data.unlockedLevelIds.Contains(firstLevelId))
             {
@@ -207,6 +364,9 @@ namespace CatGuard.Meta.Progression
             {
                 data.selectedLevelId = firstLevelId;
             }
+
+            NormalizeDailyRewardState(data);
+            EnsureDailyMissionsForToday(data);
         }
 
         private static GameSaveData EnsureSaveWithoutDefaults()
@@ -258,6 +418,172 @@ namespace CatGuard.Meta.Progression
             }
 
             return result;
+        }
+
+        private static void AddDailyMissionProgress(DailyMissionType missionType, int amount, bool saveAfter)
+        {
+            if (dailyMissionCatalog == null || !dailyMissionCatalog.IsValid() || amount <= 0)
+            {
+                return;
+            }
+
+            var data = EnsureSave();
+            EnsureDailyMissionsForToday(data);
+
+            foreach (var mission in dailyMissionCatalog.Missions)
+            {
+                if (mission == null || mission.MissionType != missionType)
+                {
+                    continue;
+                }
+
+                var entry = GetDailyMissionEntry(data, mission);
+                if (entry == null || entry.rewardClaimed)
+                {
+                    continue;
+                }
+
+                entry.progress = Math.Min(mission.TargetAmount, entry.progress + amount);
+            }
+
+            if (saveAfter)
+            {
+                Save();
+            }
+        }
+
+        private static void EnsureDailyMissionsForToday(GameSaveData data)
+        {
+            if (dailyMissionCatalog == null || !dailyMissionCatalog.IsValid())
+            {
+                return;
+            }
+
+            if (data.dailyMissions == null)
+            {
+                data.dailyMissions = new List<DailyMissionSaveEntry>();
+            }
+
+            var today = TodayDateKey();
+            if (data.dailyMissionDateKey != today)
+            {
+                data.dailyMissionDateKey = today;
+                data.dailyMissions.Clear();
+            }
+
+            foreach (var mission in dailyMissionCatalog.Missions)
+            {
+                if (mission == null || GetDailyMissionEntry(data, mission, false) != null)
+                {
+                    continue;
+                }
+
+                data.dailyMissions.Add(new DailyMissionSaveEntry(mission.MissionId));
+            }
+        }
+
+        private static DailyMissionSaveEntry GetDailyMissionEntry(GameSaveData data, DailyMissionConfig mission)
+        {
+            return GetDailyMissionEntry(data, mission, true);
+        }
+
+        private static DailyMissionSaveEntry GetDailyMissionEntry(
+            GameSaveData data,
+            DailyMissionConfig mission,
+            bool createIfMissing)
+        {
+            if (data == null || mission == null)
+            {
+                return null;
+            }
+
+            if (data.dailyMissions == null)
+            {
+                data.dailyMissions = new List<DailyMissionSaveEntry>();
+            }
+
+            foreach (var entry in data.dailyMissions)
+            {
+                if (entry != null && entry.missionId == mission.MissionId)
+                {
+                    return entry;
+                }
+            }
+
+            if (!createIfMissing)
+            {
+                return null;
+            }
+
+            var newEntry = new DailyMissionSaveEntry(mission.MissionId);
+            data.dailyMissions.Add(newEntry);
+            return newEntry;
+        }
+
+        private static void NormalizeDailyRewardState(GameSaveData data)
+        {
+            if (data == null || dailyRewardChain == null || dailyRewardChain.Rewards.Length == 0)
+            {
+                return;
+            }
+
+            if (data.dailyRewardStreakIndex < 0 || data.dailyRewardStreakIndex >= dailyRewardChain.Rewards.Length)
+            {
+                data.dailyRewardStreakIndex = 0;
+            }
+
+            if (string.IsNullOrWhiteSpace(data.lastDailyRewardClaimDateKey))
+            {
+                return;
+            }
+
+            if (!TryParseDateKey(data.lastDailyRewardClaimDateKey, out _))
+            {
+                data.lastDailyRewardClaimDateKey = string.Empty;
+                data.dailyRewardStreakIndex = 0;
+                return;
+            }
+
+            if (GetDaysSinceDateKey(data.lastDailyRewardClaimDateKey) > 1)
+            {
+                data.dailyRewardStreakIndex = 0;
+            }
+        }
+
+        private static int GetNextDailyRewardIndex(int currentIndex)
+        {
+            var rewardCount = dailyRewardChain?.Rewards.Length ?? 0;
+            if (rewardCount == 0)
+            {
+                return 0;
+            }
+
+            return (currentIndex + 1) % rewardCount;
+        }
+
+        private static string TodayDateKey()
+        {
+            return DateTime.UtcNow.ToString(DateKeyFormat, CultureInfo.InvariantCulture);
+        }
+
+        private static int GetDaysSinceDateKey(string dateKey)
+        {
+            if (!TryParseDateKey(dateKey, out var date))
+            {
+                return int.MaxValue;
+            }
+
+            return (DateTime.UtcNow.Date - date.Date).Days;
+        }
+
+        private static bool TryParseDateKey(string dateKey, out DateTime date)
+        {
+            return DateTime.TryParseExact(
+                dateKey,
+                DateKeyFormat,
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal,
+                out date);
         }
     }
 }

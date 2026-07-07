@@ -50,15 +50,7 @@ Only mark tasks as done when they are actually present in the repository or veri
 
 ### Todo
 
-* [ ] Create simple level map.
-* [ ] Create enemy path.
-* [ ] Create tower grid.
-* [ ] Implement one basic tower.
-* [ ] Implement one basic enemy.
-* [ ] Implement one wave.
-* [ ] Implement HUD.
-* [ ] Implement win state.
-* [ ] Implement lose state.
+* [ ] None.
 
 ### In Progress
 
@@ -66,7 +58,16 @@ Only mark tasks as done when they are actually present in the repository or veri
 
 ### Done
 
-* [ ] None.
+* [x] Create simple level map.
+* [x] Create enemy path.
+* [x] Create tower grid.
+* [x] Implement one basic tower.
+* [x] Implement one basic enemy.
+* [x] Implement one wave.
+* [x] Implement HUD.
+* [x] Implement win state.
+* [x] Implement lose state.
+* [x] Verify first playable scene configuration through Unity batchmode validation.
 
 ## Phase 3 - Tower Defense Core
 

@@ -127,3 +127,32 @@ The Phase 5 slice intentionally does not include a real ad SDK, Firebase, analyt
 - Gameplay events now trigger lightweight VFX and generated sounds for tower placement, tower shots, enemy defeat, base hits, victory, and defeat.
 
 No external art packs, paid assets, third-party audio files, real ad SDKs, Firebase, analytics, IAP, server validation, or forced interstitial ads are included in this phase.
+
+## Phase 7 Analytics Boundary
+
+- `IAnalyticsService` is the runtime analytics boundary.
+- `AnalyticsService` owns event names, parameter mapping, and gameplay/meta tracking helpers.
+- `FakeAnalyticsService` records events in memory and is the default implementation without external SDKs.
+- `FirebaseAnalyticsService` lives under `Scripts/SDK/Firebase` and is compiled only when `CATGUARD_FIREBASE_ANALYTICS` is defined with the Firebase Unity SDK present.
+- `Phase7ProjectSetup` validates the fake analytics path and checks that direct Firebase SDK references stay out of gameplay/meta/UI code.
+- `ProgressionService` initializes analytics, tracks permanent upgrade purchases, daily reward claims, and rewarded ad offers.
+- `PrototypeLevelController` tracks level start, level complete, level fail, and tower placement.
+- `MainMenuController` tracks opening the upgrades shop.
+- `FakeRewardedAdService` emits rewarded ad started/completed events for testable no-SDK flows.
+
+Current tracked events:
+
+- `app_start`;
+- `level_start`;
+- `level_complete`;
+- `level_fail`;
+- `tower_place`;
+- `tower_upgrade`;
+- `daily_reward_claim`;
+- `rewarded_ad_offer`;
+- `rewarded_ad_started`;
+- `rewarded_ad_completed`;
+- `shop_open`;
+- `upgrade_purchase`.
+
+Firebase Analytics and Crashlytics are not connected yet because the repository does not contain Firebase Unity SDK packages or project configuration files.

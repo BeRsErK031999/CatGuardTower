@@ -1,3 +1,5 @@
+using CatGuard.SDK.Analytics;
+
 namespace CatGuard.SDK.Ads
 {
     public sealed class FakeRewardedAdService : IRewardedAdService
@@ -9,7 +11,15 @@ namespace CatGuard.SDK.Ads
 
         public bool TryShowRewardedAd(string placementId)
         {
-            return IsRewardedAdAvailable(placementId);
+            if (!IsRewardedAdAvailable(placementId))
+            {
+                AnalyticsService.TrackRewardedAdCompleted(placementId, false);
+                return false;
+            }
+
+            AnalyticsService.TrackRewardedAdStarted(placementId);
+            AnalyticsService.TrackRewardedAdCompleted(placementId, true);
+            return true;
         }
     }
 }

@@ -6,6 +6,7 @@ using CatGuard.Meta.DailyRewards;
 using CatGuard.Meta.Progression;
 using CatGuard.Meta.Upgrades;
 using CatGuard.SDK.Ads;
+using CatGuard.SDK.Analytics;
 using UnityEngine;
 
 namespace CatGuard.UI.Screens
@@ -153,6 +154,7 @@ namespace CatGuard.UI.Screens
             if (GUI.Button(upgradesRect, currentView == MainMenuView.Upgrades ? $"> {upgradesLabel}" : upgradesLabel, buttonStyle))
             {
                 ProceduralAudioService.Play(ProceduralSoundId.MenuClick);
+                AnalyticsService.TrackShopOpen("upgrades");
                 currentView = MainMenuView.Upgrades;
             }
 

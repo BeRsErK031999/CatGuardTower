@@ -2,93 +2,93 @@
 
 ## Scope
 
-Phase 5 - Daily Loop is implemented.
+This gate covers readiness before real Firebase/Ads SDK connection.
 
-Implemented:
+Current completed phases:
 
-- daily reward save state;
-- 7-day Fish Coins reward chain;
-- daily mission save state;
-- 3 simple daily missions;
-- `Daily` tab in `MainMenu`;
-- fake rewarded x2 hook through an ad wrapper;
-- Unity batchmode setup and validation script.
+- Phase 5 daily loop;
+- Phase 6 game feel and polish;
+- Phase 7 analytics wrapper/fake implementation slice.
 
-Not implemented in this phase:
+## Current Service Architecture
 
-- real ad SDK;
-- Firebase;
-- analytics;
-- IAP;
-- server clock or server validation;
-- forced interstitial ads.
+Runtime code talks to wrapper services instead of external SDKs directly.
 
-## Daily Reward
+Current wrappers:
 
-Runtime save fields:
+- `CatGuard.SDK.Analytics.IAnalyticsService`;
+- `CatGuard.SDK.Analytics.AnalyticsService`;
+- `CatGuard.SDK.Analytics.FakeAnalyticsService`;
+- `CatGuard.SDK.Firebase.FirebaseAnalyticsService`;
+- `CatGuard.SDK.Ads.IRewardedAdService`;
+- `CatGuard.SDK.Ads.FakeRewardedAdService`.
 
-- `lastDailyRewardClaimDateKey`;
-- `dailyRewardStreakIndex`.
+`AnalyticsService` owns the event helper methods and parameter mapping. Gameplay, UI, and progression code only call `AnalyticsService`, not Firebase SDK types.
 
-Date keys use local device UTC days in `yyyy-MM-dd` format. Missing or corrupt save data starts from day 1.
+`FirebaseAnalyticsService` is compile-flag gated behind `CATGUARD_FIREBASE_ANALYTICS`. Without the Firebase Unity SDK and project config files, the default implementation remains `FakeAnalyticsService`.
 
-Current reward chain:
+## Analytics Events Covered
 
-- Day 1: 20 Fish Coins.
-- Day 2: 25 Fish Coins.
-- Day 3: 30 Fish Coins.
-- Day 4: 35 Fish Coins.
-- Day 5: 45 Fish Coins.
-- Day 6: 55 Fish Coins.
-- Day 7: 75 Fish Coins.
+Current wrapper event coverage:
 
-Normal duplicate daily claims are blocked by the saved claim date.
+- `app_start`;
+- `level_start`;
+- `level_complete`;
+- `level_fail`;
+- `tower_place`;
+- `tower_upgrade`;
+- `daily_reward_claim`;
+- `rewarded_ad_offer`;
+- `rewarded_ad_started`;
+- `rewarded_ad_completed`;
+- `shop_open`;
+- `upgrade_purchase`.
 
-## Daily Missions
+## Ad Service
 
-Runtime save fields:
-
-- `dailyMissionDateKey`;
-- `dailyMissions`.
-
-Current missions:
-
-- `Win 1 Level`: progress is recorded after a level win.
-- `Place 3 Towers`: progress is recorded when towers are placed.
-- `Claim Daily Reward`: progress is recorded after a daily reward claim.
-
-Mission reward claims are saved separately from mission progress.
-
-## Rewarded x2 Hook
-
-The daily x2 button uses:
+Current rewarded ad wrapper:
 
 - `IRewardedAdService`;
 - `FakeRewardedAdService`;
 - `RewardedAdPlacementIds.DailyRewardDouble`.
 
-No real ad SDK is connected. The fake service immediately succeeds so the placement flow can be tested without SDK dependencies.
+The fake service succeeds locally and emits rewarded ad analytics events. No real ad SDK is installed.
+
+## Planned SDK List
+
+Planned, not installed yet:
+
+- Firebase Unity SDK - Analytics;
+- Firebase Unity SDK - Crashlytics, if feasible;
+- Android `google-services.json` from the Firebase project;
+- a rewarded ads SDK in Phase 8, after the ad wrapper is extended.
+
+Not planned for this gate:
+
+- IAP;
+- backend/server validation;
+- forced interstitial ads;
+- iOS SDK setup.
 
 ## Validation
 
 Unity batchmode command:
 
 ```text
-Unity.exe -batchmode -nographics -quit -projectPath "C:\Users\Borodin_Artem\Desktop\Mobile Games\CatGuardTowerDefense" -executeMethod Phase5ProjectSetup.Run -logFile "%TEMP%\catguard-phase5-setup.log"
+Unity.exe -batchmode -nographics -quit -projectPath "C:\Users\Borodin_Artem\Desktop\Mobile Games\CatGuardTowerDefense" -executeMethod Phase7ProjectSetup.Validate -logFile "%TEMP%\catguard-phase7-validate.log"
 ```
 
-Result:
+Expected result:
 
 ```text
-Phase 5 validation passed: daily rewards, daily missions, and fake rewarded x2 hook are configured.
+Phase 7 validation passed: analytics wrapper, fake implementation, event mapping, and Firebase-ready boundary are configured.
 ```
 
-## Known Risk
+## Decision
 
-Local date changes can affect reward availability because this MVP phase intentionally uses the device clock and does not use server validation.
+Default decision for the repository state: improve wrappers first and delay real SDK connection until Firebase project configuration is available.
 
-## Decision Needed
+Next decision needed from the owner:
 
-- Continue to Phase 6 game feel and polish.
-- Adjust daily rewards or mission balance.
-- Delay polish and harden daily-loop edge cases first.
+- provide Firebase project config and approve SDK installation;
+- or continue Phase 8 rewarded ads using the existing fake analytics/ad wrappers.

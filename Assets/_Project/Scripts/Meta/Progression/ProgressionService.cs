@@ -8,6 +8,7 @@ using CatGuard.Gameplay.Levels;
 using CatGuard.Meta.DailyRewards;
 using CatGuard.Meta.Upgrades;
 using CatGuard.SDK.Ads;
+using CatGuard.SDK.Analytics;
 
 namespace CatGuard.Meta.Progression
 {
@@ -63,6 +64,7 @@ namespace CatGuard.Meta.Progression
             dailyMissionCatalog = dailyMissions;
             rewardedAdService = ads ?? new FakeRewardedAdService();
             selectedLevel = null;
+            AnalyticsService.Initialize();
             saveData = GameSaveService.LoadOrCreate(levelCatalog?.FirstLevel?.LevelId);
             EnsureDefaults();
             ResolveSelectedLevel();
@@ -234,8 +236,11 @@ namespace CatGuard.Meta.Progression
             var data = EnsureSave();
             var currentLevel = GetUpgradeLevel(upgrade);
             var nextLevel = currentLevel + 1;
-            data.fishCoins -= upgrade.GetCostForLevel(nextLevel);
+            var cost = upgrade.GetCostForLevel(nextLevel);
+            data.fishCoins -= cost;
             SetUpgradeLevel(data, upgrade.UpgradeId, nextLevel);
+            AnalyticsService.TrackTowerUpgrade(upgrade, nextLevel, cost);
+            AnalyticsService.TrackUpgradePurchase(upgrade, nextLevel, cost, data.fishCoins);
             Save();
 
             return true;
@@ -254,8 +259,14 @@ namespace CatGuard.Meta.Progression
                 return new DailyRewardClaimResult(false, 0, 0, false);
             }
 
+            var rewardedDoubleAvailable = IsDailyRewardDoubleAvailable;
+            if (requestRewardedDouble)
+            {
+                AnalyticsService.TrackRewardedAdOffer(RewardedAdPlacementIds.DailyRewardDouble, rewardedDoubleAvailable);
+            }
+
             var usedRewardedDouble = requestRewardedDouble
-                && IsDailyRewardDoubleAvailable
+                && rewardedDoubleAvailable
                 && rewardedAdService.TryShowRewardedAd(RewardedAdPlacementIds.DailyRewardDouble);
             var multiplier = usedRewardedDouble ? 2 : 1;
             var earnedCoins = reward.FishCoins * multiplier;
@@ -268,7 +279,9 @@ namespace CatGuard.Meta.Progression
             AddDailyMissionProgress(DailyMissionType.ClaimDailyReward, 1, false);
             Save();
 
-            return new DailyRewardClaimResult(true, earnedCoins, reward.DayNumber, usedRewardedDouble);
+            var result = new DailyRewardClaimResult(true, earnedCoins, reward.DayNumber, usedRewardedDouble);
+            AnalyticsService.TrackDailyRewardClaim(result);
+            return result;
         }
 
         public static bool CanClaimDailyReward()

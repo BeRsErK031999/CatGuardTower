@@ -21,6 +21,7 @@ The current goal is not to build full gameplay yet. The goal is to prepare a cle
 - The level scene uses the selected level from saved progression when available.
 - Phase 5 daily loop exists: 7-day local rewards, daily missions, and a fake rewarded x2 hook.
 - Phase 6 polish exists: self-made placeholder visuals, procedural audio/music, VFX, UI motion, sound/language settings, and RU/EN text coverage.
+- Phase 7 analytics service boundary exists: gameplay/meta code emits named analytics events through wrappers and the Editor/fake implementation works without external SDKs.
 
 ## Recommended Reading Order
 
@@ -34,4 +35,4 @@ The current goal is not to build full gameplay yet. The goal is to prepare a cle
 
 ## Next Safe Step
 
-Open the project in Unity Hub or Unity Editor, verify Phase 6 polish, then complete REVIEW GATE 5 before starting Phase 7 analytics/Firebase work.
+Provide Firebase project configuration and decide whether to install the Firebase Unity SDK now, or continue Phase 8 rewarded ads on top of the existing fake analytics/ad wrappers.

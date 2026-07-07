@@ -156,18 +156,8 @@ Only mark tasks as done when they are actually present in the repository or veri
 
 ### Todo
 
-* [ ] Create analytics service wrapper.
-* [ ] Create Editor/fake analytics implementation.
 * [ ] Connect Firebase Analytics.
 * [ ] Connect Crashlytics if feasible.
-* [ ] Track `level_start`.
-* [ ] Track `level_complete`.
-* [ ] Track `level_fail`.
-* [ ] Track `tower_place`.
-* [ ] Track `tower_upgrade`.
-* [ ] Track `daily_reward_claim`.
-* [ ] Track rewarded ad events.
-* [ ] Track `shop_open` and `upgrade_purchase`.
 
 ### In Progress
 
@@ -175,7 +165,19 @@ Only mark tasks as done when they are actually present in the repository or veri
 
 ### Done
 
-* [ ] None.
+* [x] Create analytics service wrapper.
+* [x] Create Editor/fake analytics implementation.
+* [x] Add SDK-gated Firebase Analytics adapter boundary.
+* [x] Track `app_start`.
+* [x] Track `level_start`.
+* [x] Track `level_complete`.
+* [x] Track `level_fail`.
+* [x] Track `tower_place`.
+* [x] Track `tower_upgrade`.
+* [x] Track `daily_reward_claim`.
+* [x] Track rewarded ad events.
+* [x] Track `shop_open` and `upgrade_purchase`.
+* [x] Verify analytics service boundary through Unity batchmode validation.
 
 ## Phase 8 - Rewarded Ads
 

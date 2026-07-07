@@ -16,6 +16,7 @@ Current state:
 - Phase 4 progression exists: local JSON saves, Fish Coins, three permanent upgrades, level selection, and level unlocks.
 - Phase 5 daily loop exists: local 7-day rewards, daily missions, Daily screen, and a fake rewarded x2 hook behind an ad wrapper.
 - Phase 6 polish exists: procedural placeholder visuals, generated audio/music, lightweight VFX, RU/EN localization, and sound/language settings.
+- Phase 7 analytics boundary exists: gameplay/meta code emits analytics events through `AnalyticsService`, fake analytics works in Editor, and the Firebase adapter is compile-flag gated until SDK/config files are added.
 
 Core rule: work one phase at a time. Do not start the next phase without explicit owner approval and do not implement gameplay before the required setup phase is complete.
 
@@ -132,6 +133,8 @@ Events to support:
 - `upgrade_purchase`.
 
 Main result: analytics can be verified in Firebase DebugView and gameplay code does not call Firebase directly.
+
+Current repository status: the service boundary and fake implementation are in place. Real Firebase DebugView verification still requires Firebase Unity SDK installation and project config files.
 
 ## Phase 8. Rewarded Ads
 

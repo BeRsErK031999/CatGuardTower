@@ -34,6 +34,9 @@ Use this file as a short entry point only. The phase-by-phase source of truth is
 * [x] Add procedural sounds and soft music loop.
 * [x] Add sound and language settings.
 * [x] Add RU/EN localization coverage.
+* [x] Add analytics service wrapper.
+* [x] Add fake analytics implementation.
+* [x] Track core level, tower, daily reward, rewarded ad, shop, and upgrade events through the analytics wrapper.
 
 ## Planning References
 

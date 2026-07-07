@@ -5,6 +5,7 @@ using CatGuard.Gameplay.Grid;
 using CatGuard.Gameplay.Towers;
 using CatGuard.Gameplay.Waves;
 using CatGuard.Meta.Progression;
+using CatGuard.SDK.Analytics;
 using CatGuard.UI.HUD;
 using CatGuard.Utils;
 using CatGuard.VFX;
@@ -121,6 +122,7 @@ namespace CatGuard.Gameplay.Levels
             tower.Initialize(this, towerConfig);
             towers.Add(tower);
             ProgressionService.RecordTowerPlaced();
+            AnalyticsService.TrackTowerPlace(config, towerConfig, towers.Count, worldPosition);
             ProceduralAudioService.Play(ProceduralSoundId.TowerPlaced);
             SimpleVfxFactory.Spawn(worldPosition, SimpleVfxStyle.TowerPlaced, runtimeRoot);
         }
@@ -208,6 +210,7 @@ namespace CatGuard.Gameplay.Levels
             towerGrid.Initialize(this, config);
             waveSpawner.Initialize(this, config.WaveConfig);
             hud.Initialize(this);
+            AnalyticsService.TrackLevelStart(config, Lives);
             waveSpawner.Begin();
         }
 
@@ -222,6 +225,7 @@ namespace CatGuard.Gameplay.Levels
             {
                 State = PrototypeLevelState.Lost;
                 resultApplied = true;
+                AnalyticsService.TrackLevelFail(config, DefeatedEnemies, EscapedEnemies, TowerCount, "base_lost");
                 ProceduralAudioService.Play(ProceduralSoundId.Defeat);
                 SimpleVfxFactory.Spawn(config.PathPoints[^1], SimpleVfxStyle.Defeat, runtimeRoot);
                 return;
@@ -243,6 +247,7 @@ namespace CatGuard.Gameplay.Levels
 
             resultApplied = true;
             CompletionResult = ProgressionService.CompleteLevel(config);
+            AnalyticsService.TrackLevelComplete(config, CompletionResult, Lives, DefeatedEnemies, EscapedEnemies, TowerCount);
             ProceduralAudioService.Play(ProceduralSoundId.Victory);
             SimpleVfxFactory.Spawn(Vector3.zero, SimpleVfxStyle.Victory, runtimeRoot);
         }

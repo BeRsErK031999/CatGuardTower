@@ -17,7 +17,14 @@
 
 Analytics should be added after the playable prototype works. Gameplay code must not call Firebase directly.
 
-## Early Events To Track Later
+## Current Analytics Boundary
+
+- Runtime code tracks events through `CatGuard.SDK.Analytics.AnalyticsService`.
+- Editor and local validation use `FakeAnalyticsService`.
+- `FirebaseAnalyticsService` is present as an SDK-gated adapter and requires `CATGUARD_FIREBASE_ANALYTICS` plus Firebase Unity SDK packages before it can send real events.
+- Crashlytics is still deferred until Firebase SDK setup exists.
+
+## Current Events
 
 - App/session start.
 - Level started.
@@ -27,6 +34,7 @@ Analytics should be added after the playable prototype works. Gameplay code must
 - Upgrade purchased.
 - Daily reward claimed.
 - Rewarded ad offered.
+- Rewarded ad started.
 - Rewarded ad completed.
 
 ## Privacy And Store Readiness

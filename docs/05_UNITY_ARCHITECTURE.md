@@ -211,3 +211,11 @@ This phase still uses the existing prototype combat behavior; the new content is
 - Debuggable QA APK save persistence was verified across app restart by reading `/sdcard/Android/data/com.catguard.towerdefense.qa/files/catguard-save.json`.
 - Real-device QA can be run with `tools/android/run-device-qa.ps1`, which installs and launches the APK, collects logcat, display/gfxinfo data, screenshot output, and save-file evidence under `Builds/Android/qa-device/`.
 - Full FPS and touch-device QA still requires a physical Android device.
+
+## Phase 11 Google Play Preparation
+
+- `Phase11ProjectSetup` configures the initial store Android identity separately from the Phase 10 QA package.
+- Store package: `com.berserk031999.catguardtower`.
+- Initial store version: `versionName` `0.1.0`, `versionCode` `1`.
+- Store Android settings keep the same portrait, IL2CPP, ARM64, API 25+, and no-forced-permission baseline.
+- Package name and versioning are validated through Unity batchmode before Play Console upload.

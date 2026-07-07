@@ -47,7 +47,9 @@ Use this file as a short entry point only. The phase-by-phase source of truth is
 * [x] Run offline Android emulator smoke for APK install and MainMenu launch.
 * [x] Verify Android save persistence on a debuggable QA build.
 * [x] Add repeatable real-device Android QA runner.
+* [x] Choose initial Google Play package name and version.
 * [ ] Finish real-device Android QA for install and FPS.
+* [ ] Prepare Google Play icon, screenshots, privacy, Data Safety, descriptions, and closed testing checklist.
 
 ## Planning References
 

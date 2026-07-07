@@ -247,8 +247,6 @@ Only mark tasks as done when they are actually present in the repository or veri
 
 ### Todo
 
-* [ ] Choose package name.
-* [ ] Set `versionCode` and `versionName`.
 * [ ] Prepare icon.
 * [ ] Prepare screenshots.
 * [ ] Draft privacy policy.
@@ -263,7 +261,9 @@ Only mark tasks as done when they are actually present in the repository or veri
 
 ### Done
 
-* [ ] None.
+* [x] Choose package name.
+* [x] Set `versionCode` and `versionName`.
+* [x] Add store Android settings validation.
 
 ## Phase 12 - Closed Testing
 

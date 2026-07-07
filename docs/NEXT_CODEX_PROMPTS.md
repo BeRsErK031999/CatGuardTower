@@ -1,5 +1,44 @@
 # Next Codex Prompts
 
+## Current Next Safe Prompt - Phase 11 Store Materials
+
+Use this prompt after the initial Phase 11 package/version setup.
+
+```text
+You are working in the local Unity repository:
+
+C:\Users\Borodin_Artem\Desktop\Mobile Games\CatGuardTowerDefense
+
+Task: continue Phase 11 Google Play Preparation without uploading anything to Google Play.
+
+Before changes:
+1. Read AGENTS.md.
+2. Read docs/planning/MASTER_PLAN.md.
+3. Read docs/planning/PHASES.md.
+4. Read docs/planning/TASK_BOARD.md.
+5. Read docs/planning/PHASE_10_REPORT.md.
+6. Read docs/planning/PHASE_11_REPORT.md.
+7. Check git status.
+
+Context:
+- Phase 10 real-device install/FPS QA is still open.
+- A real-device QA runner exists at tools/android/run-device-qa.ps1.
+- Initial store package/version are configured:
+  - package: com.berserk031999.catguardtower
+  - versionName: 0.1.0
+  - versionCode: 1
+- QA package remains separate: com.catguard.towerdefense.qa.
+
+Do only safe Phase 11 preparation:
+1. Prepare store listing drafts, privacy/Data Safety drafts, icon/screenshot checklist, or closed testing checklist.
+2. Do not upload to Google Play.
+3. Do not create or commit signing secrets.
+4. Do not claim real-device QA is complete unless tools/android/run-device-qa.ps1 has passed on a connected physical device.
+5. Update TASK_BOARD only for tasks actually completed.
+6. Run available Unity/CLI validation.
+7. Create a Conventional Commit.
+```
+
 ## Phase 1 - Unity Bootstrap
 
 Use this prompt after REVIEW GATE 0 is checked by the owner.

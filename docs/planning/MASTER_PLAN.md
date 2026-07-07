@@ -182,7 +182,7 @@ Goal: produce a stable Android build:
 
 Main result: the game can be installed and tested on Android without blocking issues.
 
-Current repository status: Android QA settings and build automation are in place. `Builds/Android/CatGuardTowerDefense-qa.apk`, `CatGuardTowerDefense-qa-debug.apk`, and `.aab` were produced locally and ignored by Git. Emulator fallback confirmed offline install/launch to MainMenu and save persistence across restart on the debug APK, but real-device install/FPS QA remains required before Phase 11.
+Current repository status: Android QA settings and build automation are in place. `Builds/Android/CatGuardTowerDefense-qa.apk`, `CatGuardTowerDefense-qa-debug.apk`, and `.aab` were produced locally and ignored by Git. Emulator fallback confirmed offline install/launch to MainMenu and save persistence across restart on the debug APK, and a real-device QA runner exists, but real-device install/FPS QA remains required before closed testing.
 
 ## Phase 11. Google Play Preparation
 
@@ -199,6 +199,8 @@ Goal: prepare:
 - closed testing checklist.
 
 Main result: store materials are ready for closed testing review.
+
+Current repository status: initial store package/version are configured as `com.berserk031999.catguardtower` `0.1.0` (`versionCode` `1`) and validated separately from the Phase 10 QA package.
 
 ## Phase 12. Closed Testing
 

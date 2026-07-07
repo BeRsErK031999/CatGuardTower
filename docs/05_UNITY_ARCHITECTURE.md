@@ -56,3 +56,28 @@ The `.unity` scene files were created through Unity Editor batchmode, not as han
 - `FirstCoreWave.asset` references three enemy configs: `MouseScoutEnemy`, `RatBruiserEnemy`, and `BeetleGuardEnemy`.
 
 Balance values for the current playable core live in ScriptableObject assets, not in HUD code or hardcoded UI state.
+
+## Phase 4 Progression And Saves
+
+- `GameSaveService` stores local progress as JSON at `Application.persistentDataPath/catguard-save.json`.
+- `GameSaveData` persists Fish Coins, selected level id, unlocked level ids, completed level ids, and upgrade levels.
+- `ProgressionService` is the runtime boundary for save access, level selection, level completion rewards, unlocks, and upgrade purchases.
+- `LevelCatalogConfig.asset` lists the playable level configs in order.
+- `UpgradeCatalog.asset` lists the permanent upgrades.
+- `MainMenuController` initializes progression, shows Fish Coins, displays the level selection tab, displays the upgrades tab, and exposes `Reset Save` for testing.
+- `PrototypeLevelController` resolves the saved selected level before play starts and awards first-clear or replay Fish Coins only when the wave is won.
+- `BasicTower` reads permanent tower damage and tower range multipliers from `ProgressionService`.
+
+Current permanent upgrades:
+
+- `Claw Training`: tower damage multiplier.
+- `Whisker Focus`: tower range multiplier.
+- `Cozy Cushions`: base lives bonus.
+
+Current level unlock chain:
+
+- `Garden Gate` unlocks `Greenhouse`.
+- `Greenhouse` unlocks `Porch Stand`.
+- `Porch Stand` does not unlock another level yet.
+
+The Phase 4 slice intentionally does not include cloud saves, server validation, IAP, daily rewards, ad rewards, or SDK integration.

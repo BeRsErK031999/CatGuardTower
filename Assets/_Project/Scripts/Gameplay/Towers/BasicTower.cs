@@ -1,5 +1,6 @@
 using CatGuard.Gameplay.Enemies;
 using CatGuard.Gameplay.Levels;
+using CatGuard.Meta.Progression;
 using CatGuard.Utils;
 using UnityEngine;
 
@@ -19,8 +20,8 @@ namespace CatGuard.Gameplay.Towers
         {
             levelController = owner;
             config = towerConfig;
-            range = config.Range;
-            damage = config.Damage;
+            range = config.Range * ProgressionService.GetTowerRangeMultiplier();
+            damage = config.Damage * ProgressionService.GetTowerDamageMultiplier();
             fireInterval = config.FireInterval;
             fireTimer = 0f;
 

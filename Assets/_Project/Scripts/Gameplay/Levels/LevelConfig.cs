@@ -8,6 +8,10 @@ namespace CatGuard.Gameplay.Levels
     [CreateAssetMenu(fileName = "LevelConfig", menuName = "Cat Guard/Level Config")]
     public sealed class LevelConfig : ScriptableObject
     {
+        [Header("Identity")]
+        [SerializeField] private string levelId = "level_01";
+        [SerializeField] private string displayName = "Level 1";
+
         [Header("Base")]
         [Min(1)]
         [SerializeField] private int baseLives = 6;
@@ -37,6 +41,15 @@ namespace CatGuard.Gameplay.Levels
         [SerializeField] private TowerConfig[] availableTowers = Array.Empty<TowerConfig>();
         [SerializeField] private WaveConfig waveConfig;
 
+        [Header("Progression")]
+        [Min(0)]
+        [SerializeField] private int firstClearRewardCoins = 35;
+        [Min(0)]
+        [SerializeField] private int replayRewardCoins = 8;
+        [SerializeField] private string[] unlocksLevelIds = Array.Empty<string>();
+
+        public string LevelId => string.IsNullOrWhiteSpace(levelId) ? name : levelId;
+        public string DisplayName => string.IsNullOrWhiteSpace(displayName) ? LevelId : displayName;
         public int BaseLives => Mathf.Max(1, baseLives);
         public int GridColumns => Mathf.Max(1, gridColumns);
         public int GridRows => Mathf.Max(1, gridRows);
@@ -45,9 +58,17 @@ namespace CatGuard.Gameplay.Levels
         public Vector2[] PathPoints => pathPoints;
         public TowerConfig[] AvailableTowers => availableTowers;
         public WaveConfig WaveConfig => waveConfig;
+        public int FirstClearRewardCoins => Mathf.Max(0, firstClearRewardCoins);
+        public int ReplayRewardCoins => Mathf.Max(0, replayRewardCoins);
+        public string[] UnlocksLevelIds => unlocksLevelIds ?? Array.Empty<string>();
 
         public bool IsValidForCore()
         {
+            if (string.IsNullOrWhiteSpace(LevelId) || string.IsNullOrWhiteSpace(DisplayName))
+            {
+                return false;
+            }
+
             if (BaseLives <= 0 || GridColumns <= 0 || GridRows <= 0 || CellSize <= 0f)
             {
                 return false;
@@ -75,6 +96,8 @@ namespace CatGuard.Gameplay.Levels
         }
 
         public void Configure(
+            string id,
+            string title,
             int lives,
             int columns,
             int rows,
@@ -82,8 +105,13 @@ namespace CatGuard.Gameplay.Levels
             Vector2 origin,
             Vector2[] path,
             TowerConfig[] towers,
-            WaveConfig wave)
+            WaveConfig wave,
+            int firstReward,
+            int replayReward,
+            string[] nextLevelIds)
         {
+            levelId = id;
+            displayName = title;
             baseLives = lives;
             gridColumns = columns;
             gridRows = rows;
@@ -92,6 +120,9 @@ namespace CatGuard.Gameplay.Levels
             pathPoints = path ?? Array.Empty<Vector2>();
             availableTowers = towers ?? Array.Empty<TowerConfig>();
             waveConfig = wave;
+            firstClearRewardCoins = firstReward;
+            replayRewardCoins = replayReward;
+            unlocksLevelIds = nextLevelIds ?? Array.Empty<string>();
         }
     }
 }

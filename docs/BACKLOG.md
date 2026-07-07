@@ -12,7 +12,7 @@ Use this file as a short entry point only. The phase-by-phase source of truth is
 * [x] Создать MainMenu scene
 * [x] Создать Level scene
 * [x] Реализовать SceneLoader
-* [ ] Реализовать SaveService
+* [x] Реализовать SaveService
 * [x] Реализовать первый playable level
 * [x] Реализовать grid для башен
 * [x] Реализовать движение врагов по пути
@@ -22,6 +22,10 @@ Use this file as a short entry point only. The phase-by-phase source of truth is
 * [x] Создать ScriptableObject configs для башен, врагов, волн и уровня
 * [x] Реализовать 3 типа башен
 * [x] Реализовать 3 типа врагов
+* [x] Implement Fish Coins currency.
+* [x] Implement level selection and unlocks.
+* [x] Implement 3 permanent upgrades.
+* [x] Persist local progress in JSON.
 
 ## Planning References
 

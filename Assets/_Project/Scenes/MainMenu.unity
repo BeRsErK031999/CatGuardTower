@@ -231,6 +231,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ddec97e71c6531f4ebf6af9da07bdd89, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CatGuard.UI.Screens.MainMenuController
+  levelCatalog: {fileID: 11400000, guid: 2c2efa743e9f0a44abd852bff184311e, type: 2}
+  upgradeCatalog: {fileID: 11400000, guid: 178ece264f1131c4e975f73ae793e13c, type: 2}
 --- !u!4 &997235069
 Transform:
   m_ObjectHideFlags: 0

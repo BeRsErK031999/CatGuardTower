@@ -155,6 +155,8 @@ public static class Phase3ProjectSetup
     {
         var level = EnsureAsset<LevelConfig>(LevelConfigPath);
         level.Configure(
+            "level_01",
+            "Garden Gate",
             6,
             4,
             3,
@@ -170,7 +172,10 @@ public static class Phase3ProjectSetup
                 new Vector2(3.7f, -2.7f)
             },
             towers,
-            wave);
+            wave,
+            35,
+            8,
+            new[] { "level_02" });
 
         EditorUtility.SetDirty(level);
         return level;

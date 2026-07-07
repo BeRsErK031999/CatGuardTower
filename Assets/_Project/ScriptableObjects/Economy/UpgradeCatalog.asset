@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9a3ab8555600f524595762a65deace58, type: 3}
+  m_Name: UpgradeCatalog
+  m_EditorClassIdentifier: Assembly-CSharp::CatGuard.Meta.Upgrades.UpgradeCatalogConfig
+  upgrades:
+  - {fileID: 11400000, guid: 6628cc02fe6406f418cb8d47e393f274, type: 2}
+  - {fileID: 11400000, guid: 924b26d9b40ecfc41be16ecc81398f99, type: 2}
+  - {fileID: 11400000, guid: fabe46c54163886418c966c08a0c2476, type: 2}

@@ -10,11 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 406895d35cb611041a0b5930d6554197, type: 3}
-  m_Name: Level01Config
+  m_Name: Level03Config
   m_EditorClassIdentifier: Assembly-CSharp::CatGuard.Gameplay.Levels.LevelConfig
-  levelId: level_01
-  displayName: Garden Gate
-  baseLives: 6
+  levelId: level_03
+  displayName: Porch Stand
+  baseLives: 7
   gridColumns: 4
   gridRows: 3
   cellSize: 1.15
@@ -30,8 +30,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 46fc021c90f8cab4d8c916237353a577, type: 2}
   - {fileID: 11400000, guid: db503ece8852a6a4ba44682b13fcf1b4, type: 2}
   - {fileID: 11400000, guid: c9536196982c34341acb60731de4c653, type: 2}
-  waveConfig: {fileID: 11400000, guid: 09be2664476d48745ac91e868c132248, type: 2}
-  firstClearRewardCoins: 35
-  replayRewardCoins: 8
-  unlocksLevelIds:
-  - level_02
+  waveConfig: {fileID: 11400000, guid: e576aeb12af163549b21d18ade3bc524, type: 2}
+  firstClearRewardCoins: 70
+  replayRewardCoins: 12
+  unlocksLevelIds: []

@@ -94,13 +94,7 @@ Only mark tasks as done when they are actually present in the repository or veri
 
 ### Todo
 
-* [ ] Implement local JSON save service.
-* [ ] Add Fish Coins currency.
-* [ ] Create upgrades screen.
-* [ ] Implement 3 permanent upgrades.
-* [ ] Create level selection.
-* [ ] Implement level unlocks.
-* [ ] Persist progress after app restart.
+* [ ] None.
 
 ### In Progress
 
@@ -108,7 +102,14 @@ Only mark tasks as done when they are actually present in the repository or veri
 
 ### Done
 
-* [ ] None.
+* [x] Implement local JSON save service.
+* [x] Add Fish Coins currency.
+* [x] Create upgrades screen.
+* [x] Implement 3 permanent upgrades.
+* [x] Create level selection.
+* [x] Implement level unlocks.
+* [x] Persist progress after app restart.
+* [x] Verify progression and save configuration through Unity batchmode validation.
 
 ## Phase 5 - Daily Loop
 

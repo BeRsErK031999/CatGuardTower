@@ -1,5 +1,6 @@
 using CatGuard.Core.SceneLoading;
 using CatGuard.Gameplay.Levels;
+using CatGuard.Meta.Progression;
 using UnityEngine;
 
 namespace CatGuard.UI.HUD
@@ -41,7 +42,7 @@ namespace CatGuard.UI.HUD
             var selectedTower = levelController.SelectedTowerConfig == null
                 ? "None"
                 : levelController.SelectedTowerConfig.DisplayName;
-            var text = $"Lives: {levelController.Lives}   Enemies: {levelController.DefeatedEnemies + levelController.EscapedEnemies}/{levelController.TotalEnemies}   Towers: {levelController.TowerCount}   Selected: {selectedTower}";
+            var text = $"Lives: {levelController.Lives}   Fish: {ProgressionService.FishCoins}   Enemies: {levelController.DefeatedEnemies + levelController.EscapedEnemies}/{levelController.TotalEnemies}   Towers: {levelController.TowerCount}   Selected: {selectedTower}";
             GUI.Label(hudRect, text, labelStyle);
         }
 
@@ -98,6 +99,12 @@ namespace CatGuard.UI.HUD
             var won = levelController.State == PrototypeLevelState.Won;
             var status = won ? "Victory" : "Defeat";
             GUI.Label(new Rect(0f, overlayRect.y + 18f, Screen.width, 56f), status, statusStyle);
+
+            if (won && levelController.CompletionResult != null)
+            {
+                var rewardText = $"+{levelController.CompletionResult.EarnedFishCoins} Fish Coins";
+                GUI.Label(new Rect(0f, overlayRect.y + 70f, Screen.width, 34f), rewardText, labelStyle);
+            }
 
             var buttonWidth = Mathf.Min(Screen.width * 0.36f, 220f);
             var retryRect = new Rect((Screen.width * 0.5f) - buttonWidth - 10f, overlayRect.y + 104f, buttonWidth, 64f);

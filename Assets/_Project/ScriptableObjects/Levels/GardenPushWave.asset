@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7819acd46e9aaeb438738ad148bd6188, type: 3}
+  m_Name: GardenPushWave
+  m_EditorClassIdentifier: Assembly-CSharp::CatGuard.Gameplay.Waves.WaveConfig
+  groups:
+  - enemyConfig: {fileID: 11400000, guid: 7f3846739d72a624ebc306e03c7e994c, type: 2}
+    count: 5
+    spawnInterval: 0.52
+    delayBeforeGroup: 0
+  - enemyConfig: {fileID: 11400000, guid: 52089a4722f098f4282e406958034e46, type: 2}
+    count: 4
+    spawnInterval: 0.72
+    delayBeforeGroup: 0.6
+  - enemyConfig: {fileID: 11400000, guid: a52e892d13cddf440a1b5c66acd5069b, type: 2}
+    count: 4
+    spawnInterval: 0.88
+    delayBeforeGroup: 0.8

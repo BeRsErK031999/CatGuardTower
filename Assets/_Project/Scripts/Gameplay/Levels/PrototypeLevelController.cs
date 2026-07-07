@@ -3,6 +3,7 @@ using CatGuard.Gameplay.Enemies;
 using CatGuard.Gameplay.Grid;
 using CatGuard.Gameplay.Towers;
 using CatGuard.Gameplay.Waves;
+using CatGuard.Meta.Progression;
 using CatGuard.UI.HUD;
 using CatGuard.Utils;
 using UnityEngine;
@@ -21,6 +22,7 @@ namespace CatGuard.Gameplay.Levels
         private readonly List<BasicTower> towers = new();
         private int selectedTowerIndex;
         private bool waveCompleted;
+        private bool resultApplied;
 
         public PrototypeLevelState State { get; private set; } = PrototypeLevelState.NotStarted;
         public int Lives { get; private set; }
@@ -33,6 +35,7 @@ namespace CatGuard.Gameplay.Levels
         public int ActiveEnemyCount => activeEnemies.Count;
         public int TowerCount => towers.Count;
         public TowerConfig SelectedTowerConfig => GetTowerConfig(selectedTowerIndex);
+        public LevelCompletionResult CompletionResult { get; private set; }
 
         public bool IsConfigured => config != null
             && towerGrid != null
@@ -177,15 +180,18 @@ namespace CatGuard.Gameplay.Levels
 
         private void StartLevel()
         {
+            config = ProgressionService.GetSelectedLevelOrDefault(config);
             ClearRuntimeObjects();
             BuildMapView();
 
-            Lives = config.BaseLives;
+            Lives = config.BaseLives + ProgressionService.GetBaseLivesBonus();
             DefeatedEnemies = 0;
             EscapedEnemies = 0;
             SpawnedEnemies = 0;
             selectedTowerIndex = 0;
             waveCompleted = false;
+            resultApplied = false;
+            CompletionResult = null;
             State = PrototypeLevelState.Running;
 
             towerGrid.Initialize(this, config);
@@ -204,13 +210,26 @@ namespace CatGuard.Gameplay.Levels
             if (Lives <= 0)
             {
                 State = PrototypeLevelState.Lost;
+                resultApplied = true;
                 return;
             }
 
             if (waveCompleted && activeEnemies.Count == 0 && SpawnedEnemies >= TotalEnemies)
             {
                 State = PrototypeLevelState.Won;
+                ApplyWinProgression();
             }
+        }
+
+        private void ApplyWinProgression()
+        {
+            if (resultApplied)
+            {
+                return;
+            }
+
+            resultApplied = true;
+            CompletionResult = ProgressionService.CompleteLevel(config);
         }
 
         private void BuildMapView()

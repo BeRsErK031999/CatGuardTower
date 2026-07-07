@@ -45,6 +45,7 @@ Desktop.ini
 
 # Android / Gradle generated output
 .gradle/
+.utmp/
 gradle-app.setting
 ExportedObj/
 consulo/

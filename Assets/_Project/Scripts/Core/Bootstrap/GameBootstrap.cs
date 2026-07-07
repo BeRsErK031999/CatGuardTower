@@ -13,6 +13,8 @@ namespace CatGuard.Core.Bootstrap
 
         private void Awake()
         {
+            Application.targetFrameRate = 60;
+
             if (instance != null && instance != this)
             {
                 Destroy(gameObject);

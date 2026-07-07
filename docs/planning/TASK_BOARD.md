@@ -225,14 +225,9 @@ Only mark tasks as done when they are actually present in the repository or veri
 
 ### Todo
 
-* [ ] Configure Android build settings.
-* [ ] Produce APK.
-* [ ] Produce AAB.
 * [ ] Test on real Android device.
-* [ ] Verify saves.
-* [ ] Verify offline mode.
-* [ ] Check FPS.
-* [ ] Check critical Unity Console/runtime errors.
+* [ ] Verify saves on real device or a debuggable QA build.
+* [ ] Check FPS on target low/mid real device.
 
 ### In Progress
 
@@ -240,7 +235,11 @@ Only mark tasks as done when they are actually present in the repository or veri
 
 ### Done
 
-* [ ] None.
+* [x] Configure Android build settings.
+* [x] Produce APK.
+* [x] Produce AAB.
+* [x] Verify offline launch on Android emulator fallback.
+* [x] Check critical Unity/AndroidRuntime errors during emulator smoke.
 
 ## Phase 11 - Google Play Preparation
 

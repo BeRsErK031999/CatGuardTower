@@ -43,6 +43,9 @@ Use this file as a short entry point only. The phase-by-phase source of truth is
 * [x] Build 10 MVP level configs with a linear unlock chain.
 * [x] Expand MVP content to 5 tower configs and 5 enemy configs.
 * [x] Add tutorial text to the first level and validate difficulty ramp.
+* [x] Add reproducible Android QA APK/AAB build automation.
+* [x] Run offline Android emulator smoke for APK install and MainMenu launch.
+* [ ] Finish real-device Android QA for saves and FPS.
 
 ## Planning References
 

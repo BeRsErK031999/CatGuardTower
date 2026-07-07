@@ -195,3 +195,16 @@ No forced interstitial ads, real ad SDK, IAP, backend validation, or paid assets
 - `Phase9ProjectSetup` validates 10-20 levels, 3-5 towers, 5-8 enemies, tutorial coverage, linear unlocks, scene references, localization, and difficulty ramp.
 
 This phase still uses the existing prototype combat behavior; the new content is config-driven rather than new enemy/tower mechanics.
+
+## Phase 10 Android Build And QA
+
+- `Phase10ProjectSetup` configures Android QA build settings through Unity Editor APIs.
+- Android QA builds use application id `com.catguard.towerdefense.qa`, portrait orientation, min SDK 25, automatic target SDK, IL2CPP, and ARM64.
+- Forced Internet and external storage permissions remain disabled so offline smoke is meaningful.
+- `GameBootstrap` sets `Application.targetFrameRate` to `60` for the Android QA baseline.
+- Local build artifacts are generated under `Builds/Android/`:
+  - `CatGuardTowerDefense-qa.apk`;
+  - `CatGuardTowerDefense-qa.aab`.
+- Build artifacts are intentionally ignored by Git.
+- Emulator fallback smoke verified APK install, offline launch, MainMenu rendering, and no fatal app crash signatures in logcat.
+- Release APK save files live under the app sandbox and cannot be read through `run-as`; full save-file verification still requires a physical device workflow or a debuggable QA build.

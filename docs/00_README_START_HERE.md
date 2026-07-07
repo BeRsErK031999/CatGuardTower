@@ -24,6 +24,7 @@ The current goal is not to build full gameplay yet. The goal is to prepare a cle
 - Phase 7 analytics service boundary exists: gameplay/meta code emits named analytics events through wrappers and the Editor/fake implementation works without external SDKs.
 - Phase 8 rewarded ads exist through voluntary fake/no-SDK placements: victory x2, revive, daily x2, and daily free coins.
 - Phase 9 MVP content exists: 10 levels, 5 tower configs, 5 enemy configs, baseline rewards, clear wave ramp, and a tutorial hint on the first level.
+- Phase 10 Android build pipeline exists: QA APK/AAB generation is automated, Android settings are validated, and emulator offline smoke has been run.
 
 ## Recommended Reading Order
 
@@ -37,4 +38,4 @@ The current goal is not to build full gameplay yet. The goal is to prepare a cle
 
 ## Next Safe Step
 
-Start Phase 10 Android Build And QA: configure Android build settings, produce APK/AAB, and verify saves/offline behavior on device or documented emulator fallback.
+Connect a real Android device and finish the remaining Phase 10 device QA before starting Phase 11 Google Play Preparation.

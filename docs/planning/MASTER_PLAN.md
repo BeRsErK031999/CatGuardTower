@@ -19,6 +19,7 @@ Current state:
 - Phase 7 analytics boundary exists: gameplay/meta code emits analytics events through `AnalyticsService`, fake analytics works in Editor, and the Firebase adapter is compile-flag gated until SDK/config files are added.
 - Phase 8 rewarded placements exist through the fake ad wrapper: victory reward x2, revive after defeat, daily reward x2, and daily free coins.
 - Phase 9 MVP content exists: 10 playable level configs, 5 towers, 5 enemies, a tutorial first level, and a validated difficulty ramp.
+- Phase 10 Android build pipeline exists: QA builds target Android with IL2CPP/ARM64, APK/AAB artifacts can be generated reproducibly, and emulator offline smoke launches the MainMenu.
 
 Core rule: work one phase at a time. Do not start the next phase without explicit owner approval and do not implement gameplay before the required setup phase is complete.
 
@@ -180,6 +181,8 @@ Goal: produce a stable Android build:
 - critical error check.
 
 Main result: the game can be installed and tested on Android without blocking issues.
+
+Current repository status: Android QA settings and build automation are in place. `Builds/Android/CatGuardTowerDefense-qa.apk` and `.aab` were produced locally and ignored by Git. Emulator fallback confirmed offline install/launch to MainMenu, but real-device save/FPS QA remains required before Phase 11.
 
 ## Phase 11. Google Play Preparation
 

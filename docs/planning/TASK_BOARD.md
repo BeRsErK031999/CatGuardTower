@@ -226,7 +226,6 @@ Only mark tasks as done when they are actually present in the repository or veri
 ### Todo
 
 * [ ] Test on real Android device.
-* [ ] Verify saves on real device or a debuggable QA build.
 * [ ] Check FPS on target low/mid real device.
 
 ### In Progress
@@ -238,7 +237,9 @@ Only mark tasks as done when they are actually present in the repository or veri
 * [x] Configure Android build settings.
 * [x] Produce APK.
 * [x] Produce AAB.
+* [x] Produce debuggable QA APK for save inspection.
 * [x] Verify offline launch on Android emulator fallback.
+* [x] Verify saves on debuggable QA build.
 * [x] Check critical Unity/AndroidRuntime errors during emulator smoke.
 
 ## Phase 11 - Google Play Preparation

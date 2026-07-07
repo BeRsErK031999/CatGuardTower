@@ -204,7 +204,9 @@ This phase still uses the existing prototype combat behavior; the new content is
 - `GameBootstrap` sets `Application.targetFrameRate` to `60` for the Android QA baseline.
 - Local build artifacts are generated under `Builds/Android/`:
   - `CatGuardTowerDefense-qa.apk`;
+  - `CatGuardTowerDefense-qa-debug.apk`;
   - `CatGuardTowerDefense-qa.aab`.
 - Build artifacts are intentionally ignored by Git.
 - Emulator fallback smoke verified APK install, offline launch, MainMenu rendering, and no fatal app crash signatures in logcat.
-- Release APK save files live under the app sandbox and cannot be read through `run-as`; full save-file verification still requires a physical device workflow or a debuggable QA build.
+- Debuggable QA APK save persistence was verified across app restart by reading `/sdcard/Android/data/com.catguard.towerdefense.qa/files/catguard-save.json`.
+- Full FPS and touch-device QA still requires a physical Android device.

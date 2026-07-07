@@ -45,7 +45,8 @@ Use this file as a short entry point only. The phase-by-phase source of truth is
 * [x] Add tutorial text to the first level and validate difficulty ramp.
 * [x] Add reproducible Android QA APK/AAB build automation.
 * [x] Run offline Android emulator smoke for APK install and MainMenu launch.
-* [ ] Finish real-device Android QA for saves and FPS.
+* [x] Verify Android save persistence on a debuggable QA build.
+* [ ] Finish real-device Android QA for install and FPS.
 
 ## Planning References
 

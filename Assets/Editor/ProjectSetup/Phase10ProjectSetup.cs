@@ -10,6 +10,7 @@ public static class Phase10ProjectSetup
     private const string QaApplicationIdentifier = "com.catguard.towerdefense.qa";
     private const string BuildFolder = "Builds/Android";
     private const string ApkPath = BuildFolder + "/CatGuardTowerDefense-qa.apk";
+    private const string DebugApkPath = BuildFolder + "/CatGuardTowerDefense-qa-debug.apk";
     private const string AabPath = BuildFolder + "/CatGuardTowerDefense-qa.aab";
 
     private static readonly string[] RequiredScenes =
@@ -35,23 +36,33 @@ public static class Phase10ProjectSetup
     public static void BuildApk()
     {
         ConfigureAndroidBuildSettings();
-        var succeeded = BuildAndroidArtifact(ApkPath, false);
+        var succeeded = BuildAndroidArtifact(ApkPath, false, false);
+        EditorApplication.Exit(succeeded ? 0 : 1);
+    }
+
+    public static void BuildDebugApk()
+    {
+        ConfigureAndroidBuildSettings();
+        var succeeded = BuildAndroidArtifact(DebugApkPath, false, true);
         EditorApplication.Exit(succeeded ? 0 : 1);
     }
 
     public static void BuildAab()
     {
         ConfigureAndroidBuildSettings();
-        var succeeded = BuildAndroidArtifact(AabPath, true);
+        var succeeded = BuildAndroidArtifact(AabPath, true, false);
         EditorApplication.Exit(succeeded ? 0 : 1);
     }
 
     public static void BuildAll()
     {
         ConfigureAndroidBuildSettings();
-        var apkSucceeded = BuildAndroidArtifact(ApkPath, false);
-        var aabSucceeded = BuildAndroidArtifact(AabPath, true);
-        EditorApplication.Exit(apkSucceeded && aabSucceeded ? 0 : 1);
+        var apkSucceeded = BuildAndroidArtifact(ApkPath, false, false);
+        var aabSucceeded = BuildAndroidArtifact(AabPath, true, false);
+        var debugApkSucceeded = BuildAndroidArtifact(DebugApkPath, false, true);
+        EditorUserBuildSettings.development = false;
+        EditorUserBuildSettings.buildAppBundle = false;
+        EditorApplication.Exit(apkSucceeded && aabSucceeded && debugApkSucceeded ? 0 : 1);
     }
 
     private static void ConfigureAndroidBuildSettings()
@@ -98,7 +109,7 @@ public static class Phase10ProjectSetup
             .ToArray();
     }
 
-    private static bool BuildAndroidArtifact(string path, bool appBundle)
+    private static bool BuildAndroidArtifact(string path, bool appBundle, bool development)
     {
         Directory.CreateDirectory(Path.GetDirectoryName(path) ?? BuildFolder);
         if (File.Exists(path))
@@ -107,24 +118,27 @@ public static class Phase10ProjectSetup
         }
 
         EditorUserBuildSettings.buildAppBundle = appBundle;
-        var report = BuildPipeline.BuildPlayer(RequiredScenes, path, BuildTarget.Android, BuildOptions.None);
+        EditorUserBuildSettings.development = development;
+        var options = development ? BuildOptions.Development : BuildOptions.None;
+        var report = BuildPipeline.BuildPlayer(RequiredScenes, path, BuildTarget.Android, options);
         var summary = report.summary;
+        var label = development ? "Debug APK" : appBundle ? "AAB" : "APK";
 
         if (summary.result != BuildResult.Succeeded)
         {
-            Debug.LogError($"{(appBundle ? "AAB" : "APK")} build failed: {summary.result}.");
+            Debug.LogError($"{label} build failed: {summary.result}.");
             return false;
         }
 
         if (!File.Exists(path))
         {
-            Debug.LogError($"{(appBundle ? "AAB" : "APK")} build succeeded but output was not created: {path}");
+            Debug.LogError($"{label} build succeeded but output was not created: {path}");
             return false;
         }
 
         var fileInfo = new FileInfo(path);
         var sizeMiB = fileInfo.Length / 1024f / 1024f;
-        Debug.Log($"{(appBundle ? "AAB" : "APK")} build created at {path} ({sizeMiB:F2} MiB).");
+        Debug.Log($"{label} build created at {path} ({sizeMiB:F2} MiB).");
         return true;
     }
 

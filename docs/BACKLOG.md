@@ -48,8 +48,9 @@ Use this file as a short entry point only. The phase-by-phase source of truth is
 * [x] Verify Android save persistence on a debuggable QA build.
 * [x] Add repeatable real-device Android QA runner.
 * [x] Choose initial Google Play package name and version.
+* [x] Draft Google Play listing, privacy, Data Safety, assets, and closed testing docs.
 * [ ] Finish real-device Android QA for install and FPS.
-* [ ] Prepare Google Play icon, screenshots, privacy, Data Safety, descriptions, and closed testing checklist.
+* [ ] Produce final Google Play icon, feature graphic, and screenshot image files.
 
 ## Planning References
 

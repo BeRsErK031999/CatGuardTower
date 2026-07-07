@@ -48,4 +48,15 @@ Analytics should be added after the playable prototype works. Gameplay code must
 
 ## Privacy And Store Readiness
 
-Before release, document SDKs, data collection, and Google Play privacy declarations.
+Current Phase 11 drafts live in `docs/store/`.
+
+For the current no-live-SDK build:
+
+- no real ad SDK is connected;
+- no IAP SDK is connected;
+- Firebase Analytics and Crashlytics are not compiled or configured;
+- Unity Analytics, Unity Ads, Unity Purchasing, Cloud Diagnostics, and Performance Reporting are disabled in `ProjectSettings/UnityConnectSettings.asset`;
+- local progress is stored on device through `Application.persistentDataPath`;
+- current Data Safety draft treats the build as no user data collected or shared.
+
+Before release, re-check SDKs, manifest permissions, data collection, privacy policy, and Google Play Data Safety declarations.

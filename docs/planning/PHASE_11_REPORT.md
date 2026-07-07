@@ -5,6 +5,7 @@
 - Selected the initial Google Play store package name: `com.berserk031999.catguardtower`.
 - Set the initial store version: `versionName` `0.1.0`, `versionCode` `1`.
 - Added Unity batchmode validation for store Android settings.
+- Drafted store listing text, privacy policy, Data Safety answers, store asset checklist, and closed-testing checklist under `docs/store/`.
 - Kept the Phase 10 QA package separate from the store package:
   - QA package: `com.catguard.towerdefense.qa`;
   - Store package: `com.berserk031999.catguardtower`.
@@ -46,13 +47,12 @@ Local validation result:
 
 ## Remaining Phase 11 Work
 
-- Prepare icon.
-- Prepare screenshots.
-- Draft privacy policy.
-- Draft Data Safety answers.
-- Draft short description.
-- Draft full description.
-- Prepare closed testing checklist.
+- Produce final icon image file.
+- Produce final feature graphic image file.
+- Capture final screenshot image files.
+- Owner-review store listing, privacy policy, and Data Safety drafts.
+- Publish privacy policy to a public non-editable URL.
+- Confirm final target audience and content rating.
 - Keep signing secrets outside Git.
 
 ## Open Gate

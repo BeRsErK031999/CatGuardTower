@@ -30,6 +30,18 @@ These files are ignored by Git. The QA application id is `com.catguard.towerdefe
 
 Before moving to closed-testing preparation, run physical-device QA with `tools/android/run-device-qa.ps1` and keep its generated evidence under ignored `Builds/Android/qa-device/` artifacts.
 
+## Store Materials
+
+Current drafts live under `docs/store/`:
+
+- `STORE_LISTING_DRAFT.md`;
+- `PRIVACY_POLICY_DRAFT.md`;
+- `DATA_SAFETY_DRAFT.md`;
+- `STORE_ASSET_CHECKLIST.md`;
+- `CLOSED_TESTING_CHECKLIST.md`.
+
+These are drafts only. The owner must review the public-facing text, publish the privacy policy URL, and confirm Data Safety before Play Console submission.
+
 ## Store Risks To Resolve Later
 
 - Ad SDK declarations.

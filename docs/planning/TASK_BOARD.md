@@ -249,11 +249,6 @@ Only mark tasks as done when they are actually present in the repository or veri
 
 * [ ] Prepare icon.
 * [ ] Prepare screenshots.
-* [ ] Draft privacy policy.
-* [ ] Draft Data Safety answers.
-* [ ] Draft short description.
-* [ ] Draft full description.
-* [ ] Prepare closed testing checklist.
 
 ### In Progress
 
@@ -264,6 +259,12 @@ Only mark tasks as done when they are actually present in the repository or veri
 * [x] Choose package name.
 * [x] Set `versionCode` and `versionName`.
 * [x] Add store Android settings validation.
+* [x] Draft privacy policy.
+* [x] Draft Data Safety answers.
+* [x] Draft short description.
+* [x] Draft full description.
+* [x] Prepare store asset requirements checklist.
+* [x] Prepare closed testing checklist.
 
 ## Phase 12 - Closed Testing
 

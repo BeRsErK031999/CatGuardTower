@@ -28,9 +28,10 @@ Context:
   - versionName: 0.1.0
   - versionCode: 1
 - QA package remains separate: com.catguard.towerdefense.qa.
+- Store listing, privacy, Data Safety, asset, and closed-testing drafts live under docs/store/.
 
 Do only safe Phase 11 preparation:
-1. Prepare store listing drafts, privacy/Data Safety drafts, icon/screenshot checklist, or closed testing checklist.
+1. Produce final icon, feature graphic, or screenshot image files from the current build, or owner-review the docs/store drafts.
 2. Do not upload to Google Play.
 3. Do not create or commit signing secrets.
 4. Do not claim real-device QA is complete unless tools/android/run-device-qa.ps1 has passed on a connected physical device.

@@ -43,15 +43,33 @@ namespace CatGuard.Gameplay.Waves
                     yield return new WaitForSeconds(group.DelayBeforeGroup);
                 }
 
-                for (var index = 0; index < group.Count && levelController.State == PrototypeLevelState.Running; index++)
+                for (var index = 0; index < group.Count; index++)
                 {
+                    while (levelController.State == PrototypeLevelState.Lost)
+                    {
+                        yield return null;
+                    }
+
+                    if (levelController.State != PrototypeLevelState.Running)
+                    {
+                        yield break;
+                    }
+
                     levelController.SpawnEnemy(group.EnemyConfig);
                     SpawnedCount++;
                     yield return new WaitForSeconds(group.SpawnInterval);
                 }
             }
 
-            levelController.HandleWaveCompleted();
+            while (levelController.State == PrototypeLevelState.Lost)
+            {
+                yield return null;
+            }
+
+            if (levelController.State == PrototypeLevelState.Running)
+            {
+                levelController.HandleWaveCompleted();
+            }
         }
     }
 }

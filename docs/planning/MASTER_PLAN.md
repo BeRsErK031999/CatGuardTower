@@ -17,6 +17,7 @@ Current state:
 - Phase 5 daily loop exists: local 7-day rewards, daily missions, Daily screen, and a fake rewarded x2 hook behind an ad wrapper.
 - Phase 6 polish exists: procedural placeholder visuals, generated audio/music, lightweight VFX, RU/EN localization, and sound/language settings.
 - Phase 7 analytics boundary exists: gameplay/meta code emits analytics events through `AnalyticsService`, fake analytics works in Editor, and the Firebase adapter is compile-flag gated until SDK/config files are added.
+- Phase 8 rewarded placements exist through the fake ad wrapper: victory reward x2, revive after defeat, daily reward x2, and daily free coins.
 
 Core rule: work one phase at a time. Do not start the next phase without explicit owner approval and do not implement gameplay before the required setup phase is complete.
 
@@ -148,6 +149,8 @@ Goal: add voluntary rewarded ad placements:
 Forced interstitial ads are explicitly excluded.
 
 Main result: rewards are granted once, analytics are tracked, and ads remain voluntary.
+
+Current repository status: fake/no-SDK rewarded placements are implemented. A real ad SDK remains deferred until an SDK provider and project configuration are chosen.
 
 ## Phase 9. MVP Content
 

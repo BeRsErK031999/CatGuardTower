@@ -183,14 +183,7 @@ Only mark tasks as done when they are actually present in the repository or veri
 
 ### Todo
 
-* [ ] Create ad service wrapper.
-* [ ] Create Editor/fake ad implementation.
-* [ ] Add x2 reward after victory.
-* [ ] Add revive after defeat.
-* [ ] Add x2 daily reward.
-* [ ] Add free coins placement.
-* [ ] Add duplicate reward protection.
-* [ ] Verify no forced interstitial ads exist.
+* [ ] None.
 
 ### In Progress
 
@@ -198,7 +191,15 @@ Only mark tasks as done when they are actually present in the repository or veri
 
 ### Done
 
-* [ ] None.
+* [x] Create ad service wrapper.
+* [x] Create Editor/fake ad implementation.
+* [x] Add x2 reward after victory.
+* [x] Add revive after defeat.
+* [x] Add x2 daily reward.
+* [x] Add free coins placement.
+* [x] Add duplicate reward protection.
+* [x] Verify no forced interstitial ads exist.
+* [x] Verify rewarded placement configuration through Unity batchmode validation.
 
 ## Phase 9 - MVP Content
 

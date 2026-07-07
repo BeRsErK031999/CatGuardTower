@@ -22,6 +22,7 @@ The current goal is not to build full gameplay yet. The goal is to prepare a cle
 - Phase 5 daily loop exists: 7-day local rewards, daily missions, and a fake rewarded x2 hook.
 - Phase 6 polish exists: self-made placeholder visuals, procedural audio/music, VFX, UI motion, sound/language settings, and RU/EN text coverage.
 - Phase 7 analytics service boundary exists: gameplay/meta code emits named analytics events through wrappers and the Editor/fake implementation works without external SDKs.
+- Phase 8 rewarded ads exist through voluntary fake/no-SDK placements: victory x2, revive, daily x2, and daily free coins.
 
 ## Recommended Reading Order
 
@@ -35,4 +36,4 @@ The current goal is not to build full gameplay yet. The goal is to prepare a cle
 
 ## Next Safe Step
 
-Provide Firebase project configuration and decide whether to install the Firebase Unity SDK now, or continue Phase 8 rewarded ads on top of the existing fake analytics/ad wrappers.
+Review Phase 8 rewarded placements, then complete REVIEW GATE 7 before starting Phase 9 MVP content expansion.

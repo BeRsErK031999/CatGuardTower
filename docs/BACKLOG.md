@@ -37,6 +37,9 @@ Use this file as a short entry point only. The phase-by-phase source of truth is
 * [x] Add analytics service wrapper.
 * [x] Add fake analytics implementation.
 * [x] Track core level, tower, daily reward, rewarded ad, shop, and upgrade events through the analytics wrapper.
+* [x] Add voluntary rewarded placements for victory x2, revive, daily x2, and free coins.
+* [x] Add duplicate reward protection for rewarded placements.
+* [x] Verify no forced interstitial runtime code exists.
 
 ## Planning References
 

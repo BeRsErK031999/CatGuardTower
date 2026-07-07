@@ -15,6 +15,7 @@ namespace CatGuard.Meta.Progression
     public static class ProgressionService
     {
         private const string DateKeyFormat = "yyyy-MM-dd";
+        private const int FreeCoinsRewardAmount = 15;
 
         private static LevelCatalogConfig levelCatalog;
         private static UpgradeCatalogConfig upgradeCatalog;
@@ -35,6 +36,7 @@ namespace CatGuard.Meta.Progression
         public static string LanguageCode => LocalizationService.NormalizeLanguageCode(EnsureSave().languageCode);
         public static bool IsDailyRewardDoubleAvailable => rewardedAdService != null
             && rewardedAdService.IsRewardedAdAvailable(RewardedAdPlacementIds.DailyRewardDouble);
+        public static int FreeCoinsRewardFishCoins => FreeCoinsRewardAmount;
 
         public static DailyRewardConfig CurrentDailyReward
         {
@@ -246,6 +248,59 @@ namespace CatGuard.Meta.Progression
             return true;
         }
 
+        public static bool IsRewardedPlacementAvailable(string placementId)
+        {
+            return rewardedAdService != null
+                && !string.IsNullOrWhiteSpace(placementId)
+                && rewardedAdService.IsRewardedAdAvailable(placementId);
+        }
+
+        public static bool TryShowRewardedPlacement(string placementId)
+        {
+            var available = IsRewardedPlacementAvailable(placementId);
+            AnalyticsService.TrackRewardedAdOffer(placementId, available);
+            return available && rewardedAdService.TryShowRewardedAd(placementId);
+        }
+
+        public static int GrantRewardedFishCoins(string placementId, int amount)
+        {
+            if (string.IsNullOrWhiteSpace(placementId) || amount <= 0)
+            {
+                return 0;
+            }
+
+            var data = EnsureSave();
+            data.fishCoins += amount;
+            Save();
+            return amount;
+        }
+
+        public static bool CanClaimFreeCoinsReward()
+        {
+            var data = EnsureSave();
+            return data.lastFreeCoinsRewardDateKey != TodayDateKey()
+                && IsRewardedPlacementAvailable(RewardedAdPlacementIds.FreeCoins);
+        }
+
+        public static int ClaimFreeCoinsReward()
+        {
+            if (!CanClaimFreeCoinsReward())
+            {
+                return 0;
+            }
+
+            if (!TryShowRewardedPlacement(RewardedAdPlacementIds.FreeCoins))
+            {
+                return 0;
+            }
+
+            var data = EnsureSave();
+            data.fishCoins += FreeCoinsRewardAmount;
+            data.lastFreeCoinsRewardDateKey = TodayDateKey();
+            Save();
+            return FreeCoinsRewardAmount;
+        }
+
         public static DailyRewardClaimResult ClaimDailyReward(bool requestRewardedDouble)
         {
             if (!CanClaimDailyReward())
@@ -259,15 +314,8 @@ namespace CatGuard.Meta.Progression
                 return new DailyRewardClaimResult(false, 0, 0, false);
             }
 
-            var rewardedDoubleAvailable = IsDailyRewardDoubleAvailable;
-            if (requestRewardedDouble)
-            {
-                AnalyticsService.TrackRewardedAdOffer(RewardedAdPlacementIds.DailyRewardDouble, rewardedDoubleAvailable);
-            }
-
             var usedRewardedDouble = requestRewardedDouble
-                && rewardedDoubleAvailable
-                && rewardedAdService.TryShowRewardedAd(RewardedAdPlacementIds.DailyRewardDouble);
+                && TryShowRewardedPlacement(RewardedAdPlacementIds.DailyRewardDouble);
             var multiplier = usedRewardedDouble ? 2 : 1;
             var earnedCoins = reward.FishCoins * multiplier;
             var data = EnsureSave();

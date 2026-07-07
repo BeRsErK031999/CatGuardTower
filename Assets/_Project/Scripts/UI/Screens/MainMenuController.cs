@@ -23,6 +23,7 @@ namespace CatGuard.UI.Screens
         private GUIStyle smallLabelStyle;
         private GUIStyle buttonStyle;
         private string dailyMessage = string.Empty;
+        private string freeCoinsMessage = string.Empty;
         private MainMenuView currentView = MainMenuView.Levels;
 
         public bool IsConfigured => levelCatalog != null
@@ -87,6 +88,7 @@ namespace CatGuard.UI.Screens
 
             DrawTabs();
             DrawSettings();
+            DrawFreeCoinsPlacement();
 
             if (currentView == MainMenuView.Levels)
             {
@@ -129,6 +131,30 @@ namespace CatGuard.UI.Screens
             {
                 ProceduralAudioService.Play(ProceduralSoundId.MenuClick);
                 ProgressionService.ToggleAudioMuted();
+            }
+        }
+
+        private void DrawFreeCoinsPlacement()
+        {
+            var buttonWidth = Mathf.Min(210f, Screen.width * 0.42f);
+            var freeCoinsRect = new Rect(24f, Screen.height - 124f, buttonWidth, 42f);
+            var label = string.Format(LocalizationService.Text("ads.freeCoins"), ProgressionService.FreeCoinsRewardFishCoins);
+
+            GUI.enabled = ProgressionService.CanClaimFreeCoinsReward();
+            if (GUI.Button(freeCoinsRect, label, buttonStyle))
+            {
+                var earned = ProgressionService.ClaimFreeCoinsReward();
+                if (earned > 0)
+                {
+                    ProceduralAudioService.Play(ProceduralSoundId.MenuClick);
+                    freeCoinsMessage = string.Format(LocalizationService.Text("ads.freeCoinsClaimed"), earned);
+                }
+            }
+
+            GUI.enabled = true;
+            if (!string.IsNullOrWhiteSpace(freeCoinsMessage))
+            {
+                GUI.Label(new Rect(24f, Screen.height - 164f, Mathf.Min(340f, Screen.width * 0.66f), 34f), freeCoinsMessage, smallLabelStyle);
             }
         }
 

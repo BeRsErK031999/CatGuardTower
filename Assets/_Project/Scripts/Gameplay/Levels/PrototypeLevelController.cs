@@ -5,6 +5,7 @@ using CatGuard.Gameplay.Grid;
 using CatGuard.Gameplay.Towers;
 using CatGuard.Gameplay.Waves;
 using CatGuard.Meta.Progression;
+using CatGuard.SDK.Ads;
 using CatGuard.SDK.Analytics;
 using CatGuard.UI.HUD;
 using CatGuard.Utils;
@@ -26,6 +27,8 @@ namespace CatGuard.Gameplay.Levels
         private int selectedTowerIndex;
         private bool waveCompleted;
         private bool resultApplied;
+        private bool victoryRewardDoubled;
+        private bool reviveUsed;
 
         public PrototypeLevelState State { get; private set; } = PrototypeLevelState.NotStarted;
         public int Lives { get; private set; }
@@ -39,6 +42,15 @@ namespace CatGuard.Gameplay.Levels
         public int TowerCount => towers.Count;
         public TowerConfig SelectedTowerConfig => GetTowerConfig(selectedTowerIndex);
         public LevelCompletionResult CompletionResult { get; private set; }
+        public bool CanClaimVictoryDoubleReward => State == PrototypeLevelState.Won
+            && CompletionResult != null
+            && CompletionResult.EarnedFishCoins > 0
+            && !victoryRewardDoubled
+            && ProgressionService.IsRewardedPlacementAvailable(RewardedAdPlacementIds.VictoryRewardDouble);
+        public bool CanReviveWithRewardedAd => State == PrototypeLevelState.Lost
+            && !reviveUsed
+            && HasRemainingThreats()
+            && ProgressionService.IsRewardedPlacementAvailable(RewardedAdPlacementIds.Revive);
 
         public bool IsConfigured => config != null
             && towerGrid != null
@@ -179,6 +191,54 @@ namespace CatGuard.Gameplay.Levels
             EvaluateResult();
         }
 
+        public bool TryClaimVictoryDoubleReward()
+        {
+            if (!CanClaimVictoryDoubleReward)
+            {
+                return false;
+            }
+
+            if (!ProgressionService.TryShowRewardedPlacement(RewardedAdPlacementIds.VictoryRewardDouble))
+            {
+                return false;
+            }
+
+            var bonus = ProgressionService.GrantRewardedFishCoins(
+                RewardedAdPlacementIds.VictoryRewardDouble,
+                CompletionResult.EarnedFishCoins);
+            if (bonus <= 0)
+            {
+                return false;
+            }
+
+            victoryRewardDoubled = true;
+            CompletionResult = CompletionResult.WithRewardedBonus(bonus);
+            ProceduralAudioService.Play(ProceduralSoundId.Victory);
+            SimpleVfxFactory.Spawn(Vector3.zero, SimpleVfxStyle.Victory, runtimeRoot);
+            return true;
+        }
+
+        public bool TryReviveWithRewardedAd()
+        {
+            if (!CanReviveWithRewardedAd)
+            {
+                return false;
+            }
+
+            if (!ProgressionService.TryShowRewardedPlacement(RewardedAdPlacementIds.Revive))
+            {
+                return false;
+            }
+
+            reviveUsed = true;
+            resultApplied = false;
+            Lives = Mathf.Max(1, Mathf.CeilToInt((config.BaseLives + ProgressionService.GetBaseLivesBonus()) * 0.5f));
+            State = PrototypeLevelState.Running;
+            ProceduralAudioService.Play(ProceduralSoundId.Victory);
+            SimpleVfxFactory.Spawn(config.PathPoints[^1], SimpleVfxStyle.Victory, runtimeRoot);
+            return true;
+        }
+
         private void Start()
         {
             if (!IsConfigured)
@@ -204,6 +264,8 @@ namespace CatGuard.Gameplay.Levels
             selectedTowerIndex = 0;
             waveCompleted = false;
             resultApplied = false;
+            victoryRewardDoubled = false;
+            reviveUsed = false;
             CompletionResult = null;
             State = PrototypeLevelState.Running;
 
@@ -250,6 +312,11 @@ namespace CatGuard.Gameplay.Levels
             AnalyticsService.TrackLevelComplete(config, CompletionResult, Lives, DefeatedEnemies, EscapedEnemies, TowerCount);
             ProceduralAudioService.Play(ProceduralSoundId.Victory);
             SimpleVfxFactory.Spawn(Vector3.zero, SimpleVfxStyle.Victory, runtimeRoot);
+        }
+
+        private bool HasRemainingThreats()
+        {
+            return activeEnemies.Count > 0 || SpawnedEnemies < TotalEnemies || !waveCompleted;
         }
 
         private void BuildMapView()

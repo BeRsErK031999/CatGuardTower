@@ -17,6 +17,7 @@ namespace CatGuard.Core.Save
         public List<DailyMissionSaveEntry> dailyMissions = new();
         public bool audioMuted;
         public string languageCode = "en";
+        public string lastFreeCoinsRewardDateKey;
 
         public static GameSaveData CreateDefault(string firstLevelId)
         {

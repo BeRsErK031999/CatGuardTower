@@ -156,3 +156,19 @@ Current tracked events:
 - `upgrade_purchase`.
 
 Firebase Analytics and Crashlytics are not connected yet because the repository does not contain Firebase Unity SDK packages or project configuration files.
+
+## Phase 8 Rewarded Ads
+
+- Rewarded ads remain behind `IRewardedAdService`; no real ad SDK is installed.
+- `RewardedAdPlacementIds` defines `daily_reward_double`, `victory_reward_double`, `revive`, and `free_coins`.
+- `FakeRewardedAdService` is still the Editor/local implementation and emits rewarded ad analytics through `AnalyticsService`.
+- `PrototypeHud` shows voluntary result-screen placements:
+  - x2 reward after victory;
+  - revive after defeat when there are remaining threats.
+- `MainMenuController` shows a voluntary free coins placement.
+- `ProgressionService` grants rewarded Fish Coins and stores `lastFreeCoinsRewardDateKey` so the free coins placement can be claimed once per UTC day.
+- Victory x2 and revive are guarded by runtime flags on the current level result so repeated clicks cannot grant repeated rewards.
+- `PrototypeWaveSpawner` pauses while the level is defeated, which lets revive resume the current wave instead of ending the run immediately.
+- `Phase8ProjectSetup` validates rewarded placement ids, fake rewarded ad completion, localization coverage, result reward totals, and absence of forced interstitial runtime references.
+
+No forced interstitial ads, real ad SDK, IAP, backend validation, or paid assets are included in this phase.

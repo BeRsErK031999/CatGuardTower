@@ -13,6 +13,15 @@
 - Optional revive or second chance if it does not break balance.
 - Optional daily reward multiplier.
 
+## Current Rewarded Placements
+
+- `victory_reward_double`: doubles the current level reward once after victory.
+- `revive`: gives one voluntary second chance after defeat when the wave still has remaining threats.
+- `daily_reward_double`: doubles the daily reward once as part of the daily claim flow.
+- `free_coins`: grants a small free Fish Coins reward once per UTC day.
+
+All current placements use `FakeRewardedAdService`; no real ad SDK or forced interstitial ads are connected.
+
 ## Analytics Direction
 
 Analytics should be added after the playable prototype works. Gameplay code must not call Firebase directly.

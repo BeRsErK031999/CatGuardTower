@@ -12,10 +12,12 @@ namespace CatGuard.UI.HUD
         private GUIStyle labelStyle;
         private GUIStyle statusStyle;
         private GUIStyle buttonStyle;
+        private string resultMessage = string.Empty;
 
         public void Initialize(PrototypeLevelController controller)
         {
             levelController = controller;
+            resultMessage = string.Empty;
         }
 
         private void OnGUI()
@@ -103,7 +105,7 @@ namespace CatGuard.UI.HUD
         private void DrawResultOverlay()
         {
             var slide = Mathf.Sin(Time.timeSinceLevelLoad * 4f) * 4f;
-            var overlayRect = new Rect(0f, (Screen.height * 0.28f) + slide, Screen.width, 210f);
+            var overlayRect = new Rect(0f, (Screen.height * 0.24f) + slide, Screen.width, 292f);
             GUI.Box(overlayRect, GUIContent.none);
 
             var won = levelController.State == PrototypeLevelState.Won;
@@ -112,15 +114,44 @@ namespace CatGuard.UI.HUD
 
             if (won && levelController.CompletionResult != null)
             {
-                var rewardText = string.Format(
-                    LocalizationService.Text("result.reward"),
-                    levelController.CompletionResult.EarnedFishCoins);
+                var rewardText = levelController.CompletionResult.RewardedBonusFishCoins > 0
+                    ? string.Format(
+                        LocalizationService.Text("result.rewardWithBonus"),
+                        levelController.CompletionResult.TotalEarnedFishCoins,
+                        levelController.CompletionResult.RewardedBonusFishCoins)
+                    : string.Format(
+                        LocalizationService.Text("result.reward"),
+                        levelController.CompletionResult.EarnedFishCoins);
                 GUI.Label(new Rect(0f, overlayRect.y + 70f, Screen.width, 34f), rewardText, labelStyle);
             }
 
+            if (!string.IsNullOrWhiteSpace(resultMessage))
+            {
+                GUI.Label(new Rect(0f, overlayRect.y + 104f, Screen.width, 28f), resultMessage, labelStyle);
+            }
+
+            var adButtonWidth = Mathf.Min(Screen.width * 0.68f, 360f);
+            var adButtonRect = new Rect((Screen.width - adButtonWidth) * 0.5f, overlayRect.y + 136f, adButtonWidth, 54f);
+            if (won && levelController.CanClaimVictoryDoubleReward)
+            {
+                if (GUI.Button(adButtonRect, LocalizationService.Text("button.claimX2"), buttonStyle)
+                    && levelController.TryClaimVictoryDoubleReward())
+                {
+                    resultMessage = LocalizationService.Text("result.x2Claimed");
+                }
+            }
+            else if (!won && levelController.CanReviveWithRewardedAd)
+            {
+                if (GUI.Button(adButtonRect, LocalizationService.Text("button.revive"), buttonStyle)
+                    && levelController.TryReviveWithRewardedAd())
+                {
+                    resultMessage = string.Empty;
+                }
+            }
+
             var buttonWidth = Mathf.Min(Screen.width * 0.36f, 220f);
-            var retryRect = new Rect((Screen.width * 0.5f) - buttonWidth - 10f, overlayRect.y + 104f, buttonWidth, 64f);
-            var menuRect = new Rect((Screen.width * 0.5f) + 10f, overlayRect.y + 104f, buttonWidth, 64f);
+            var retryRect = new Rect((Screen.width * 0.5f) - buttonWidth - 10f, overlayRect.y + 204f, buttonWidth, 64f);
+            var menuRect = new Rect((Screen.width * 0.5f) + 10f, overlayRect.y + 204f, buttonWidth, 64f);
 
             if (GUI.Button(retryRect, LocalizationService.Text("button.retry"), buttonStyle))
             {

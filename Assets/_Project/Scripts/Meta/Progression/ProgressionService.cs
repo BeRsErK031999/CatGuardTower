@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using CatGuard.Core.Audio;
+using CatGuard.Core.Localization;
 using CatGuard.Core.Save;
 using CatGuard.Gameplay.Levels;
 using CatGuard.Meta.DailyRewards;
@@ -28,6 +30,8 @@ namespace CatGuard.Meta.Progression
             && dailyRewardChain.IsValid()
             && dailyMissionCatalog != null
             && dailyMissionCatalog.IsValid();
+        public static bool IsAudioMuted => EnsureSave().audioMuted;
+        public static string LanguageCode => LocalizationService.NormalizeLanguageCode(EnsureSave().languageCode);
         public static bool IsDailyRewardDoubleAvailable => rewardedAdService != null
             && rewardedAdService.IsRewardedAdAvailable(RewardedAdPlacementIds.DailyRewardDouble);
 
@@ -62,6 +66,7 @@ namespace CatGuard.Meta.Progression
             saveData = GameSaveService.LoadOrCreate(levelCatalog?.FirstLevel?.LevelId);
             EnsureDefaults();
             ResolveSelectedLevel();
+            ApplySettings();
             Save();
         }
 
@@ -87,7 +92,34 @@ namespace CatGuard.Meta.Progression
             saveData = GameSaveData.CreateDefault(levelCatalog?.FirstLevel?.LevelId);
             selectedLevel = levelCatalog?.FirstLevel;
             EnsureDefaults();
+            ApplySettings();
             Save();
+        }
+
+        public static void SetAudioMuted(bool isMuted)
+        {
+            var data = EnsureSave();
+            data.audioMuted = isMuted;
+            ProceduralAudioService.SetMuted(isMuted);
+            Save();
+        }
+
+        public static void ToggleAudioMuted()
+        {
+            SetAudioMuted(!IsAudioMuted);
+        }
+
+        public static void SetLanguage(string languageCode)
+        {
+            var data = EnsureSave();
+            data.languageCode = LocalizationService.NormalizeLanguageCode(languageCode);
+            LocalizationService.SetLanguage(data.languageCode);
+            Save();
+        }
+
+        public static void ToggleLanguage()
+        {
+            SetLanguage(LocalizationService.NextLanguageCode());
         }
 
         public static bool IsLevelUnlocked(LevelConfig level)
@@ -365,8 +397,16 @@ namespace CatGuard.Meta.Progression
                 data.selectedLevelId = firstLevelId;
             }
 
+            data.languageCode = LocalizationService.NormalizeLanguageCode(data.languageCode);
             NormalizeDailyRewardState(data);
             EnsureDailyMissionsForToday(data);
+        }
+
+        private static void ApplySettings()
+        {
+            var data = EnsureSaveWithoutDefaults();
+            LocalizationService.SetLanguage(data.languageCode);
+            ProceduralAudioService.Initialize(data.audioMuted);
         }
 
         private static GameSaveData EnsureSaveWithoutDefaults()

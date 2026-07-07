@@ -112,3 +112,18 @@ Current daily missions:
 
 Local date changes can affect daily availability because this phase intentionally does not use a server clock.
 The Phase 5 slice intentionally does not include a real ad SDK, Firebase, analytics, IAP, server validation, or forced interstitial ads.
+
+## Phase 6 Game Feel And Polish
+
+- Placeholder visual assets are self-made and generated at runtime by `PrototypeSpriteFactory`, `PrototypeLevelController`, and `SimpleVfxFactory`.
+- License notes for placeholder visuals live in `Assets/_Project/Art/Placeholder/README.md`.
+- Procedural audio and music are generated at runtime by `ProceduralAudioService`.
+- License notes for procedural audio live in `Assets/_Project/Audio/Procedural/README.md`.
+- `GameSaveData` stores `audioMuted` and `languageCode` with the rest of local progress.
+- `ProgressionService` owns sound mute and language switching for the current local save.
+- `LocalizationService` provides visible RU/EN strings for the main menu, HUD, level names, tower names, upgrades, daily rewards, and daily missions.
+- `MainMenuController` exposes sound and language buttons and has a subtle title motion.
+- `PrototypeHud` uses localized visible text and has a small animated result overlay.
+- Gameplay events now trigger lightweight VFX and generated sounds for tower placement, tower shots, enemy defeat, base hits, victory, and defeat.
+
+No external art packs, paid assets, third-party audio files, real ad SDKs, Firebase, analytics, IAP, server validation, or forced interstitial ads are included in this phase.

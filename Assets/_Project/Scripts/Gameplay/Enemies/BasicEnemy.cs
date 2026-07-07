@@ -91,7 +91,7 @@ namespace CatGuard.Gameplay.Enemies
                 spriteRenderer = gameObject.AddComponent<SpriteRenderer>();
             }
 
-            spriteRenderer.sprite = PrototypeSpriteFactory.SquareSprite;
+            spriteRenderer.sprite = PrototypeSpriteFactory.CircleSprite;
             spriteRenderer.sortingOrder = 20;
             transform.localScale = new Vector3(config.VisualScale, config.VisualScale, 1f);
         }

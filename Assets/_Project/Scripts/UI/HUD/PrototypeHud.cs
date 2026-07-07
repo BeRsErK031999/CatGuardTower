@@ -1,3 +1,4 @@
+using CatGuard.Core.Localization;
 using CatGuard.Core.SceneLoading;
 using CatGuard.Gameplay.Levels;
 using CatGuard.Meta.Progression;
@@ -40,9 +41,16 @@ namespace CatGuard.UI.HUD
             GUI.Box(hudRect, GUIContent.none);
 
             var selectedTower = levelController.SelectedTowerConfig == null
-                ? "None"
-                : levelController.SelectedTowerConfig.DisplayName;
-            var text = $"Lives: {levelController.Lives}   Fish: {ProgressionService.FishCoins}   Enemies: {levelController.DefeatedEnemies + levelController.EscapedEnemies}/{levelController.TotalEnemies}   Towers: {levelController.TowerCount}   Selected: {selectedTower}";
+                ? LocalizationService.Text("common.none")
+                : LocalizationService.TowerName(levelController.SelectedTowerConfig);
+            var text = string.Format(
+                LocalizationService.Text("hud.stats"),
+                levelController.Lives,
+                ProgressionService.FishCoins,
+                levelController.DefeatedEnemies + levelController.EscapedEnemies,
+                levelController.TotalEnemies,
+                levelController.TowerCount,
+                selectedTower);
             GUI.Label(hudRect, text, labelStyle);
         }
 
@@ -55,7 +63,7 @@ namespace CatGuard.UI.HUD
 
             var rect = new Rect(16f, Screen.height - 70f, Screen.width - 32f, 50f);
             GUI.Box(rect, GUIContent.none);
-            GUI.Label(rect, "Choose a tower, then tap a tile. Survive the configured wave.", labelStyle);
+            GUI.Label(rect, LocalizationService.Text("hud.instruction"), labelStyle);
             DrawTowerSelector();
         }
 
@@ -79,9 +87,10 @@ namespace CatGuard.UI.HUD
                     continue;
                 }
 
+                var towerName = LocalizationService.TowerName(tower);
                 var label = index == levelController.SelectedTowerIndex
-                    ? $"> {tower.DisplayName}"
-                    : tower.DisplayName;
+                    ? $"> {towerName}"
+                    : towerName;
                 var rect = new Rect(startX + (buttonWidth * index), y, buttonWidth - 6f, 52f);
 
                 if (GUI.Button(rect, label, buttonStyle))
@@ -93,16 +102,19 @@ namespace CatGuard.UI.HUD
 
         private void DrawResultOverlay()
         {
-            var overlayRect = new Rect(0f, Screen.height * 0.28f, Screen.width, 210f);
+            var slide = Mathf.Sin(Time.timeSinceLevelLoad * 4f) * 4f;
+            var overlayRect = new Rect(0f, (Screen.height * 0.28f) + slide, Screen.width, 210f);
             GUI.Box(overlayRect, GUIContent.none);
 
             var won = levelController.State == PrototypeLevelState.Won;
-            var status = won ? "Victory" : "Defeat";
+            var status = won ? LocalizationService.Text("result.victory") : LocalizationService.Text("result.defeat");
             GUI.Label(new Rect(0f, overlayRect.y + 18f, Screen.width, 56f), status, statusStyle);
 
             if (won && levelController.CompletionResult != null)
             {
-                var rewardText = $"+{levelController.CompletionResult.EarnedFishCoins} Fish Coins";
+                var rewardText = string.Format(
+                    LocalizationService.Text("result.reward"),
+                    levelController.CompletionResult.EarnedFishCoins);
                 GUI.Label(new Rect(0f, overlayRect.y + 70f, Screen.width, 34f), rewardText, labelStyle);
             }
 
@@ -110,12 +122,12 @@ namespace CatGuard.UI.HUD
             var retryRect = new Rect((Screen.width * 0.5f) - buttonWidth - 10f, overlayRect.y + 104f, buttonWidth, 64f);
             var menuRect = new Rect((Screen.width * 0.5f) + 10f, overlayRect.y + 104f, buttonWidth, 64f);
 
-            if (GUI.Button(retryRect, "Retry", buttonStyle))
+            if (GUI.Button(retryRect, LocalizationService.Text("button.retry"), buttonStyle))
             {
                 SceneLoader.LoadLevel();
             }
 
-            if (GUI.Button(menuRect, "Menu", buttonStyle))
+            if (GUI.Button(menuRect, LocalizationService.Text("button.menu"), buttonStyle))
             {
                 SceneLoader.LoadMainMenu();
             }
@@ -131,7 +143,7 @@ namespace CatGuard.UI.HUD
             labelStyle = new GUIStyle(GUI.skin.label)
             {
                 alignment = TextAnchor.MiddleCenter,
-                fontSize = 24,
+                fontSize = 20,
                 fontStyle = FontStyle.Bold,
                 wordWrap = true
             };
@@ -146,7 +158,7 @@ namespace CatGuard.UI.HUD
             buttonStyle = new GUIStyle(GUI.skin.button)
             {
                 alignment = TextAnchor.MiddleCenter,
-                fontSize = 30,
+                fontSize = 24,
                 fontStyle = FontStyle.Bold
             };
         }

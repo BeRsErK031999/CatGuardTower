@@ -30,6 +30,10 @@ Use this file as a short entry point only. The phase-by-phase source of truth is
 * [x] Implement daily missions.
 * [x] Add Daily screen to MainMenu.
 * [x] Add fake rewarded x2 daily reward hook.
+* [x] Add procedural placeholder visuals and VFX.
+* [x] Add procedural sounds and soft music loop.
+* [x] Add sound and language settings.
+* [x] Add RU/EN localization coverage.
 
 ## Planning References
 

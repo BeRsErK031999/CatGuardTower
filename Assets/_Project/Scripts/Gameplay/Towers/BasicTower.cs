@@ -1,7 +1,9 @@
+using CatGuard.Core.Audio;
 using CatGuard.Gameplay.Enemies;
 using CatGuard.Gameplay.Levels;
 using CatGuard.Meta.Progression;
 using CatGuard.Utils;
+using CatGuard.VFX;
 using UnityEngine;
 
 namespace CatGuard.Gameplay.Towers
@@ -48,6 +50,8 @@ namespace CatGuard.Gameplay.Towers
             }
 
             target.ApplyDamage(damage);
+            ProceduralAudioService.Play(ProceduralSoundId.TowerShot);
+            SimpleVfxFactory.Spawn(target.transform.position, SimpleVfxStyle.TowerShot);
             fireTimer = fireInterval;
         }
 
@@ -59,7 +63,7 @@ namespace CatGuard.Gameplay.Towers
                 spriteRenderer = gameObject.AddComponent<SpriteRenderer>();
             }
 
-            spriteRenderer.sprite = PrototypeSpriteFactory.SquareSprite;
+            spriteRenderer.sprite = PrototypeSpriteFactory.DiamondSprite;
             spriteRenderer.color = config.VisualColor;
             spriteRenderer.sortingOrder = 15;
             transform.localScale = new Vector3(config.VisualScale, config.VisualScale, 1f);

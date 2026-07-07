@@ -15,6 +15,7 @@ Current state:
 - Phase 3 tower defense core exists: `Level01Config` references 3 tower configs, 3 enemy configs, and `FirstCoreWave`.
 - Phase 4 progression exists: local JSON saves, Fish Coins, three permanent upgrades, level selection, and level unlocks.
 - Phase 5 daily loop exists: local 7-day rewards, daily missions, Daily screen, and a fake rewarded x2 hook behind an ad wrapper.
+- Phase 6 polish exists: procedural placeholder visuals, generated audio/music, lightweight VFX, RU/EN localization, and sound/language settings.
 
 Core rule: work one phase at a time. Do not start the next phase without explicit owner approval and do not implement gameplay before the required setup phase is complete.
 

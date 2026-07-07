@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using CatGuard.Core.Audio;
 using CatGuard.Gameplay.Enemies;
 using CatGuard.Gameplay.Grid;
 using CatGuard.Gameplay.Towers;
@@ -6,6 +7,7 @@ using CatGuard.Gameplay.Waves;
 using CatGuard.Meta.Progression;
 using CatGuard.UI.HUD;
 using CatGuard.Utils;
+using CatGuard.VFX;
 using UnityEngine;
 
 namespace CatGuard.Gameplay.Levels
@@ -119,6 +121,8 @@ namespace CatGuard.Gameplay.Levels
             tower.Initialize(this, towerConfig);
             towers.Add(tower);
             ProgressionService.RecordTowerPlaced();
+            ProceduralAudioService.Play(ProceduralSoundId.TowerPlaced);
+            SimpleVfxFactory.Spawn(worldPosition, SimpleVfxStyle.TowerPlaced, runtimeRoot);
         }
 
         public void SpawnEnemy(EnemyConfig enemyConfig)
@@ -140,23 +144,29 @@ namespace CatGuard.Gameplay.Levels
 
         public void HandleEnemyDefeated(BasicEnemy enemy)
         {
+            var position = enemy == null ? Vector3.zero : enemy.transform.position;
             if (activeEnemies.Remove(enemy))
             {
                 DefeatedEnemies++;
             }
 
+            ProceduralAudioService.Play(ProceduralSoundId.EnemyDefeated);
+            SimpleVfxFactory.Spawn(position, SimpleVfxStyle.EnemyDefeated, runtimeRoot);
             Destroy(enemy.gameObject);
             EvaluateResult();
         }
 
         public void HandleEnemyReachedBase(BasicEnemy enemy, int damage)
         {
+            var position = enemy == null ? (Vector3)config.PathPoints[^1] : enemy.transform.position;
             if (activeEnemies.Remove(enemy))
             {
                 EscapedEnemies++;
             }
 
             Lives = Mathf.Max(0, Lives - Mathf.Max(1, damage));
+            ProceduralAudioService.Play(ProceduralSoundId.BaseHit);
+            SimpleVfxFactory.Spawn(position, SimpleVfxStyle.BaseHit, runtimeRoot);
             Destroy(enemy.gameObject);
             EvaluateResult();
         }
@@ -212,6 +222,8 @@ namespace CatGuard.Gameplay.Levels
             {
                 State = PrototypeLevelState.Lost;
                 resultApplied = true;
+                ProceduralAudioService.Play(ProceduralSoundId.Defeat);
+                SimpleVfxFactory.Spawn(config.PathPoints[^1], SimpleVfxStyle.Defeat, runtimeRoot);
                 return;
             }
 
@@ -231,6 +243,8 @@ namespace CatGuard.Gameplay.Levels
 
             resultApplied = true;
             CompletionResult = ProgressionService.CompleteLevel(config);
+            ProceduralAudioService.Play(ProceduralSoundId.Victory);
+            SimpleVfxFactory.Spawn(Vector3.zero, SimpleVfxStyle.Victory, runtimeRoot);
         }
 
         private void BuildMapView()
@@ -238,9 +252,36 @@ namespace CatGuard.Gameplay.Levels
             var mapRoot = new GameObject("MapView");
             mapRoot.transform.SetParent(runtimeRoot, false);
 
+            CreateBackdrop(mapRoot.transform);
             CreatePathLine(mapRoot.transform);
             CreateMarker("Spawn", config.PathPoints[0], new Color(0.3f, 0.85f, 0.45f), mapRoot.transform);
             CreateMarker("Base", config.PathPoints[^1], new Color(0.95f, 0.65f, 0.2f), mapRoot.transform);
+        }
+
+        private static void CreateBackdrop(Transform parent)
+        {
+            CreateBackdropPatch("GrassPatch", new Vector2(-1.8f, 0.3f), new Vector3(7.5f, 5.8f, 1f), new Color(0.11f, 0.23f, 0.18f), parent);
+            CreateBackdropPatch("SoilPatch", new Vector2(1.7f, -1.7f), new Vector3(3.8f, 1.9f, 1f), new Color(0.22f, 0.15f, 0.09f), parent);
+            CreateBackdropPatch("MoonPatch", new Vector2(3.25f, 3.1f), new Vector3(0.74f, 0.74f, 1f), new Color(0.9f, 0.86f, 0.55f), parent, true);
+        }
+
+        private static void CreateBackdropPatch(
+            string patchName,
+            Vector2 position,
+            Vector3 scale,
+            Color color,
+            Transform parent,
+            bool circle = false)
+        {
+            var patchObject = new GameObject(patchName);
+            patchObject.transform.SetParent(parent, false);
+            patchObject.transform.position = position;
+            patchObject.transform.localScale = scale;
+
+            var renderer = patchObject.AddComponent<SpriteRenderer>();
+            renderer.sprite = circle ? PrototypeSpriteFactory.CircleSprite : PrototypeSpriteFactory.SquareSprite;
+            renderer.color = color;
+            renderer.sortingOrder = 0;
         }
 
         private void CreatePathLine(Transform parent)
@@ -282,7 +323,7 @@ namespace CatGuard.Gameplay.Levels
             markerObject.transform.localScale = new Vector3(0.58f, 0.58f, 1f);
 
             var renderer = markerObject.AddComponent<SpriteRenderer>();
-            renderer.sprite = PrototypeSpriteFactory.SquareSprite;
+            renderer.sprite = PrototypeSpriteFactory.CircleSprite;
             renderer.color = color;
             renderer.sortingOrder = 8;
         }

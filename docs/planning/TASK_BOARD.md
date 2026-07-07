@@ -134,14 +134,7 @@ Only mark tasks as done when they are actually present in the repository or veri
 
 ### Todo
 
-* [ ] Add placeholder or free visual assets.
-* [ ] Add basic sounds.
-* [ ] Add basic music.
-* [ ] Add basic VFX.
-* [ ] Add UI animations.
-* [ ] Add sound settings.
-* [ ] Add language settings.
-* [ ] Add RU/EN localization coverage.
+* [ ] None.
 
 ### In Progress
 
@@ -149,7 +142,15 @@ Only mark tasks as done when they are actually present in the repository or veri
 
 ### Done
 
-* [ ] None.
+* [x] Add placeholder or free visual assets.
+* [x] Add basic sounds.
+* [x] Add basic music.
+* [x] Add basic VFX.
+* [x] Add UI animations.
+* [x] Add sound settings.
+* [x] Add language settings.
+* [x] Add RU/EN localization coverage.
+* [x] Verify game feel and polish configuration through Unity batchmode validation.
 
 ## Phase 7 - Analytics
 

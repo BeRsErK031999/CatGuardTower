@@ -13,6 +13,7 @@ The current goal is not to build full gameplay yet. The goal is to prepare a cle
 - Android Build Support, Android SDK/NDK, CMake, and OpenJDK are installed under the Unity editor.
 - `Assets/_Project/` contains the project scaffold that was previously staged in `_project_scaffold/`.
 - Initial scenes exist: `Boot`, `MainMenu`, and `Level`.
+- Phase 1 bootstrap exists: `Boot` loads `MainMenu`, and the Main Menu Play button loads `Level`.
 
 ## Recommended Reading Order
 
@@ -26,4 +27,4 @@ The current goal is not to build full gameplay yet. The goal is to prepare a cle
 
 ## Next Safe Step
 
-Open the project in Unity Hub or Unity Editor, confirm REVIEW GATE 0 details, then continue with Phase 1 bootstrap: `GameBootstrap`, `SceneLoader`, and `Boot -> MainMenu -> Level` flow.
+Open the project in Unity Hub or Unity Editor, confirm REVIEW GATE 1 details, then continue with Phase 2 first playable prototype only after owner approval.

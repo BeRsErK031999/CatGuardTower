@@ -29,9 +29,7 @@ Only mark tasks as done when they are actually present in the repository or veri
 
 ### Todo
 
-* [ ] Implement minimal `GameBootstrap`.
-* [ ] Implement minimal `SceneLoader`.
-* [ ] Verify `Boot -> MainMenu -> Level` flow.
+* [ ] None.
 
 ### In Progress
 
@@ -43,6 +41,10 @@ Only mark tasks as done when they are actually present in the repository or veri
 * [x] Create `MainMenu` scene through Unity Editor workflow.
 * [x] Create `Level` scene through Unity Editor workflow.
 * [x] Add scenes to Build Settings.
+* [x] Implement minimal `GameBootstrap`.
+* [x] Implement minimal `SceneLoader`.
+* [x] Add minimal Play button path in `MainMenu`.
+* [x] Verify `Boot -> MainMenu -> Level` flow through Unity batchmode validation.
 
 ## Phase 2 - First Playable Prototype
 

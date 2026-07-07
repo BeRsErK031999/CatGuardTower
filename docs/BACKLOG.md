@@ -11,7 +11,7 @@ Use this file as a short entry point only. The phase-by-phase source of truth is
 * [x] Создать Boot scene
 * [x] Создать MainMenu scene
 * [x] Создать Level scene
-* [ ] Реализовать SceneLoader
+* [x] Реализовать SceneLoader
 * [ ] Реализовать SaveService
 * [ ] Реализовать первый playable level
 * [ ] Реализовать grid для башен

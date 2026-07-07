@@ -6,9 +6,11 @@ Current state:
 
 - Git repository exists.
 - Base documentation exists.
-- Unity Hub and Unity Editor were not detected previously.
-- A real Unity project has not been created yet.
-- `_project_scaffold/` exists and should later be moved into `Assets/_Project/`.
+- Unity Hub and Unity Editor `6000.4.12f1` are installed locally.
+- A real Unity project exists in the repository root.
+- Android Build Support, Android SDK/NDK, CMake, and OpenJDK are installed under the Unity editor.
+- `Assets/_Project/` contains the scaffold that was previously staged in `_project_scaffold/`.
+- Phase 1 bootstrap exists: `Boot -> MainMenu -> Level`.
 
 Core rule: work one phase at a time. Do not start the next phase without explicit owner approval and do not implement gameplay before the required setup phase is complete.
 

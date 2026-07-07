@@ -6,6 +6,7 @@
 - Set the initial store version: `versionName` `0.1.0`, `versionCode` `1`.
 - Added Unity batchmode validation for store Android settings.
 - Drafted store listing text, privacy policy, Data Safety answers, store asset checklist, and closed-testing checklist under `docs/store/`.
+- Added generated store image assets under `docs/store/assets/`.
 - Kept the Phase 10 QA package separate from the store package:
   - QA package: `com.catguard.towerdefense.qa`;
   - Store package: `com.berserk031999.catguardtower`.
@@ -47,9 +48,8 @@ Local validation result:
 
 ## Remaining Phase 11 Work
 
-- Produce final icon image file.
-- Produce final feature graphic image file.
-- Capture final screenshot image files.
+- Owner-review generated icon, feature graphic, and screenshot assets.
+- Capture or confirm final screenshot image files from physical-device QA.
 - Owner-review store listing, privacy policy, and Data Safety drafts.
 - Publish privacy policy to a public non-editable URL.
 - Confirm final target audience and content rating.

@@ -247,8 +247,8 @@ Only mark tasks as done when they are actually present in the repository or veri
 
 ### Todo
 
-* [ ] Prepare icon.
-* [ ] Prepare screenshots.
+* [ ] Owner-review generated store image assets.
+* [ ] Capture or confirm real-device screenshots.
 
 ### In Progress
 
@@ -265,6 +265,9 @@ Only mark tasks as done when they are actually present in the repository or veri
 * [x] Draft full description.
 * [x] Prepare store asset requirements checklist.
 * [x] Prepare closed testing checklist.
+* [x] Prepare generated store icon.
+* [x] Prepare generated feature graphic.
+* [x] Prepare pre-device screenshot asset set.
 
 ## Phase 12 - Closed Testing
 

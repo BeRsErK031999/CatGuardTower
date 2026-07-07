@@ -1,6 +1,6 @@
 # Google Play Store Asset Checklist
 
-Source status: requirements checklist only. Final image files have not been produced yet.
+Source status: requirements checklist plus generated pre-device asset set.
 
 Official Google Play reference checked on 2026-07-07:
 
@@ -42,8 +42,18 @@ Official Google Play reference checked on 2026-07-07:
 
 ## Open Asset Tasks
 
-- Produce final launcher/store icon.
-- Produce final feature graphic.
-- Capture screenshots from a real Android device or validated emulator build.
+- Owner-review generated launcher/store icon.
+- Owner-review generated feature graphic.
+- Capture or confirm screenshots from a real Android device or validated emulator build.
 - Review screenshots for readable text on phone screens.
 - Add alt text for uploaded graphic assets in Play Console.
+
+## Generated Asset Files
+
+- `docs/store/assets/icon/catguard-store-icon-512.png`
+- `docs/store/assets/feature/catguard-feature-1024x500.png`
+- `docs/store/assets/screenshots/01-main-menu-level-select-1080x1920.png`
+- `docs/store/assets/screenshots/02-level-placement-1080x1920.png`
+- `docs/store/assets/screenshots/03-wave-combat-1080x1920.png`
+- `docs/store/assets/screenshots/04-victory-upgrades-1080x1920.png`
+- `docs/store/assets/screenshots/05-daily-loop-1080x1920.png`

@@ -19,6 +19,9 @@ Use this file as a short entry point only. The phase-by-phase source of truth is
 * [x] Реализовать базовую башню
 * [x] Реализовать волны
 * [x] Реализовать победу/поражение
+* [x] Создать ScriptableObject configs для башен, врагов, волн и уровня
+* [x] Реализовать 3 типа башен
+* [x] Реализовать 3 типа врагов
 
 ## Planning References
 

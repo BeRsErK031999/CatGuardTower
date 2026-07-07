@@ -11,7 +11,7 @@ namespace CatGuard.Gameplay.Levels
 {
     public sealed class PrototypeLevelController : MonoBehaviour
     {
-        [SerializeField] private PrototypeLevelConfig config;
+        [SerializeField] private LevelConfig config;
         [SerializeField] private TowerGrid towerGrid;
         [SerializeField] private PrototypeWaveSpawner waveSpawner;
         [SerializeField] private PrototypeHud hud;
@@ -19,6 +19,7 @@ namespace CatGuard.Gameplay.Levels
 
         private readonly List<BasicEnemy> activeEnemies = new();
         private readonly List<BasicTower> towers = new();
+        private int selectedTowerIndex;
         private bool waveCompleted;
 
         public PrototypeLevelState State { get; private set; } = PrototypeLevelState.NotStarted;
@@ -26,19 +27,22 @@ namespace CatGuard.Gameplay.Levels
         public int DefeatedEnemies { get; private set; }
         public int EscapedEnemies { get; private set; }
         public int SpawnedEnemies { get; private set; }
-        public int TotalEnemies => config == null ? 0 : config.EnemyCount;
+        public LevelConfig Config => config;
+        public int SelectedTowerIndex => selectedTowerIndex;
+        public int TotalEnemies => config?.WaveConfig == null ? 0 : config.WaveConfig.TotalEnemyCount;
         public int ActiveEnemyCount => activeEnemies.Count;
         public int TowerCount => towers.Count;
+        public TowerConfig SelectedTowerConfig => GetTowerConfig(selectedTowerIndex);
 
         public bool IsConfigured => config != null
             && towerGrid != null
             && waveSpawner != null
             && hud != null
             && runtimeRoot != null
-            && config.IsValidForPrototype();
+            && config.IsValidForCore();
 
         public void Configure(
-            PrototypeLevelConfig levelConfig,
+            LevelConfig levelConfig,
             TowerGrid grid,
             PrototypeWaveSpawner spawner,
             PrototypeHud levelHud,
@@ -49,6 +53,21 @@ namespace CatGuard.Gameplay.Levels
             waveSpawner = spawner;
             hud = levelHud;
             runtimeRoot = root;
+        }
+
+        public void SelectTower(int towerIndex)
+        {
+            if (config?.AvailableTowers == null)
+            {
+                return;
+            }
+
+            if (towerIndex < 0 || towerIndex >= config.AvailableTowers.Length)
+            {
+                return;
+            }
+
+            selectedTowerIndex = towerIndex;
         }
 
         public BasicEnemy FindNearestEnemy(Vector3 origin, float range)
@@ -83,27 +102,33 @@ namespace CatGuard.Gameplay.Levels
                 return;
             }
 
-            var towerObject = new GameObject($"CatTower_{towers.Count + 1:00}");
-            towerObject.transform.SetParent(runtimeRoot, false);
-            towerObject.transform.position = worldPosition;
-
-            var tower = towerObject.AddComponent<BasicTower>();
-            tower.Initialize(this, config);
-            towers.Add(tower);
-        }
-
-        public void SpawnEnemy()
-        {
-            if (State != PrototypeLevelState.Running)
+            var towerConfig = SelectedTowerConfig;
+            if (towerConfig == null)
             {
                 return;
             }
 
-            var enemyObject = new GameObject($"BasicEnemy_{SpawnedEnemies + 1:00}");
+            var towerObject = new GameObject($"{towerConfig.DisplayName}_{towers.Count + 1:00}");
+            towerObject.transform.SetParent(runtimeRoot, false);
+            towerObject.transform.position = worldPosition;
+
+            var tower = towerObject.AddComponent<BasicTower>();
+            tower.Initialize(this, towerConfig);
+            towers.Add(tower);
+        }
+
+        public void SpawnEnemy(EnemyConfig enemyConfig)
+        {
+            if (State != PrototypeLevelState.Running || enemyConfig == null)
+            {
+                return;
+            }
+
+            var enemyObject = new GameObject($"{enemyConfig.DisplayName}_{SpawnedEnemies + 1:00}");
             enemyObject.transform.SetParent(runtimeRoot, false);
 
             var enemy = enemyObject.AddComponent<BasicEnemy>();
-            enemy.Initialize(this, config.PathPoints, config.EnemyHealth, config.EnemySpeed, config.EnemyBaseDamage);
+            enemy.Initialize(this, config.PathPoints, enemyConfig);
 
             activeEnemies.Add(enemy);
             SpawnedEnemies++;
@@ -159,11 +184,12 @@ namespace CatGuard.Gameplay.Levels
             DefeatedEnemies = 0;
             EscapedEnemies = 0;
             SpawnedEnemies = 0;
+            selectedTowerIndex = 0;
             waveCompleted = false;
             State = PrototypeLevelState.Running;
 
             towerGrid.Initialize(this, config);
-            waveSpawner.Initialize(this, config);
+            waveSpawner.Initialize(this, config.WaveConfig);
             hud.Initialize(this);
             waveSpawner.Begin();
         }
@@ -181,7 +207,7 @@ namespace CatGuard.Gameplay.Levels
                 return;
             }
 
-            if (waveCompleted && activeEnemies.Count == 0 && SpawnedEnemies >= config.EnemyCount)
+            if (waveCompleted && activeEnemies.Count == 0 && SpawnedEnemies >= TotalEnemies)
             {
                 State = PrototypeLevelState.Won;
             }
@@ -216,6 +242,16 @@ namespace CatGuard.Gameplay.Levels
             {
                 line.SetPosition(index, config.PathPoints[index]);
             }
+        }
+
+        private TowerConfig GetTowerConfig(int towerIndex)
+        {
+            if (config?.AvailableTowers == null || towerIndex < 0 || towerIndex >= config.AvailableTowers.Length)
+            {
+                return null;
+            }
+
+            return config.AvailableTowers[towerIndex];
         }
 
         private static void CreateMarker(string markerName, Vector2 position, Color color, Transform parent)

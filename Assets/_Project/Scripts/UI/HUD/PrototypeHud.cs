@@ -38,7 +38,10 @@ namespace CatGuard.UI.HUD
             var hudRect = new Rect(16f, 16f, Screen.width - 32f, 52f);
             GUI.Box(hudRect, GUIContent.none);
 
-            var text = $"Lives: {levelController.Lives}   Enemies: {levelController.DefeatedEnemies + levelController.EscapedEnemies}/{levelController.TotalEnemies}   Towers: {levelController.TowerCount}";
+            var selectedTower = levelController.SelectedTowerConfig == null
+                ? "None"
+                : levelController.SelectedTowerConfig.DisplayName;
+            var text = $"Lives: {levelController.Lives}   Enemies: {levelController.DefeatedEnemies + levelController.EscapedEnemies}/{levelController.TotalEnemies}   Towers: {levelController.TowerCount}   Selected: {selectedTower}";
             GUI.Label(hudRect, text, labelStyle);
         }
 
@@ -51,7 +54,40 @@ namespace CatGuard.UI.HUD
 
             var rect = new Rect(16f, Screen.height - 70f, Screen.width - 32f, 50f);
             GUI.Box(rect, GUIContent.none);
-            GUI.Label(rect, "Tap a tile to place Cat Tower. Survive the wave.", labelStyle);
+            GUI.Label(rect, "Choose a tower, then tap a tile. Survive the configured wave.", labelStyle);
+            DrawTowerSelector();
+        }
+
+        private void DrawTowerSelector()
+        {
+            var config = levelController.Config;
+            if (config?.AvailableTowers == null || config.AvailableTowers.Length == 0)
+            {
+                return;
+            }
+
+            var buttonWidth = Mathf.Min(150f, (Screen.width - 48f) / config.AvailableTowers.Length);
+            var startX = (Screen.width - (buttonWidth * config.AvailableTowers.Length)) * 0.5f;
+            var y = Screen.height - 138f;
+
+            for (var index = 0; index < config.AvailableTowers.Length; index++)
+            {
+                var tower = config.AvailableTowers[index];
+                if (tower == null)
+                {
+                    continue;
+                }
+
+                var label = index == levelController.SelectedTowerIndex
+                    ? $"> {tower.DisplayName}"
+                    : tower.DisplayName;
+                var rect = new Rect(startX + (buttonWidth * index), y, buttonWidth - 6f, 52f);
+
+                if (GUI.Button(rect, label, buttonStyle))
+                {
+                    levelController.SelectTower(index);
+                }
+            }
         }
 
         private void DrawResultOverlay()

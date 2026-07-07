@@ -73,13 +73,7 @@ Only mark tasks as done when they are actually present in the repository or veri
 
 ### Todo
 
-* [ ] Create `TowerConfig`.
-* [ ] Create `EnemyConfig`.
-* [ ] Create `WaveConfig`.
-* [ ] Create `LevelConfig`.
-* [ ] Implement 3 tower types.
-* [ ] Implement 3 enemy types.
-* [ ] Move balance values into configs.
+* [ ] None.
 
 ### In Progress
 
@@ -87,7 +81,14 @@ Only mark tasks as done when they are actually present in the repository or veri
 
 ### Done
 
-* [ ] None.
+* [x] Create `TowerConfig`.
+* [x] Create `EnemyConfig`.
+* [x] Create `WaveConfig`.
+* [x] Create `LevelConfig`.
+* [x] Implement 3 tower types.
+* [x] Implement 3 enemy types.
+* [x] Move balance values into configs.
+* [x] Verify config-driven tower defense core through Unity batchmode validation.
 
 ## Phase 4 - Progression And Saves
 

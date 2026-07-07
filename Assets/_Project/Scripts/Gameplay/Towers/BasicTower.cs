@@ -8,18 +8,20 @@ namespace CatGuard.Gameplay.Towers
     public sealed class BasicTower : MonoBehaviour
     {
         private PrototypeLevelController levelController;
+        private TowerConfig config;
         private float range;
         private float damage;
         private float fireInterval;
         private float fireTimer;
         private SpriteRenderer spriteRenderer;
 
-        public void Initialize(PrototypeLevelController owner, PrototypeLevelConfig config)
+        public void Initialize(PrototypeLevelController owner, TowerConfig towerConfig)
         {
             levelController = owner;
-            range = config.TowerRange;
-            damage = config.TowerDamage;
-            fireInterval = config.TowerFireInterval;
+            config = towerConfig;
+            range = config.Range;
+            damage = config.Damage;
+            fireInterval = config.FireInterval;
             fireTimer = 0f;
 
             EnsureVisual();
@@ -57,9 +59,9 @@ namespace CatGuard.Gameplay.Towers
             }
 
             spriteRenderer.sprite = PrototypeSpriteFactory.SquareSprite;
-            spriteRenderer.color = new Color(0.24f, 0.78f, 0.96f);
+            spriteRenderer.color = config.VisualColor;
             spriteRenderer.sortingOrder = 15;
-            transform.localScale = new Vector3(0.62f, 0.62f, 1f);
+            transform.localScale = new Vector3(config.VisualScale, config.VisualScale, 1f);
         }
     }
 }

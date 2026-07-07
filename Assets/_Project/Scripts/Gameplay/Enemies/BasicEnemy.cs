@@ -7,6 +7,7 @@ namespace CatGuard.Gameplay.Enemies
     public sealed class BasicEnemy : MonoBehaviour
     {
         private PrototypeLevelController levelController;
+        private EnemyConfig config;
         private Vector2[] pathPoints;
         private SpriteRenderer spriteRenderer;
         private float maxHealth;
@@ -22,16 +23,15 @@ namespace CatGuard.Gameplay.Enemies
         public void Initialize(
             PrototypeLevelController owner,
             Vector2[] path,
-            float health,
-            float moveSpeed,
-            int damageToBase)
+            EnemyConfig enemyConfig)
         {
             levelController = owner;
+            config = enemyConfig;
             pathPoints = path;
-            maxHealth = Mathf.Max(1f, health);
+            maxHealth = config.Health;
             currentHealth = maxHealth;
-            speed = Mathf.Max(0.1f, moveSpeed);
-            baseDamage = Mathf.Max(1, damageToBase);
+            speed = config.Speed;
+            baseDamage = config.BaseDamage;
             nextPathIndex = 1;
             completed = false;
 
@@ -93,7 +93,7 @@ namespace CatGuard.Gameplay.Enemies
 
             spriteRenderer.sprite = PrototypeSpriteFactory.SquareSprite;
             spriteRenderer.sortingOrder = 20;
-            transform.localScale = new Vector3(0.42f, 0.42f, 1f);
+            transform.localScale = new Vector3(config.VisualScale, config.VisualScale, 1f);
         }
 
         private void UpdateVisual()
@@ -103,7 +103,7 @@ namespace CatGuard.Gameplay.Enemies
                 return;
             }
 
-            spriteRenderer.color = Color.Lerp(new Color(0.5f, 0.1f, 0.08f), new Color(1f, 0.3f, 0.22f), HealthPercent);
+            spriteRenderer.color = Color.Lerp(new Color(0.35f, 0.08f, 0.08f), config.VisualColor, HealthPercent);
         }
 
         private void ReachBase()

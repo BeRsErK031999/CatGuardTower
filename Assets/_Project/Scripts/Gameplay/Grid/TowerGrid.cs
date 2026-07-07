@@ -12,12 +12,12 @@ namespace CatGuard.Gameplay.Grid
         private readonly HashSet<Vector2Int> occupiedCells = new();
 
         private PrototypeLevelController levelController;
-        private PrototypeLevelConfig config;
+        private LevelConfig config;
         private Camera mainCamera;
 
         public int PlacedTowerCount => occupiedCells.Count;
 
-        public void Initialize(PrototypeLevelController owner, PrototypeLevelConfig levelConfig)
+        public void Initialize(PrototypeLevelController owner, LevelConfig levelConfig)
         {
             levelController = owner;
             config = levelConfig;
@@ -76,6 +76,11 @@ namespace CatGuard.Gameplay.Grid
 
         private void TryPlaceFromScreen(Vector2 screenPosition)
         {
+            if (screenPosition.y < 170f || screenPosition.y > Screen.height - 80f)
+            {
+                return;
+            }
+
             var world = mainCamera.ScreenToWorldPoint(new Vector3(screenPosition.x, screenPosition.y, 0f));
             TryPlaceAtWorld(world);
         }

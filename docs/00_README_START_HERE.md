@@ -15,6 +15,7 @@ The current goal is not to build full gameplay yet. The goal is to prepare a cle
 - Initial scenes exist: `Boot`, `MainMenu`, and `Level`.
 - Phase 1 bootstrap exists: `Boot` loads `MainMenu`, and the Main Menu Play button loads `Level`.
 - Phase 2 first playable prototype exists in `Level`: tap grid cells to place basic towers and survive one wave.
+- Phase 3 tower defense core exists: `Level01Config` drives 3 tower configs, 3 enemy configs, and one wave config.
 
 ## Recommended Reading Order
 
@@ -28,4 +29,4 @@ The current goal is not to build full gameplay yet. The goal is to prepare a cle
 
 ## Next Safe Step
 
-Open the project in Unity Hub or Unity Editor, confirm REVIEW GATE 2 details, then continue with Phase 3 tower defense core only after owner approval.
+Open the project in Unity Hub or Unity Editor, confirm REVIEW GATE 3 details, then continue with Phase 4 progression and saves only after owner approval.

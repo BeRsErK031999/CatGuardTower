@@ -12,6 +12,7 @@ Current state:
 - `Assets/_Project/` contains the scaffold that was previously staged in `_project_scaffold/`.
 - Phase 1 bootstrap exists: `Boot -> MainMenu -> Level`.
 - Phase 2 first playable prototype exists in `Level`: basic path, tower grid, one tower type, one enemy type, one wave, HUD, win state, and lose state.
+- Phase 3 tower defense core exists: `Level01Config` references 3 tower configs, 3 enemy configs, and `FirstCoreWave`.
 
 Core rule: work one phase at a time. Do not start the next phase without explicit owner approval and do not implement gameplay before the required setup phase is complete.
 

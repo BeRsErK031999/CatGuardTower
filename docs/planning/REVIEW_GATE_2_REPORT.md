@@ -36,8 +36,8 @@ Scope: Phase 2 - First Playable Prototype.
 
 ## Unity Scene And Assets
 
-- `Assets/_Project/Scenes/Level.unity` now contains `PrototypeLevel`.
-- `Assets/_Project/ScriptableObjects/Levels/PrototypeLevelConfig.asset` stores Phase 2 tuning.
+- `Assets/_Project/Scenes/Level.unity` contained `PrototypeLevel`.
+- Historical note: Phase 2 tuning was later replaced in Phase 3 by `LevelConfig`, `WaveConfig`, `TowerConfig`, and `EnemyConfig` assets.
 
 ## Verification
 

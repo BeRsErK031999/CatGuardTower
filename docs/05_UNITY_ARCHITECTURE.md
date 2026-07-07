@@ -39,11 +39,20 @@ The `.unity` scene files were created through Unity Editor batchmode, not as han
 ## Phase 2 First Playable Prototype
 
 - `PrototypeLevelController` owns level state, lives, spawned enemies, active enemies, tower creation, and win/lose evaluation.
-- `PrototypeLevelConfig` is the temporary Phase 2 ScriptableObject tuning asset for the first playable slice.
-- `TowerGrid` lets the player tap grid cells to place the single basic tower type.
+- Phase 2 originally used a temporary prototype tuning asset; Phase 3 replaced it with `LevelConfig`, `WaveConfig`, `TowerConfig`, and `EnemyConfig`.
+- `TowerGrid` lets the player tap grid cells to place the selected tower type.
 - `BasicTower` targets the nearest enemy inside range and applies direct damage.
 - `BasicEnemy` follows the configured path and damages the base if it reaches the end.
 - `PrototypeWaveSpawner` runs one wave.
-- `PrototypeHud` displays lives, enemy progress, tower count, instructions, and result buttons.
+- `PrototypeHud` displays lives, enemy progress, tower count, tower selection, instructions, and result buttons.
 
-The Phase 2 prototype intentionally keeps only one tower type, one enemy type, and one wave. Full `TowerConfig`, `EnemyConfig`, `WaveConfig`, and `LevelConfig` work remains in Phase 3.
+## Phase 3 Config-Driven Core
+
+- `LevelConfig` stores base lives, grid settings, path points, available towers, and the active wave.
+- `TowerConfig` stores tower id, display name, range, damage, fire interval, visual scale, and visual color.
+- `EnemyConfig` stores enemy id, display name, health, speed, base damage, visual scale, and visual color.
+- `WaveConfig` stores ordered enemy groups with enemy config references, counts, spawn intervals, and group delays.
+- `Level01Config.asset` references three tower configs: `CatDartTower`, `YarnCannonTower`, and `BellSniperTower`.
+- `FirstCoreWave.asset` references three enemy configs: `MouseScoutEnemy`, `RatBruiserEnemy`, and `BeetleGuardEnemy`.
+
+Balance values for the current playable core live in ScriptableObject assets, not in HUD code or hardcoded UI state.

@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 406895d35cb611041a0b5930d6554197, type: 3}
+  m_Name: Level01Config
+  m_EditorClassIdentifier: Assembly-CSharp::CatGuard.Gameplay.Levels.LevelConfig
+  baseLives: 6
+  gridColumns: 4
+  gridRows: 3
+  cellSize: 1.15
+  gridOrigin: {x: -1.75, y: -2.8}
+  pathPoints:
+  - {x: -3.7, y: 3}
+  - {x: -1.4, y: 2.2}
+  - {x: 1.5, y: 2.2}
+  - {x: 2.8, y: 0.7}
+  - {x: 1.2, y: -0.9}
+  - {x: 3.7, y: -2.7}
+  availableTowers:
+  - {fileID: 11400000, guid: 46fc021c90f8cab4d8c916237353a577, type: 2}
+  - {fileID: 11400000, guid: db503ece8852a6a4ba44682b13fcf1b4, type: 2}
+  - {fileID: 11400000, guid: c9536196982c34341acb60731de4c653, type: 2}
+  waveConfig: {fileID: 11400000, guid: 09be2664476d48745ac91e868c132248, type: 2}

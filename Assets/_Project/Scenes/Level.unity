@@ -288,7 +288,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 52637c75c6b40644e9ccb2dd0c6aab68, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CatGuard.Gameplay.Levels.PrototypeLevelController
-  config: {fileID: 11400000, guid: 844505bb6da0e4d4a9553834649cf2e9, type: 2}
+  config: {fileID: 11400000, guid: 059abbe76b0dfc94a80c890c3b5cd12d, type: 2}
   towerGrid: {fileID: 1645991711}
   waveSpawner: {fileID: 1337566666}
   hud: {fileID: 1337566665}

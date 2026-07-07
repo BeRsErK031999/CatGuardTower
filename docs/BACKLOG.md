@@ -40,6 +40,9 @@ Use this file as a short entry point only. The phase-by-phase source of truth is
 * [x] Add voluntary rewarded placements for victory x2, revive, daily x2, and free coins.
 * [x] Add duplicate reward protection for rewarded placements.
 * [x] Verify no forced interstitial runtime code exists.
+* [x] Build 10 MVP level configs with a linear unlock chain.
+* [x] Expand MVP content to 5 tower configs and 5 enemy configs.
+* [x] Add tutorial text to the first level and validate difficulty ramp.
 
 ## Planning References
 

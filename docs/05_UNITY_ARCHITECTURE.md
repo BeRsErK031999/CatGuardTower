@@ -172,3 +172,26 @@ Firebase Analytics and Crashlytics are not connected yet because the repository 
 - `Phase8ProjectSetup` validates rewarded placement ids, fake rewarded ad completion, localization coverage, result reward totals, and absence of forced interstitial runtime references.
 
 No forced interstitial ads, real ad SDK, IAP, backend validation, or paid assets are included in this phase.
+
+## Phase 9 MVP Content
+
+- `LevelCatalog.asset` now contains 10 level configs from `level_01` through `level_10`.
+- The unlock chain is linear from `Garden Gate` to `Quiet Alley`.
+- The first level includes tutorial text through `LevelConfig.TutorialTextKey`.
+- `PrototypeHud` displays level tutorial text when the active level provides it; otherwise it uses the standard HUD instruction.
+- MVP towers:
+  - `cat_dart`;
+  - `yarn_cannon`;
+  - `bell_sniper`;
+  - `laser_pointer`;
+  - `blanket_boom`.
+- MVP enemies:
+  - `mouse_scout`;
+  - `rat_bruiser`;
+  - `beetle_guard`;
+  - `moth_swarm`;
+  - `snail_tank`.
+- Each level references one wave config, and wave threat increases across the catalog.
+- `Phase9ProjectSetup` validates 10-20 levels, 3-5 towers, 5-8 enemies, tutorial coverage, linear unlocks, scene references, localization, and difficulty ramp.
+
+This phase still uses the existing prototype combat behavior; the new content is config-driven rather than new enemy/tower mechanics.

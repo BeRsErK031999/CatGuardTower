@@ -23,6 +23,7 @@ The current goal is not to build full gameplay yet. The goal is to prepare a cle
 - Phase 6 polish exists: self-made placeholder visuals, procedural audio/music, VFX, UI motion, sound/language settings, and RU/EN text coverage.
 - Phase 7 analytics service boundary exists: gameplay/meta code emits named analytics events through wrappers and the Editor/fake implementation works without external SDKs.
 - Phase 8 rewarded ads exist through voluntary fake/no-SDK placements: victory x2, revive, daily x2, and daily free coins.
+- Phase 9 MVP content exists: 10 levels, 5 tower configs, 5 enemy configs, baseline rewards, clear wave ramp, and a tutorial hint on the first level.
 
 ## Recommended Reading Order
 
@@ -36,4 +37,4 @@ The current goal is not to build full gameplay yet. The goal is to prepare a cle
 
 ## Next Safe Step
 
-Review Phase 8 rewarded placements, then complete REVIEW GATE 7 before starting Phase 9 MVP content expansion.
+Start Phase 10 Android Build And QA: configure Android build settings, produce APK/AAB, and verify saves/offline behavior on device or documented emulator fallback.

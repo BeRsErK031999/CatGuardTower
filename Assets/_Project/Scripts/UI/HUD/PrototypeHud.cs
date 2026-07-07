@@ -65,7 +65,10 @@ namespace CatGuard.UI.HUD
 
             var rect = new Rect(16f, Screen.height - 70f, Screen.width - 32f, 50f);
             GUI.Box(rect, GUIContent.none);
-            GUI.Label(rect, LocalizationService.Text("hud.instruction"), labelStyle);
+            var instruction = levelController.Config != null && levelController.Config.HasTutorialText
+                ? LocalizationService.Text(levelController.Config.TutorialTextKey)
+                : LocalizationService.Text("hud.instruction");
+            GUI.Label(rect, instruction, labelStyle);
             DrawTowerSelector();
         }
 

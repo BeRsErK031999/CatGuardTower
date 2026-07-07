@@ -10,18 +10,22 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7819acd46e9aaeb438738ad148bd6188, type: 3}
-  m_Name: GardenPushWave
+  m_Name: OrchardWallWave
   m_EditorClassIdentifier: Assembly-CSharp::CatGuard.Gameplay.Waves.WaveConfig
   groups:
-  - enemyConfig: {fileID: 11400000, guid: 7f3846739d72a624ebc306e03c7e994c, type: 2}
-    count: 5
-    spawnInterval: 0.58
-    delayBeforeGroup: 0
-  - enemyConfig: {fileID: 11400000, guid: 52089a4722f098f4282e406958034e46, type: 2}
-    count: 3
-    spawnInterval: 0.76
-    delayBeforeGroup: 0.6
   - enemyConfig: {fileID: 11400000, guid: d8e34b8a87134304781d6f19ceee8c6a, type: 2}
-    count: 4
-    spawnInterval: 0.42
+    count: 12
+    spawnInterval: 0.26
+    delayBeforeGroup: 0
+  - enemyConfig: {fileID: 11400000, guid: 7f3846739d72a624ebc306e03c7e994c, type: 2}
+    count: 8
+    spawnInterval: 0.4
+    delayBeforeGroup: 0.4
+  - enemyConfig: {fileID: 11400000, guid: b47878b293e7cdf4bb20b3301eb7876d, type: 2}
+    count: 5
+    spawnInterval: 0.88
+    delayBeforeGroup: 0.7
+  - enemyConfig: {fileID: 11400000, guid: a52e892d13cddf440a1b5c66acd5069b, type: 2}
+    count: 6
+    spawnInterval: 0.62
     delayBeforeGroup: 0.5

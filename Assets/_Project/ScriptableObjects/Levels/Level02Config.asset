@@ -14,17 +14,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CatGuard.Gameplay.Levels.LevelConfig
   levelId: level_02
   displayName: Greenhouse
-  baseLives: 6
+  baseLives: 7
   gridColumns: 4
   gridRows: 3
   cellSize: 1.15
   gridOrigin: {x: -1.75, y: -2.8}
   pathPoints:
-  - {x: -3.7, y: 3}
-  - {x: -1.4, y: 2.2}
-  - {x: 1.5, y: 2.2}
-  - {x: 2.8, y: 0.7}
-  - {x: 1.2, y: -0.9}
+  - {x: -3.8, y: 2.7}
+  - {x: -2.2, y: 1.5}
+  - {x: 0.3, y: 1.8}
+  - {x: 2.5, y: 0.8}
+  - {x: 0.9, y: -1.5}
   - {x: 3.7, y: -2.7}
   availableTowers:
   - {fileID: 11400000, guid: 46fc021c90f8cab4d8c916237353a577, type: 2}
@@ -35,3 +35,4 @@ MonoBehaviour:
   replayRewardCoins: 10
   unlocksLevelIds:
   - level_03
+  tutorialTextKey: 

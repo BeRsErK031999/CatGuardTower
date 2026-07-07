@@ -30,7 +30,10 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 46fc021c90f8cab4d8c916237353a577, type: 2}
   - {fileID: 11400000, guid: db503ece8852a6a4ba44682b13fcf1b4, type: 2}
   - {fileID: 11400000, guid: c9536196982c34341acb60731de4c653, type: 2}
+  - {fileID: 11400000, guid: 5f1012f251e8525489c183b551824698, type: 2}
   waveConfig: {fileID: 11400000, guid: e576aeb12af163549b21d18ade3bc524, type: 2}
-  firstClearRewardCoins: 70
+  firstClearRewardCoins: 65
   replayRewardCoins: 12
-  unlocksLevelIds: []
+  unlocksLevelIds:
+  - level_04
+  tutorialTextKey: 

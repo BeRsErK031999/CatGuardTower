@@ -205,13 +205,7 @@ Only mark tasks as done when they are actually present in the repository or veri
 
 ### Todo
 
-* [ ] Build 10-20 level configs.
-* [ ] Expand to 3-5 towers.
-* [ ] Expand to 5-8 enemies.
-* [ ] Add baseline balance.
-* [ ] Add clear difficulty ramp.
-* [ ] Add onboarding/tutorial level.
-* [ ] Verify full MVP progression path.
+* [ ] None.
 
 ### In Progress
 
@@ -219,7 +213,13 @@ Only mark tasks as done when they are actually present in the repository or veri
 
 ### Done
 
-* [ ] None.
+* [x] Build 10-20 level configs.
+* [x] Expand to 3-5 towers.
+* [x] Expand to 5-8 enemies.
+* [x] Add baseline balance.
+* [x] Add clear difficulty ramp.
+* [x] Add onboarding/tutorial level.
+* [x] Verify full MVP progression path through Unity batchmode validation.
 
 ## Phase 10 - Android Build And QA
 

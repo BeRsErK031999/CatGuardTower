@@ -10,29 +10,31 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 406895d35cb611041a0b5930d6554197, type: 3}
-  m_Name: Level01Config
+  m_Name: Level07Config
   m_EditorClassIdentifier: Assembly-CSharp::CatGuard.Gameplay.Levels.LevelConfig
-  levelId: level_01
-  displayName: Garden Gate
-  baseLives: 7
+  levelId: level_07
+  displayName: Roof Corner
+  baseLives: 9
   gridColumns: 4
   gridRows: 3
   cellSize: 1.15
   gridOrigin: {x: -1.75, y: -2.8}
   pathPoints:
   - {x: -3.7, y: 3}
-  - {x: -1.4, y: 2.2}
-  - {x: 1.5, y: 2.2}
-  - {x: 2.8, y: 0.7}
-  - {x: 1.2, y: -0.9}
-  - {x: 3.7, y: -2.7}
+  - {x: -2.8, y: -0.2}
+  - {x: -0.8, y: -0.4}
+  - {x: 0.8, y: 1.5}
+  - {x: 2.6, y: 0.2}
+  - {x: 3.7, y: -2.8}
   availableTowers:
   - {fileID: 11400000, guid: 46fc021c90f8cab4d8c916237353a577, type: 2}
   - {fileID: 11400000, guid: db503ece8852a6a4ba44682b13fcf1b4, type: 2}
   - {fileID: 11400000, guid: c9536196982c34341acb60731de4c653, type: 2}
-  waveConfig: {fileID: 11400000, guid: 09be2664476d48745ac91e868c132248, type: 2}
-  firstClearRewardCoins: 35
-  replayRewardCoins: 8
+  - {fileID: 11400000, guid: 5f1012f251e8525489c183b551824698, type: 2}
+  - {fileID: 11400000, guid: 9f62c30ee9a20c543aa6a5d31f10191f, type: 2}
+  waveConfig: {fileID: 11400000, guid: 7e21999041680ba45820373812c01730, type: 2}
+  firstClearRewardCoins: 145
+  replayRewardCoins: 20
   unlocksLevelIds:
-  - level_02
-  tutorialTextKey: tutorial.level_01
+  - level_08
+  tutorialTextKey: 

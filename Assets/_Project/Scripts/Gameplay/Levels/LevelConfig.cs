@@ -47,6 +47,7 @@ namespace CatGuard.Gameplay.Levels
         [Min(0)]
         [SerializeField] private int replayRewardCoins = 8;
         [SerializeField] private string[] unlocksLevelIds = Array.Empty<string>();
+        [SerializeField] private string tutorialTextKey = string.Empty;
 
         public string LevelId => string.IsNullOrWhiteSpace(levelId) ? name : levelId;
         public string DisplayName => string.IsNullOrWhiteSpace(displayName) ? LevelId : displayName;
@@ -61,6 +62,8 @@ namespace CatGuard.Gameplay.Levels
         public int FirstClearRewardCoins => Mathf.Max(0, firstClearRewardCoins);
         public int ReplayRewardCoins => Mathf.Max(0, replayRewardCoins);
         public string[] UnlocksLevelIds => unlocksLevelIds ?? Array.Empty<string>();
+        public string TutorialTextKey => tutorialTextKey ?? string.Empty;
+        public bool HasTutorialText => !string.IsNullOrWhiteSpace(TutorialTextKey);
 
         public bool IsValidForCore()
         {
@@ -108,7 +111,8 @@ namespace CatGuard.Gameplay.Levels
             WaveConfig wave,
             int firstReward,
             int replayReward,
-            string[] nextLevelIds)
+            string[] nextLevelIds,
+            string tutorialKey = "")
         {
             levelId = id;
             displayName = title;
@@ -123,6 +127,7 @@ namespace CatGuard.Gameplay.Levels
             firstClearRewardCoins = firstReward;
             replayRewardCoins = replayReward;
             unlocksLevelIds = nextLevelIds ?? Array.Empty<string>();
+            tutorialTextKey = tutorialKey ?? string.Empty;
         }
     }
 }

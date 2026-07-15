@@ -15,6 +15,7 @@ MonoBehaviour:
   levelId: level_02
   displayName: Greenhouse
   baseLives: 7
+  startingBattleFish: 115
   gridColumns: 4
   gridRows: 3
   cellSize: 1.15

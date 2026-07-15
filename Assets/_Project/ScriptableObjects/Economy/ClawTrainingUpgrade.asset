@@ -16,6 +16,6 @@ MonoBehaviour:
   displayName: Claw Training
   effectType: 0
   maxLevel: 3
-  baseCost: 25
-  costIncrease: 25
+  baseCost: 100
+  costIncrease: 75
   effectPerLevel: 0.15

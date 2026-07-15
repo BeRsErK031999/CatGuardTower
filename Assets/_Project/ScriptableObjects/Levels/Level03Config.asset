@@ -15,6 +15,7 @@ MonoBehaviour:
   levelId: level_03
   displayName: Porch Stand
   baseLives: 7
+  startingBattleFish: 125
   gridColumns: 4
   gridRows: 3
   cellSize: 1.15

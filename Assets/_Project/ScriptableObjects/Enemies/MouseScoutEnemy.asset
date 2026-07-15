@@ -17,5 +17,6 @@ MonoBehaviour:
   health: 2
   speed: 1.25
   baseDamage: 1
+  battleFishReward: 5
   visualScale: 0.34
   visualColor: {r: 1, g: 0.34, b: 0.34, a: 1}

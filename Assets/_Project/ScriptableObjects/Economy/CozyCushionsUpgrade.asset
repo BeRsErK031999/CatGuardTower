@@ -16,6 +16,6 @@ MonoBehaviour:
   displayName: Cozy Cushions
   effectType: 2
   maxLevel: 3
-  baseCost: 30
-  costIncrease: 30
+  baseCost: 125
+  costIncrease: 100
   effectPerLevel: 1

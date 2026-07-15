@@ -15,6 +15,7 @@ MonoBehaviour:
   levelId: level_10
   displayName: Quiet Alley
   baseLives: 10
+  startingBattleFish: 195
   gridColumns: 4
   gridRows: 3
   cellSize: 1.15

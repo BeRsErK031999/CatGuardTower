@@ -15,6 +15,7 @@ MonoBehaviour:
   levelId: level_09
   displayName: Orchard Wall
   baseLives: 10
+  startingBattleFish: 185
   gridColumns: 4
   gridRows: 3
   cellSize: 1.15

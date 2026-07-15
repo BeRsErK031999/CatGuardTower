@@ -8,6 +8,7 @@
 [Uu]ser[Ss]ettings/
 [Mm]emoryCaptures/
 unity-*.log
+debug.log
 
 # Unity cache and crash output
 *.pidb

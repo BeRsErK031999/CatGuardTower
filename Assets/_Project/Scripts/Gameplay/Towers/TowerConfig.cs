@@ -17,6 +17,10 @@ namespace CatGuard.Gameplay.Towers
         [SerializeField] private float visualScale = 0.62f;
         [SerializeField] private Color visualColor = new(0.24f, 0.78f, 0.96f);
 
+        [Header("Economy")]
+        [Min(1)]
+        [SerializeField] private int buildCost = 45;
+
         public string TowerId => string.IsNullOrWhiteSpace(towerId) ? name : towerId;
         public string DisplayName => string.IsNullOrWhiteSpace(displayName) ? TowerId : displayName;
         public float Range => Mathf.Max(0.1f, range);
@@ -24,6 +28,7 @@ namespace CatGuard.Gameplay.Towers
         public float FireInterval => Mathf.Max(0.05f, fireInterval);
         public float VisualScale => Mathf.Max(0.1f, visualScale);
         public Color VisualColor => visualColor;
+        public int BuildCost => Mathf.Max(1, buildCost);
 
         public bool IsValid()
         {
@@ -31,7 +36,8 @@ namespace CatGuard.Gameplay.Towers
                 && Range > 0f
                 && Damage > 0f
                 && FireInterval > 0f
-                && VisualScale > 0f;
+                && VisualScale > 0f
+                && BuildCost > 0;
         }
 
         public void Configure(
@@ -41,7 +47,8 @@ namespace CatGuard.Gameplay.Towers
             float attackDamage,
             float attackInterval,
             float scale,
-            Color color)
+            Color color,
+            int cost = 45)
         {
             towerId = id;
             displayName = title;
@@ -50,6 +57,7 @@ namespace CatGuard.Gameplay.Towers
             fireInterval = attackInterval;
             visualScale = scale;
             visualColor = color;
+            buildCost = Mathf.Max(1, cost);
         }
     }
 }

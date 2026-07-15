@@ -13,6 +13,8 @@ namespace CatGuard.Gameplay.Enemies
         [SerializeField] private float speed = 0.9f;
         [Min(1)]
         [SerializeField] private int baseDamage = 1;
+        [Min(0)]
+        [SerializeField] private int battleFishReward = 3;
         [Min(0.1f)]
         [SerializeField] private float visualScale = 0.42f;
         [SerializeField] private Color visualColor = new(1f, 0.3f, 0.22f);
@@ -22,6 +24,7 @@ namespace CatGuard.Gameplay.Enemies
         public float Health => Mathf.Max(1f, health);
         public float Speed => Mathf.Max(0.1f, speed);
         public int BaseDamage => Mathf.Max(1, baseDamage);
+        public int BattleFishReward => Mathf.Max(0, battleFishReward);
         public float VisualScale => Mathf.Max(0.1f, visualScale);
         public Color VisualColor => visualColor;
 
@@ -31,6 +34,7 @@ namespace CatGuard.Gameplay.Enemies
                 && Health > 0f
                 && Speed > 0f
                 && BaseDamage > 0
+                && battleFishReward >= 0
                 && VisualScale > 0f;
         }
 
@@ -41,13 +45,15 @@ namespace CatGuard.Gameplay.Enemies
             float moveSpeed,
             int damageToBase,
             float scale,
-            Color color)
+            Color color,
+            int fishReward = 3)
         {
             enemyId = id;
             displayName = title;
             health = maxHealth;
             speed = moveSpeed;
             baseDamage = damageToBase;
+            battleFishReward = Mathf.Max(0, fishReward);
             visualScale = scale;
             visualColor = color;
         }

@@ -34,6 +34,7 @@ function Find-Adb {
         $candidatePaths.Add((Join-Path $env:ANDROID_SDK_ROOT "platform-tools\adb.exe"))
     }
 
+    $candidatePaths.Add((Join-Path $env:ProgramFiles "Unity\Hub\Editor\6000.4.12f1\Editor\Data\PlaybackEngines\AndroidPlayer\SDK\platform-tools\adb.exe"))
     $candidatePaths.Add((Join-Path $env:LOCALAPPDATA "Unity\Hub\Editor\6000.4.12f1\Editor\Data\PlaybackEngines\AndroidPlayer\SDK\platform-tools\adb.exe"))
     $candidatePaths.Add((Join-Path $env:LOCALAPPDATA "Android\Sdk\platform-tools\adb.exe"))
 
@@ -62,8 +63,15 @@ function Invoke-Adb {
         [switch]$AllowFailure
     )
 
-    $output = @(& $script:AdbPath @Arguments 2>&1 | ForEach-Object { $_.ToString() })
-    $exitCode = $LASTEXITCODE
+    $previousErrorActionPreference = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    try {
+        $output = @(& $script:AdbPath @Arguments 2>&1 | ForEach-Object { $_.ToString() })
+        $exitCode = $LASTEXITCODE
+    }
+    finally {
+        $ErrorActionPreference = $previousErrorActionPreference
+    }
 
     if ($exitCode -ne 0 -and -not $AllowFailure) {
         throw "adb $($Arguments -join ' ') failed with exit code $exitCode.`n$($output -join [Environment]::NewLine)"
@@ -170,6 +178,9 @@ if ($Offline) {
 }
 
 Write-Host "Launching app..."
+Invoke-TargetAdb -Arguments @("shell", "input", "keyevent", "KEYCODE_WAKEUP") -AllowFailure | Out-Null
+Invoke-TargetAdb -Arguments @("shell", "wm", "dismiss-keyguard") -AllowFailure | Out-Null
+Invoke-TargetAdb -Arguments @("shell", "cmd", "statusbar", "collapse") -AllowFailure | Out-Null
 $launchResult = Invoke-TargetAdb -Arguments @("shell", "monkey", "-p", $PackageName, "-c", "android.intent.category.LAUNCHER", "1") -AllowFailure
 Start-Sleep -Seconds $LaunchWaitSeconds
 
@@ -211,7 +222,7 @@ if ($saveResult.ExitCode -eq 0 -and (($saveResult.Output -join "").Trim().Length
     }
 }
 
-$fatalPattern = "FATAL EXCEPTION|AndroidRuntime|CRASH|NullReferenceException|MissingMethodException|DllNotFoundException"
+$fatalPattern = "FATAL EXCEPTION|Fatal signal|Abort message|NullReferenceException|MissingMethodException|DllNotFoundException| E/AndroidRuntime"
 $fatalHits = @($logcatResult.Output | Where-Object { $_ -match $fatalPattern })
 $focusLines = @($windowResult.Output | Where-Object { $_ -match "mCurrentFocus|mFocusedApp|mFocusedWindow|topResumedActivity|mTopFocusedDisplay" })
 $frameRateLines = @($displayResult.Output | Where-Object { $_ -match "(?i)fps|refresh|frameRate|DisplayDeviceInfo|mode" } | Select-Object -First 80)

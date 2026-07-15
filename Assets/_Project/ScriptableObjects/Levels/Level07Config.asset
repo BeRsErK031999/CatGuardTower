@@ -15,6 +15,7 @@ MonoBehaviour:
   levelId: level_07
   displayName: Roof Corner
   baseLives: 9
+  startingBattleFish: 165
   gridColumns: 4
   gridRows: 3
   cellSize: 1.15

@@ -25,6 +25,9 @@ public static class Phase9ProjectSetup
 
     private const string LevelCatalogPath = LevelConfigFolder + "/LevelCatalog.asset";
     private const string UpgradeCatalogPath = EconomyConfigFolder + "/UpgradeCatalog.asset";
+    private const string DamageUpgradePath = EconomyConfigFolder + "/ClawTrainingUpgrade.asset";
+    private const string RangeUpgradePath = EconomyConfigFolder + "/WhiskerFocusUpgrade.asset";
+    private const string LivesUpgradePath = EconomyConfigFolder + "/CozyCushionsUpgrade.asset";
     private const string DailyRewardChainPath = EconomyConfigFolder + "/DailyRewardChain.asset";
     private const string DailyMissionCatalogPath = EconomyConfigFolder + "/DailyMissionCatalog.asset";
 
@@ -37,6 +40,7 @@ public static class Phase9ProjectSetup
         var waves = EnsureWaveConfigs(enemies);
         var levels = EnsureLevelConfigs(towers, waves);
         var levelCatalog = EnsureLevelCatalog(levels);
+        EnsureUpgradeCatalog(EnsureUpgradeConfigs());
 
         ConfigureMainMenuScene(levelCatalog);
         ConfigureLevelScene(levels[0]);
@@ -57,15 +61,16 @@ public static class Phase9ProjectSetup
         Directory.CreateDirectory(TowerConfigFolder);
         Directory.CreateDirectory(EnemyConfigFolder);
         Directory.CreateDirectory(LevelConfigFolder);
+        Directory.CreateDirectory(EconomyConfigFolder);
     }
 
     private static TowerConfig[] EnsureTowerConfigs()
     {
-        var dart = EnsureTower("CatDartTower", "cat_dart", "Dart", 2.7f, 1f, 0.26f, 0.56f, new Color(0.24f, 0.78f, 0.96f));
-        var yarn = EnsureTower("YarnCannonTower", "yarn_cannon", "Yarn", 2.15f, 2.4f, 0.72f, 0.72f, new Color(0.96f, 0.72f, 0.28f));
-        var bell = EnsureTower("BellSniperTower", "bell_sniper", "Bell", 4f, 1.7f, 0.55f, 0.5f, new Color(0.72f, 0.45f, 0.95f));
-        var laser = EnsureTower("LaserPointerTower", "laser_pointer", "Laser", 3.35f, 0.72f, 0.16f, 0.48f, new Color(0.38f, 1f, 0.62f));
-        var blanket = EnsureTower("BlanketBoomTower", "blanket_boom", "Blanket", 1.8f, 3.25f, 0.9f, 0.82f, new Color(1f, 0.42f, 0.62f));
+        var dart = EnsureTower("CatDartTower", "cat_dart", "Dart", 2.7f, 1f, 0.26f, 0.56f, new Color(0.24f, 0.78f, 0.96f), 45);
+        var yarn = EnsureTower("YarnCannonTower", "yarn_cannon", "Yarn", 2.15f, 2.4f, 0.72f, 0.72f, new Color(0.96f, 0.72f, 0.28f), 50);
+        var bell = EnsureTower("BellSniperTower", "bell_sniper", "Bell", 4f, 1.7f, 0.55f, 0.5f, new Color(0.72f, 0.45f, 0.95f), 55);
+        var laser = EnsureTower("LaserPointerTower", "laser_pointer", "Laser", 3.35f, 0.72f, 0.16f, 0.48f, new Color(0.38f, 1f, 0.62f), 60);
+        var blanket = EnsureTower("BlanketBoomTower", "blanket_boom", "Blanket", 1.8f, 3.25f, 0.9f, 0.82f, new Color(1f, 0.42f, 0.62f), 65);
 
         return new[] { dart, yarn, bell, laser, blanket };
     }
@@ -78,21 +83,22 @@ public static class Phase9ProjectSetup
         float damage,
         float interval,
         float scale,
-        Color color)
+        Color color,
+        int buildCost)
     {
         var tower = EnsureAsset<TowerConfig>($"{TowerConfigFolder}/{assetName}.asset");
-        tower.Configure(id, displayName, range, damage, interval, scale, color);
+        tower.Configure(id, displayName, range, damage, interval, scale, color, buildCost);
         EditorUtility.SetDirty(tower);
         return tower;
     }
 
     private static EnemyConfig[] EnsureEnemyConfigs()
     {
-        var scout = EnsureEnemy("MouseScoutEnemy", "mouse_scout", "Mouse Scout", 2f, 1.25f, 1, 0.34f, new Color(1f, 0.34f, 0.34f));
-        var bruiser = EnsureEnemy("RatBruiserEnemy", "rat_bruiser", "Rat Bruiser", 6f, 0.55f, 2, 0.58f, new Color(0.86f, 0.42f, 0.18f));
-        var guard = EnsureEnemy("BeetleGuardEnemy", "beetle_guard", "Beetle Guard", 4f, 0.85f, 1, 0.46f, new Color(0.42f, 0.8f, 0.35f));
-        var moth = EnsureEnemy("MothSwarmEnemy", "moth_swarm", "Moth Swarm", 1.5f, 1.55f, 1, 0.3f, new Color(0.95f, 0.74f, 1f));
-        var snail = EnsureEnemy("SnailTankEnemy", "snail_tank", "Snail Tank", 10f, 0.35f, 3, 0.7f, new Color(0.35f, 0.72f, 0.92f));
+        var scout = EnsureEnemy("MouseScoutEnemy", "mouse_scout", "Mouse Scout", 2f, 1.25f, 1, 0.34f, new Color(1f, 0.34f, 0.34f), 5);
+        var bruiser = EnsureEnemy("RatBruiserEnemy", "rat_bruiser", "Rat Bruiser", 6f, 0.55f, 2, 0.58f, new Color(0.86f, 0.42f, 0.18f), 12);
+        var guard = EnsureEnemy("BeetleGuardEnemy", "beetle_guard", "Beetle Guard", 4f, 0.85f, 1, 0.46f, new Color(0.42f, 0.8f, 0.35f), 8);
+        var moth = EnsureEnemy("MothSwarmEnemy", "moth_swarm", "Moth Swarm", 1.5f, 1.55f, 1, 0.3f, new Color(0.95f, 0.74f, 1f), 4);
+        var snail = EnsureEnemy("SnailTankEnemy", "snail_tank", "Snail Tank", 10f, 0.35f, 3, 0.7f, new Color(0.35f, 0.72f, 0.92f), 18);
 
         return new[] { scout, bruiser, guard, moth, snail };
     }
@@ -105,10 +111,11 @@ public static class Phase9ProjectSetup
         float speed,
         int baseDamage,
         float scale,
-        Color color)
+        Color color,
+        int battleFishReward)
     {
         var enemy = EnsureAsset<EnemyConfig>($"{EnemyConfigFolder}/{assetName}.asset");
-        enemy.Configure(id, displayName, health, speed, baseDamage, scale, color);
+        enemy.Configure(id, displayName, health, speed, baseDamage, scale, color, battleFishReward);
         EditorUtility.SetDirty(enemy);
         return enemy;
     }
@@ -148,16 +155,16 @@ public static class Phase9ProjectSetup
 
         return new[]
         {
-            EnsureLevel("Level01Config", "level_01", "Garden Gate", 7, firstThreeTowers, waves[0], 35, 8, "level_02", DefaultPath(), "tutorial.level_01"),
-            EnsureLevel("Level02Config", "level_02", "Greenhouse", 7, firstThreeTowers, waves[1], 50, 10, "level_03", GreenhousePath()),
-            EnsureLevel("Level03Config", "level_03", "Porch Stand", 7, firstFourTowers, waves[2], 65, 12, "level_04", DefaultPath()),
-            EnsureLevel("Level04Config", "level_04", "Lantern Path", 8, firstFourTowers, waves[3], 80, 14, "level_05", LanternPath()),
-            EnsureLevel("Level05Config", "level_05", "Fish Barrel", 8, allTowers, waves[4], 100, 16, "level_06", BarrelPath()),
-            EnsureLevel("Level06Config", "level_06", "Moonlit Fence", 8, allTowers, waves[5], 120, 18, "level_07", FencePath()),
-            EnsureLevel("Level07Config", "level_07", "Roof Corner", 9, allTowers, waves[6], 145, 20, "level_08", RoofPath()),
-            EnsureLevel("Level08Config", "level_08", "Old Well", 9, allTowers, waves[7], 170, 22, "level_09", WellPath()),
-            EnsureLevel("Level09Config", "level_09", "Orchard Wall", 10, allTowers, waves[8], 200, 25, "level_10", OrchardPath()),
-            EnsureLevel("Level10Config", "level_10", "Quiet Alley", 10, allTowers, waves[9], 235, 30, string.Empty, AlleyPath())
+            EnsureLevel("Level01Config", "level_01", "Garden Gate", 7, 105, firstThreeTowers, waves[0], 35, 8, "level_02", DefaultPath(), "tutorial.level_01"),
+            EnsureLevel("Level02Config", "level_02", "Greenhouse", 7, 115, firstThreeTowers, waves[1], 50, 10, "level_03", GreenhousePath()),
+            EnsureLevel("Level03Config", "level_03", "Porch Stand", 7, 125, firstFourTowers, waves[2], 65, 12, "level_04", DefaultPath()),
+            EnsureLevel("Level04Config", "level_04", "Lantern Path", 8, 135, firstFourTowers, waves[3], 80, 14, "level_05", LanternPath()),
+            EnsureLevel("Level05Config", "level_05", "Fish Barrel", 8, 145, allTowers, waves[4], 100, 16, "level_06", BarrelPath()),
+            EnsureLevel("Level06Config", "level_06", "Moonlit Fence", 8, 155, allTowers, waves[5], 120, 18, "level_07", FencePath()),
+            EnsureLevel("Level07Config", "level_07", "Roof Corner", 9, 165, allTowers, waves[6], 145, 20, "level_08", RoofPath()),
+            EnsureLevel("Level08Config", "level_08", "Old Well", 9, 175, allTowers, waves[7], 170, 22, "level_09", WellPath()),
+            EnsureLevel("Level09Config", "level_09", "Orchard Wall", 10, 185, allTowers, waves[8], 200, 25, "level_10", OrchardPath()),
+            EnsureLevel("Level10Config", "level_10", "Quiet Alley", 10, 195, allTowers, waves[9], 235, 30, string.Empty, AlleyPath())
         };
     }
 
@@ -166,6 +173,7 @@ public static class Phase9ProjectSetup
         string id,
         string displayName,
         int lives,
+        int startingBattleFish,
         TowerConfig[] towers,
         WaveConfig wave,
         int firstReward,
@@ -189,7 +197,8 @@ public static class Phase9ProjectSetup
             firstReward,
             replayReward,
             string.IsNullOrWhiteSpace(nextLevelId) ? new string[0] : new[] { nextLevelId },
-            tutorialKey);
+            tutorialKey,
+            startingBattleFish);
         EditorUtility.SetDirty(level);
         return level;
     }
@@ -198,6 +207,31 @@ public static class Phase9ProjectSetup
     {
         var catalog = EnsureAsset<LevelCatalogConfig>(LevelCatalogPath);
         catalog.Configure(levels);
+        EditorUtility.SetDirty(catalog);
+        return catalog;
+    }
+
+    private static UpgradeConfig[] EnsureUpgradeConfigs()
+    {
+        var damage = EnsureAsset<UpgradeConfig>(DamageUpgradePath);
+        damage.Configure("claw_training", "Claw Training", UpgradeEffectType.TowerDamageMultiplier, 3, 100, 75, 0.15f);
+
+        var range = EnsureAsset<UpgradeConfig>(RangeUpgradePath);
+        range.Configure("whisker_focus", "Whisker Focus", UpgradeEffectType.TowerRangeMultiplier, 3, 100, 75, 0.12f);
+
+        var lives = EnsureAsset<UpgradeConfig>(LivesUpgradePath);
+        lives.Configure("cozy_cushions", "Cozy Cushions", UpgradeEffectType.BaseLivesBonus, 3, 125, 100, 1f);
+
+        EditorUtility.SetDirty(damage);
+        EditorUtility.SetDirty(range);
+        EditorUtility.SetDirty(lives);
+        return new[] { damage, range, lives };
+    }
+
+    private static UpgradeCatalogConfig EnsureUpgradeCatalog(UpgradeConfig[] upgrades)
+    {
+        var catalog = EnsureAsset<UpgradeCatalogConfig>(UpgradeCatalogPath);
+        catalog.Configure(upgrades);
         EditorUtility.SetDirty(catalog);
         return catalog;
     }
@@ -372,8 +406,10 @@ public static class Phase9ProjectSetup
     {
         var errors = new List<string>();
         var levelCatalog = AssetDatabase.LoadAssetAtPath<LevelCatalogConfig>(LevelCatalogPath);
+        var upgradeCatalog = AssetDatabase.LoadAssetAtPath<UpgradeCatalogConfig>(UpgradeCatalogPath);
 
         ValidateCatalog(levelCatalog, errors);
+        ValidateUpgradeBalance(levelCatalog, upgradeCatalog, errors);
         ValidateSceneReferences(levelCatalog, errors);
         ValidateLocalization(levelCatalog, errors);
 
@@ -388,7 +424,7 @@ public static class Phase9ProjectSetup
             return;
         }
 
-        Debug.Log("Phase 9 validation passed: 10-level MVP content, 5 towers, 5 enemies, tutorial, and difficulty ramp are configured.");
+        Debug.Log("Phase 9 validation passed: campaign content, kill rewards, battle budgets, meta-upgrade balance, tutorial, and difficulty ramp are configured.");
         EditorApplication.Exit(0);
     }
 
@@ -408,6 +444,7 @@ public static class Phase9ProjectSetup
         var towers = new HashSet<TowerConfig>();
         var enemies = new HashSet<EnemyConfig>();
         var previousThreat = 0f;
+        var previousBattleFish = 0;
         for (var index = 0; index < levelCatalog.Levels.Length; index++)
         {
             var level = levelCatalog.Levels[index];
@@ -431,7 +468,13 @@ public static class Phase9ProjectSetup
                 errors.Add($"Difficulty threat must increase level by level: {level.LevelId}.");
             }
 
+            if (level.StartingBattleFish < previousBattleFish)
+            {
+                errors.Add($"Starting battle Fish must not decrease: {level.LevelId}.");
+            }
+
             previousThreat = threat;
+            previousBattleFish = level.StartingBattleFish;
             ValidateUnlock(levelCatalog, index, errors);
         }
 
@@ -445,9 +488,54 @@ public static class Phase9ProjectSetup
             errors.Add("MVP content must use 5-8 enemy configs.");
         }
 
+        foreach (var enemy in enemies)
+        {
+            if (enemy.BattleFishReward <= 0)
+            {
+                errors.Add($"Enemy {enemy.EnemyId} must grant a positive battle Fish reward.");
+            }
+        }
+
         if (!levelCatalog.Levels[0].HasTutorialText)
         {
             errors.Add("First MVP level must include tutorial text.");
+        }
+    }
+
+    private static void ValidateUpgradeBalance(
+        LevelCatalogConfig levelCatalog,
+        UpgradeCatalogConfig upgradeCatalog,
+        ICollection<string> errors)
+    {
+        if (levelCatalog == null || !levelCatalog.IsValid())
+        {
+            return;
+        }
+
+        if (upgradeCatalog == null || !upgradeCatalog.IsValid())
+        {
+            errors.Add("UpgradeCatalog must contain three valid upgrade configs.");
+            return;
+        }
+
+        var campaignRewards = 0;
+        foreach (var level in levelCatalog.Levels)
+        {
+            campaignRewards += level.FirstClearRewardCoins;
+        }
+
+        var fullUpgradeCost = 0;
+        foreach (var upgrade in upgradeCatalog.Upgrades)
+        {
+            for (var level = 1; level <= upgrade.MaxLevel; level++)
+            {
+                fullUpgradeCost += upgrade.GetCostForLevel(level);
+            }
+        }
+
+        if (fullUpgradeCost <= campaignRewards)
+        {
+            errors.Add("Full meta-upgrade cost must exceed total first-clear campaign rewards.");
         }
     }
 

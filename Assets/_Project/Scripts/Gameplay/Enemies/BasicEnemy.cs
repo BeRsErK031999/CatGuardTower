@@ -19,6 +19,7 @@ namespace CatGuard.Gameplay.Enemies
 
         public bool IsAlive => !completed && currentHealth > 0f;
         public float HealthPercent => maxHealth <= 0f ? 0f : Mathf.Clamp01(currentHealth / maxHealth);
+        public int BattleFishReward => config == null ? 0 : config.BattleFishReward;
 
         public void Initialize(
             PrototypeLevelController owner,

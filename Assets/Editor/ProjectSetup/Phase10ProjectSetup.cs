@@ -11,6 +11,7 @@ public static class Phase10ProjectSetup
     private const string BuildFolder = "Builds/Android";
     private const string ApkPath = BuildFolder + "/CatGuardTowerDefense-qa.apk";
     private const string DebugApkPath = BuildFolder + "/CatGuardTowerDefense-qa-debug.apk";
+    private const string EmulatorApkPath = BuildFolder + "/CatGuardTowerDefense-emulator.apk";
     private const string AabPath = BuildFolder + "/CatGuardTowerDefense-qa.aab";
 
     private static readonly string[] RequiredScenes =
@@ -44,6 +45,28 @@ public static class Phase10ProjectSetup
     {
         ConfigureAndroidBuildSettings();
         var succeeded = BuildAndroidArtifact(DebugApkPath, false, true);
+        EditorApplication.Exit(succeeded ? 0 : 1);
+    }
+
+    public static void BuildEmulatorApk()
+    {
+        ConfigureAndroidBuildSettings();
+        var succeeded = false;
+
+        try
+        {
+            PlayerSettings.Android.targetArchitectures = AndroidArchitecture.X86_64;
+            AssetDatabase.SaveAssets();
+            succeeded = BuildAndroidArtifact(EmulatorApkPath, false, true);
+        }
+        finally
+        {
+            PlayerSettings.Android.targetArchitectures = AndroidArchitecture.ARM64;
+            EditorUserBuildSettings.development = false;
+            EditorUserBuildSettings.buildAppBundle = false;
+            AssetDatabase.SaveAssets();
+        }
+
         EditorApplication.Exit(succeeded ? 0 : 1);
     }
 

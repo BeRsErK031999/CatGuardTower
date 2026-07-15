@@ -29,7 +29,7 @@ namespace CatGuard.Gameplay.Grid
 
         public bool TryPlaceAtWorld(Vector2 worldPosition)
         {
-            if (levelController == null || config == null || levelController.State != PrototypeLevelState.Running)
+            if (levelController == null || config == null || !levelController.CanPlaceTowers)
             {
                 return false;
             }
@@ -44,10 +44,13 @@ namespace CatGuard.Gameplay.Grid
                 return false;
             }
 
+            if (!levelController.TryCreateTower(GetCellCenter(cell)))
+            {
+                return false;
+            }
+
             occupiedCells.Add(cell);
             UpdateCellVisual(cell);
-            levelController.CreateTower(GetCellCenter(cell));
-
             return true;
         }
 
@@ -76,7 +79,9 @@ namespace CatGuard.Gameplay.Grid
 
         private void TryPlaceFromScreen(Vector2 screenPosition)
         {
-            if (screenPosition.y < 170f || screenPosition.y > Screen.height - 80f)
+            var bottomHudHeight = Screen.height * 0.16f;
+            var topHudStart = Screen.height * 0.86f;
+            if (screenPosition.y < bottomHudHeight || screenPosition.y > topHudStart)
             {
                 return;
             }

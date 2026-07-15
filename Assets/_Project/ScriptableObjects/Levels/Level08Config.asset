@@ -15,6 +15,7 @@ MonoBehaviour:
   levelId: level_08
   displayName: Old Well
   baseLives: 9
+  startingBattleFish: 175
   gridColumns: 4
   gridRows: 3
   cellSize: 1.15

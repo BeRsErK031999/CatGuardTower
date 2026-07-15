@@ -15,6 +15,7 @@ MonoBehaviour:
   levelId: level_06
   displayName: Moonlit Fence
   baseLives: 8
+  startingBattleFish: 155
   gridColumns: 4
   gridRows: 3
   cellSize: 1.15

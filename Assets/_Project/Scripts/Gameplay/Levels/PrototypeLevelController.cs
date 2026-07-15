@@ -29,18 +29,22 @@ namespace CatGuard.Gameplay.Levels
         private bool resultApplied;
         private bool victoryRewardDoubled;
         private bool reviveUsed;
+        private Sprite gameplayBackgroundSprite;
 
         public PrototypeLevelState State { get; private set; } = PrototypeLevelState.NotStarted;
         public int Lives { get; private set; }
         public int DefeatedEnemies { get; private set; }
         public int EscapedEnemies { get; private set; }
         public int SpawnedEnemies { get; private set; }
+        public int BattleFish { get; private set; }
         public LevelConfig Config => config;
         public int SelectedTowerIndex => selectedTowerIndex;
         public int TotalEnemies => config?.WaveConfig == null ? 0 : config.WaveConfig.TotalEnemyCount;
         public int ActiveEnemyCount => activeEnemies.Count;
         public int TowerCount => towers.Count;
         public TowerConfig SelectedTowerConfig => GetTowerConfig(selectedTowerIndex);
+        public bool CanPlaceTowers => State is PrototypeLevelState.Preparing or PrototypeLevelState.Running;
+        public bool CanStartWave => State == PrototypeLevelState.Preparing && waveSpawner != null;
         public LevelCompletionResult CompletionResult { get; private set; }
         public bool CanClaimVictoryDoubleReward => State == PrototypeLevelState.Won
             && CompletionResult != null
@@ -88,6 +92,24 @@ namespace CatGuard.Gameplay.Levels
             selectedTowerIndex = towerIndex;
         }
 
+        public bool CanAffordTower(int towerIndex)
+        {
+            var towerConfig = GetTowerConfig(towerIndex);
+            return towerConfig != null && BattleFish >= towerConfig.BuildCost;
+        }
+
+        public bool TryStartWave()
+        {
+            if (!CanStartWave)
+            {
+                return false;
+            }
+
+            State = PrototypeLevelState.Running;
+            waveSpawner.Begin();
+            return true;
+        }
+
         public BasicEnemy FindNearestEnemy(Vector3 origin, float range)
         {
             BasicEnemy nearest = null;
@@ -113,18 +135,20 @@ namespace CatGuard.Gameplay.Levels
             return nearest;
         }
 
-        public void CreateTower(Vector2 worldPosition)
+        public bool TryCreateTower(Vector2 worldPosition)
         {
-            if (State != PrototypeLevelState.Running)
+            if (!CanPlaceTowers)
             {
-                return;
+                return false;
             }
 
             var towerConfig = SelectedTowerConfig;
-            if (towerConfig == null)
+            if (towerConfig == null || BattleFish < towerConfig.BuildCost)
             {
-                return;
+                return false;
             }
+
+            BattleFish -= towerConfig.BuildCost;
 
             var towerObject = new GameObject($"{towerConfig.DisplayName}_{towers.Count + 1:00}");
             towerObject.transform.SetParent(runtimeRoot, false);
@@ -137,6 +161,7 @@ namespace CatGuard.Gameplay.Levels
             AnalyticsService.TrackTowerPlace(config, towerConfig, towers.Count, worldPosition);
             ProceduralAudioService.Play(ProceduralSoundId.TowerPlaced);
             SimpleVfxFactory.Spawn(worldPosition, SimpleVfxStyle.TowerPlaced, runtimeRoot);
+            return true;
         }
 
         public void SpawnEnemy(EnemyConfig enemyConfig)
@@ -162,6 +187,7 @@ namespace CatGuard.Gameplay.Levels
             if (activeEnemies.Remove(enemy))
             {
                 DefeatedEnemies++;
+                BattleFish += enemy.BattleFishReward;
             }
 
             ProceduralAudioService.Play(ProceduralSoundId.EnemyDefeated);
@@ -255,25 +281,26 @@ namespace CatGuard.Gameplay.Levels
         {
             config = ProgressionService.GetSelectedLevelOrDefault(config);
             ClearRuntimeObjects();
+            FitCameraToLevel();
             BuildMapView();
 
             Lives = config.BaseLives + ProgressionService.GetBaseLivesBonus();
             DefeatedEnemies = 0;
             EscapedEnemies = 0;
             SpawnedEnemies = 0;
+            BattleFish = config.StartingBattleFish;
             selectedTowerIndex = 0;
             waveCompleted = false;
             resultApplied = false;
             victoryRewardDoubled = false;
             reviveUsed = false;
             CompletionResult = null;
-            State = PrototypeLevelState.Running;
+            State = PrototypeLevelState.Preparing;
 
             towerGrid.Initialize(this, config);
             waveSpawner.Initialize(this, config.WaveConfig);
             hud.Initialize(this);
             AnalyticsService.TrackLevelStart(config, Lives);
-            waveSpawner.Begin();
         }
 
         private void EvaluateResult()
@@ -324,10 +351,88 @@ namespace CatGuard.Gameplay.Levels
             var mapRoot = new GameObject("MapView");
             mapRoot.transform.SetParent(runtimeRoot, false);
 
-            CreateBackdrop(mapRoot.transform);
+            if (!CreateArtworkBackdrop(mapRoot.transform))
+            {
+                CreateBackdrop(mapRoot.transform);
+            }
+
             CreatePathLine(mapRoot.transform);
             CreateMarker("Spawn", config.PathPoints[0], new Color(0.3f, 0.85f, 0.45f), mapRoot.transform);
             CreateMarker("Base", config.PathPoints[^1], new Color(0.95f, 0.65f, 0.2f), mapRoot.transform);
+        }
+
+        private void FitCameraToLevel()
+        {
+            var camera = Camera.main;
+            if (camera == null || config?.PathPoints == null || config.PathPoints.Length == 0)
+            {
+                return;
+            }
+
+            var minX = config.PathPoints[0].x;
+            var maxX = minX;
+            var minY = config.PathPoints[0].y;
+            var maxY = minY;
+
+            foreach (var point in config.PathPoints)
+            {
+                minX = Mathf.Min(minX, point.x);
+                maxX = Mathf.Max(maxX, point.x);
+                minY = Mathf.Min(minY, point.y);
+                maxY = Mathf.Max(maxY, point.y);
+            }
+
+            var cellRadius = config.CellSize * 0.55f;
+            minX = Mathf.Min(minX, config.GridOrigin.x - cellRadius);
+            maxX = Mathf.Max(maxX, config.GridOrigin.x + ((config.GridColumns - 1) * config.CellSize) + cellRadius);
+            minY = Mathf.Min(minY, config.GridOrigin.y - cellRadius);
+            maxY = Mathf.Max(maxY, config.GridOrigin.y + ((config.GridRows - 1) * config.CellSize) + cellRadius);
+
+            const float worldPadding = 0.55f;
+            var halfWidth = ((maxX - minX) * 0.5f) + worldPadding;
+            var halfHeight = ((maxY - minY) * 0.5f) + worldPadding;
+            var aspect = Mathf.Max(0.1f, camera.aspect);
+            camera.orthographic = true;
+            camera.orthographicSize = Mathf.Max(halfHeight / 0.72f, halfWidth / (aspect * 0.9f));
+            camera.transform.position = new Vector3((minX + maxX) * 0.5f, (minY + maxY) * 0.5f, -10f);
+            camera.backgroundColor = new Color(0.025f, 0.07f, 0.08f);
+        }
+
+        private bool CreateArtworkBackdrop(Transform parent)
+        {
+            var texture = Resources.Load<Texture2D>("UI/gameplay_garden");
+            var camera = Camera.main;
+            if (texture == null || camera == null)
+            {
+                return false;
+            }
+
+            gameplayBackgroundSprite = Sprite.Create(
+                texture,
+                new Rect(0f, 0f, texture.width, texture.height),
+                new Vector2(0.5f, 0.5f),
+                100f);
+            gameplayBackgroundSprite.name = "GameplayGardenBackground";
+
+            var backgroundObject = new GameObject("GardenArtwork");
+            backgroundObject.transform.SetParent(parent, false);
+            backgroundObject.transform.position = new Vector3(
+                camera.transform.position.x,
+                camera.transform.position.y,
+                0f);
+
+            var renderer = backgroundObject.AddComponent<SpriteRenderer>();
+            renderer.sprite = gameplayBackgroundSprite;
+            renderer.sortingOrder = -20;
+            renderer.color = new Color(0.82f, 0.9f, 0.84f, 1f);
+
+            var visibleHeight = camera.orthographicSize * 2f;
+            var visibleWidth = visibleHeight * camera.aspect;
+            var scale = Mathf.Max(
+                visibleWidth / gameplayBackgroundSprite.bounds.size.x,
+                visibleHeight / gameplayBackgroundSprite.bounds.size.y);
+            backgroundObject.transform.localScale = new Vector3(scale, scale, 1f);
+            return true;
         }
 
         private static void CreateBackdrop(Transform parent)
@@ -364,12 +469,12 @@ namespace CatGuard.Gameplay.Levels
             var line = pathObject.AddComponent<LineRenderer>();
             line.positionCount = config.PathPoints.Length;
             line.useWorldSpace = true;
-            line.startWidth = 0.18f;
-            line.endWidth = 0.18f;
+            line.startWidth = 0.34f;
+            line.endWidth = 0.34f;
             line.sortingOrder = 5;
             line.material = new Material(Shader.Find("Sprites/Default"));
-            line.startColor = new Color(0.78f, 0.74f, 0.52f);
-            line.endColor = new Color(0.78f, 0.74f, 0.52f);
+            line.startColor = new Color(0.96f, 0.75f, 0.34f);
+            line.endColor = new Color(0.96f, 0.6f, 0.24f);
 
             for (var index = 0; index < config.PathPoints.Length; index++)
             {
@@ -392,7 +497,7 @@ namespace CatGuard.Gameplay.Levels
             var markerObject = new GameObject(markerName);
             markerObject.transform.SetParent(parent, false);
             markerObject.transform.position = position;
-            markerObject.transform.localScale = new Vector3(0.58f, 0.58f, 1f);
+            markerObject.transform.localScale = new Vector3(0.72f, 0.72f, 1f);
 
             var renderer = markerObject.AddComponent<SpriteRenderer>();
             renderer.sprite = PrototypeSpriteFactory.CircleSprite;
@@ -404,6 +509,12 @@ namespace CatGuard.Gameplay.Levels
         {
             activeEnemies.Clear();
             towers.Clear();
+
+            if (gameplayBackgroundSprite != null)
+            {
+                Destroy(gameplayBackgroundSprite);
+                gameplayBackgroundSprite = null;
+            }
 
             for (var index = runtimeRoot.childCount - 1; index >= 0; index--)
             {

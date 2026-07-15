@@ -19,3 +19,4 @@ MonoBehaviour:
   fireInterval: 0.9
   visualScale: 0.82
   visualColor: {r: 1, g: 0.42, b: 0.62, a: 1}
+  buildCost: 65

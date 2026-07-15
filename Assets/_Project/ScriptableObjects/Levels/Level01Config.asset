@@ -15,6 +15,7 @@ MonoBehaviour:
   levelId: level_01
   displayName: Garden Gate
   baseLives: 7
+  startingBattleFish: 105
   gridColumns: 4
   gridRows: 3
   cellSize: 1.15

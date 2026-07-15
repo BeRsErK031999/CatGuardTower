@@ -15,6 +15,8 @@ namespace CatGuard.Gameplay.Levels
         [Header("Base")]
         [Min(1)]
         [SerializeField] private int baseLives = 6;
+        [Min(1)]
+        [SerializeField] private int startingBattleFish = 135;
 
         [Header("Grid")]
         [Min(1)]
@@ -52,6 +54,7 @@ namespace CatGuard.Gameplay.Levels
         public string LevelId => string.IsNullOrWhiteSpace(levelId) ? name : levelId;
         public string DisplayName => string.IsNullOrWhiteSpace(displayName) ? LevelId : displayName;
         public int BaseLives => Mathf.Max(1, baseLives);
+        public int StartingBattleFish => Mathf.Max(1, startingBattleFish);
         public int GridColumns => Mathf.Max(1, gridColumns);
         public int GridRows => Mathf.Max(1, gridRows);
         public float CellSize => Mathf.Max(0.5f, cellSize);
@@ -72,7 +75,7 @@ namespace CatGuard.Gameplay.Levels
                 return false;
             }
 
-            if (BaseLives <= 0 || GridColumns <= 0 || GridRows <= 0 || CellSize <= 0f)
+            if (BaseLives <= 0 || StartingBattleFish <= 0 || GridColumns <= 0 || GridRows <= 0 || CellSize <= 0f)
             {
                 return false;
             }
@@ -87,12 +90,20 @@ namespace CatGuard.Gameplay.Levels
                 return false;
             }
 
+            var hasAffordableTower = false;
             foreach (var tower in availableTowers)
             {
                 if (tower == null || !tower.IsValid())
                 {
                     return false;
                 }
+
+                hasAffordableTower |= tower.BuildCost <= StartingBattleFish;
+            }
+
+            if (!hasAffordableTower)
+            {
+                return false;
             }
 
             return waveConfig != null && waveConfig.IsValid();
@@ -112,11 +123,13 @@ namespace CatGuard.Gameplay.Levels
             int firstReward,
             int replayReward,
             string[] nextLevelIds,
-            string tutorialKey = "")
+            string tutorialKey = "",
+            int battleFish = 135)
         {
             levelId = id;
             displayName = title;
             baseLives = lives;
+            startingBattleFish = Mathf.Max(1, battleFish);
             gridColumns = columns;
             gridRows = rows;
             cellSize = size;

@@ -1,5 +1,6 @@
 param(
-    [string]$OutputDir = "docs\store\assets"
+    [string]$OutputDir = "docs\store\assets",
+    [string]$ScreenshotSourceDir = ""
 )
 
 Set-StrictMode -Version Latest
@@ -83,6 +84,35 @@ function New-Canvas {
         Bitmap = $bitmap
         Graphics = $graphics
     }
+}
+
+function Draw-ImageCover {
+    param(
+        [System.Drawing.Graphics]$Graphics,
+        [System.Drawing.Image]$Image,
+        [System.Drawing.RectangleF]$Destination,
+        [float]$FocusY = 0.5
+    )
+
+    $destinationRatio = $Destination.Width / $Destination.Height
+    $sourceRatio = $Image.Width / $Image.Height
+
+    if ($sourceRatio -gt $destinationRatio) {
+        $sourceHeight = [float]$Image.Height
+        $sourceWidth = $sourceHeight * $destinationRatio
+        $sourceX = ($Image.Width - $sourceWidth) * 0.5
+        $sourceY = 0
+    } else {
+        $sourceWidth = [float]$Image.Width
+        $sourceHeight = $sourceWidth / $destinationRatio
+        $sourceX = 0
+        $normalizedFocusY = [Math]::Max(0.0, [Math]::Min(1.0, $FocusY))
+        $sourceY = ($Image.Height * $normalizedFocusY) - ($sourceHeight * 0.5)
+        $sourceY = [Math]::Max(0.0, [Math]::Min($Image.Height - $sourceHeight, $sourceY))
+    }
+
+    $source = [System.Drawing.RectangleF]::new($sourceX, $sourceY, $sourceWidth, $sourceHeight)
+    $Graphics.DrawImage($Image, $Destination, $source, [System.Drawing.GraphicsUnit]::Pixel)
 }
 
 function New-RoundedPath {
@@ -529,15 +559,19 @@ function Draw-Icon {
     $clipRect = [System.Drawing.RectangleF]::new(28, 28, 456, 456)
     $clipPath = New-RoundedPath $clipRect 92
 
-    $bg = New-Brush "#123743"
-    $g.FillPath($bg, $clipPath)
-    $bg.Dispose()
-
     $g.SetClip($clipPath)
 
-    $hill = New-Brush "#285448"
-    $g.FillEllipse($hill, -70, 300, 650, 250)
-    $hill.Dispose()
+    $backgroundPath = Resolve-ProjectPath "Assets\_Project\Resources\UI\main_menu_garden.png"
+    $background = [System.Drawing.Image]::FromFile($backgroundPath)
+    try {
+        Draw-ImageCover $g $background ([System.Drawing.RectangleF]::new(28, 28, 456, 456)) 0.38
+    } finally {
+        $background.Dispose()
+    }
+
+    $shade = New-Brush "#071d28" 68
+    $g.FillRectangle($shade, 28, 28, 456, 456)
+    $shade.Dispose()
 
     Draw-CatTower $g 256 242 2.25 "#f0c96b" "#53c3b6"
 
@@ -562,60 +596,65 @@ function Draw-FeatureGraphic {
 
     $canvas = New-Canvas 1024 500
     $g = $canvas.Graphics
-    $gradient = [System.Drawing.Drawing2D.LinearGradientBrush]::new(
-        [System.Drawing.Rectangle]::new(0, 0, 1024, 500),
-        (New-Color "#123743"),
-        (New-Color "#2c2344"),
-        [System.Drawing.Drawing2D.LinearGradientMode]::Horizontal)
-    $g.FillRectangle($gradient, 0, 0, 1024, 500)
-    $gradient.Dispose()
 
-    $moon = New-Brush "#f6d978" 220
-    $g.FillEllipse($moon, 784, 44, 110, 110)
-    $moon.Dispose()
+    $backgroundPath = Resolve-ProjectPath "Assets\_Project\Resources\UI\gameplay_garden.png"
+    $background = [System.Drawing.Image]::FromFile($backgroundPath)
+    try {
+        Draw-ImageCover $g $background ([System.Drawing.RectangleF]::new(0, 0, 1024, 500)) 0.28
+    } finally {
+        $background.Dispose()
+    }
 
-    $field = New-Brush "#285448"
-    Fill-RoundRect $g 40 80 944 360 32 $field $null
-    $field.Dispose()
+    $shade = New-Brush "#071d28" 54
+    $g.FillRectangle($shade, 0, 0, 1024, 500)
+    $shade.Dispose()
 
-    Draw-Path $g 1 36 25 50
-    Draw-CatTower $g 220 254 1.25 "#f0c96b" "#53c3b6"
-    Draw-CatTower $g 470 182 1.05 "#f6d2a8" "#e87b6d"
-    Draw-CatTower $g 690 282 1.15 "#d7c4ff" "#f0c96b"
-    Draw-Enemy $g 330 330 1.15 "#ef6f6c" "mouse"
-    Draw-Enemy $g 610 225 1.0 "#c58be8" "moth"
-    Draw-Enemy $g 840 160 1.05 "#84d0e0" "snail"
+    Draw-Path $g 1 36 25 42
+    Draw-CatTower $g 222 278 1.18 "#f0c96b" "#53c3b6"
+    Draw-CatTower $g 510 220 1.02 "#f6d2a8" "#e87b6d"
+    Draw-CatTower $g 752 300 1.10 "#d7c4ff" "#f0c96b"
+    Draw-Enemy $g 360 348 1.08 "#ef6f6c" "mouse"
+    Draw-Enemy $g 628 232 0.98 "#c58be8" "moth"
+    Draw-Enemy $g 864 180 1.00 "#84d0e0" "snail"
 
-    $spark = New-Brush "#f8ed7a" 190
-    $g.FillEllipse($spark, 590, 203, 30, 30)
-    $g.FillEllipse($spark, 815, 145, 24, 24)
-    $spark.Dispose()
+    $titlePanel = New-Brush "#061820" 178
+    Fill-RoundRect $g 304 24 416 76 22 $titlePanel $null
+    $titlePanel.Dispose()
+    $title = -join ([char[]](0x041A, 0x043E, 0x0442, 0x043E, 0x041E, 0x0431, 0x043E, 0x0440, 0x043E, 0x043D, 0x0430))
+    Draw-Text $g $title 320 30 384 62 48 "#fff7da" ([System.Drawing.FontStyle]::Bold) ([System.Drawing.StringAlignment]::Center) ([System.Drawing.StringAlignment]::Center)
 
     $canvas.Bitmap.Save($Path, [System.Drawing.Imaging.ImageFormat]::Png)
     $g.Dispose()
     $canvas.Bitmap.Dispose()
 }
 
-function Draw-Screenshot {
+function Import-RuntimeScreenshot {
     param(
-        [string]$Path,
-        [string]$Kind
+        [string]$SourcePath,
+        [string]$DestinationPath
     )
 
-    $canvas = New-Canvas 1080 1920
-    $g = $canvas.Graphics
-    switch ($Kind) {
-        "menu" { Draw-LevelScreen $g }
-        "placement" { Draw-GameplayScreen $g }
-        "combat" { Draw-GameplayScreen $g -Combat }
-        "victory" { Draw-VictoryScreen $g }
-        "daily" { Draw-DailyScreen $g }
-        default { throw "Unknown screenshot kind: $Kind" }
+    if (-not (Test-Path -LiteralPath $SourcePath -PathType Leaf)) {
+        throw "Runtime screenshot was not found: $SourcePath"
     }
 
-    $canvas.Bitmap.Save($Path, [System.Drawing.Imaging.ImageFormat]::Png)
-    $g.Dispose()
-    $canvas.Bitmap.Dispose()
+    $source = [System.Drawing.Image]::FromFile($SourcePath)
+    try {
+        if ($source.Width -ne 1080 -or $source.Height -ne 1920) {
+            throw "Runtime screenshot must be exactly 1080 x 1920: $SourcePath ($($source.Width) x $($source.Height))"
+        }
+
+        $canvas = New-Canvas 1080 1920
+        try {
+            $canvas.Graphics.DrawImageUnscaled($source, 0, 0)
+            $canvas.Bitmap.Save($DestinationPath, [System.Drawing.Imaging.ImageFormat]::Png)
+        } finally {
+            $canvas.Graphics.Dispose()
+            $canvas.Bitmap.Dispose()
+        }
+    } finally {
+        $source.Dispose()
+    }
 }
 
 $resolvedOutputDir = Resolve-ProjectPath $OutputDir
@@ -624,24 +663,43 @@ $featureDir = Join-Path $resolvedOutputDir "feature"
 $screenshotsDir = Join-Path $resolvedOutputDir "screenshots"
 New-Item -ItemType Directory -Force -Path $iconDir, $featureDir, $screenshotsDir | Out-Null
 
-$assets = @(
+$artAssets = @(
     @{ Path = Join-Path $iconDir "catguard-store-icon-512.png"; Kind = "icon" },
-    @{ Path = Join-Path $featureDir "catguard-feature-1024x500.png"; Kind = "feature" },
-    @{ Path = Join-Path $screenshotsDir "01-main-menu-level-select-1080x1920.png"; Kind = "menu" },
-    @{ Path = Join-Path $screenshotsDir "02-level-placement-1080x1920.png"; Kind = "placement" },
-    @{ Path = Join-Path $screenshotsDir "03-wave-combat-1080x1920.png"; Kind = "combat" },
-    @{ Path = Join-Path $screenshotsDir "04-victory-upgrades-1080x1920.png"; Kind = "victory" },
-    @{ Path = Join-Path $screenshotsDir "05-daily-loop-1080x1920.png"; Kind = "daily" }
+    @{ Path = Join-Path $featureDir "catguard-feature-1024x500.png"; Kind = "feature" }
 )
 
-foreach ($asset in $assets) {
+foreach ($asset in $artAssets) {
     $path = [string]$asset.Path
     switch ([string]$asset.Kind) {
         "icon" { Draw-Icon $path }
         "feature" { Draw-FeatureGraphic $path }
-        default { Draw-Screenshot $path ([string]$asset.Kind) }
     }
 
     $file = Get-Item -LiteralPath $path
     Write-Host "$($file.FullName) $($file.Length) bytes"
+}
+
+if ($ScreenshotSourceDir) {
+    $resolvedScreenshotSourceDir = Resolve-ProjectPath $ScreenshotSourceDir
+    if (-not (Test-Path -LiteralPath $resolvedScreenshotSourceDir -PathType Container)) {
+        throw "Screenshot source directory was not found: $resolvedScreenshotSourceDir"
+    }
+
+    $screenshotAssets = @(
+        @{ Source = "01-main-menu.png"; Destination = "01-main-menu-level-select-1080x1920.png" },
+        @{ Source = "02-level-placement.png"; Destination = "02-level-placement-1080x1920.png" },
+        @{ Source = "03-wave-combat.png"; Destination = "03-wave-combat-1080x1920.png" },
+        @{ Source = "04-victory.png"; Destination = "04-victory-upgrades-1080x1920.png" },
+        @{ Source = "05-daily.png"; Destination = "05-daily-loop-1080x1920.png" }
+    )
+
+    foreach ($asset in $screenshotAssets) {
+        $sourcePath = Join-Path $resolvedScreenshotSourceDir ([string]$asset.Source)
+        $destinationPath = Join-Path $screenshotsDir ([string]$asset.Destination)
+        Import-RuntimeScreenshot $sourcePath $destinationPath
+        $file = Get-Item -LiteralPath $destinationPath
+        Write-Host "$($file.FullName) $($file.Length) bytes"
+    }
+} else {
+    Write-Host "Runtime screenshots were preserved. Pass -ScreenshotSourceDir to import a validated 1080 x 1920 capture set."
 }

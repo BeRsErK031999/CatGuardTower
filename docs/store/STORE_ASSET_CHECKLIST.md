@@ -1,8 +1,8 @@
 # Google Play Store Asset Checklist
 
-Source status: requirements checklist plus generated pre-device asset set.
+Source status: requirements checklist plus validated emulator release capture set.
 
-Official Google Play reference checked on 2026-07-07:
+Official Google Play reference checked on 2026-07-16:
 
 - Preview assets requirements: https://support.google.com/googleplay/android-developer/answer/9866151?hl=en
 
@@ -44,9 +44,26 @@ Official Google Play reference checked on 2026-07-07:
 
 - Owner-review generated launcher/store icon.
 - Owner-review generated feature graphic.
-- Capture or confirm screenshots from a real Android device or validated emulator build.
-- Review screenshots for readable text on phone screens.
-- Add alt text for uploaded graphic assets in Play Console.
+- Confirm the screenshot set during physical-device Phase 10 QA before final Play Console submission.
+- Enter the prepared alt text when assets are uploaded to Play Console.
+
+## Completed Asset QA
+
+- Replaced the English synthetic screenshot drafts with current Russian in-app captures.
+- Captured the five-screen set from a non-development x86_64 QA release APK on the validated API 34 emulator.
+- Used a native 1080 x 1920 capture surface and removed the `Development Build` watermark by using a release build rather than editing screenshots.
+- Visually reviewed the icon, feature graphic, and every screenshot for readable text, current garden artwork, consistent hierarchy, and misleading content.
+- Confirmed the screenshots show the actual main menu, placement, combat, victory, and daily loop states.
+
+## Prepared Alt Text
+
+- App icon: `Кот-защитник на фоне ночных садовых ворот.`
+- Feature graphic: `Три кота защищают ночной сад от мыши, мотылька и улитки.`
+- Main menu: `Главное меню КотоОбороны с прогрессом и уровнями кампании.`
+- Placement: `Садовый уровень с маршрутом врагов, сеткой и выбором защитников.`
+- Combat: `Два защитника атакуют волну врагов на дорожке ночного сада.`
+- Victory: `Экран победы с наградой и выбором повтора или возврата в меню.`
+- Daily loop: `Ежедневная награда, цепочка из семи дней и задания игрока.`
 
 ## Generated Asset Files
 

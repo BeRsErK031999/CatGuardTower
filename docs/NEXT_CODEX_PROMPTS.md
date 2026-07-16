@@ -29,12 +29,13 @@ Context:
   - versionCode: 1
 - QA package remains separate: com.catguard.towerdefense.qa.
 - Store listing, privacy, Data Safety, asset, and closed-testing drafts live under docs/store/.
-- Generated store image assets live under docs/store/assets/.
+- Refreshed store image assets live under docs/store/assets/; the five screenshots are current Russian 1080 x 1920 captures from a non-development API 34 emulator build.
+- Physical-device confirmation and owner approval of the image set remain open.
 - Secret-free signed store AAB automation lives at tools/android/build-signed-store-aab.ps1.
 - The wrapper requires a keystore outside Git and restores the previous Unity Android settings after the build.
 
 Do only safe Phase 11 preparation:
-1. Owner-review generated store assets, replace screenshots with real-device captures, or prepare signing/build steps without committing secrets.
+1. Owner-review the refreshed store assets, confirm or selectively replace screenshots during physical-device QA, or prepare signing/build steps without committing secrets.
 2. Do not upload to Google Play.
 3. Do not create or commit signing secrets.
 4. Do not claim real-device QA is complete unless tools/android/run-device-qa.ps1 has passed on a connected physical device.

@@ -50,8 +50,9 @@ Use this file as a short entry point only. The phase-by-phase source of truth is
 * [x] Choose initial Google Play package name and version.
 * [x] Draft Google Play listing, privacy, Data Safety, assets, and closed testing docs.
 * [x] Generate pre-device Google Play icon, feature graphic, and screenshot assets.
+* [x] Replace synthetic store screenshot drafts with validated 1080 x 1920 emulator release captures.
 * [ ] Finish real-device Android QA for install and FPS.
-* [ ] Owner-review generated Google Play image assets and replace screenshots with real-device captures if needed.
+* [ ] Owner-review refreshed Google Play image assets and confirm them during physical-device QA.
 
 ## Planning References
 

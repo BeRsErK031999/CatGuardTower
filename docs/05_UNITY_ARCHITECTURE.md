@@ -205,7 +205,10 @@ This phase still uses the existing prototype combat behavior; the new content is
 - Local build artifacts are generated under `Builds/Android/`:
   - `CatGuardTowerDefense-qa.apk`;
   - `CatGuardTowerDefense-qa-debug.apk`;
+  - `CatGuardTowerDefense-emulator.apk`;
+  - `CatGuardTowerDefense-emulator-release.apk`;
   - `CatGuardTowerDefense-qa.aab`.
+- The non-development x86_64 emulator APK is used for clean store capture sessions without the Unity development watermark.
 - Build artifacts are intentionally ignored by Git.
 - Emulator fallback smoke verified APK install, offline launch, MainMenu rendering, and no fatal app crash signatures in logcat.
 - Debuggable QA APK save persistence was verified across app restart by reading `/sdcard/Android/data/com.catguard.towerdefense.qa/files/catguard-save.json`.

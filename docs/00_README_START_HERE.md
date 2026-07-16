@@ -25,7 +25,7 @@ The current goal is not to build full gameplay yet. The goal is to prepare a cle
 - Phase 8 rewarded ads exist through voluntary fake/no-SDK placements: victory x2, revive, daily x2, and daily free coins.
 - Phase 9 MVP content exists: 10 levels, 5 tower configs, 5 enemy configs, baseline rewards, clear wave ramp, and a tutorial hint on the first level.
 - Phase 10 Android build pipeline exists: QA APK/AAB generation is automated, Android settings are validated, emulator offline smoke has been run, save persistence is verified on a debuggable QA build, and a real-device QA runner is available at `tools/android/run-device-qa.ps1`.
-- Phase 11 Google Play preparation has started: the initial store package/version are configured as `com.berserk031999.catguardtower` `0.1.0` (`versionCode` `1`), while the QA package remains separate, store/compliance drafts live under `docs/store/`, and generated store image assets live under `docs/store/assets/`.
+- Phase 11 Google Play preparation has started: the initial store package/version are configured as `com.berserk031999.catguardtower` `0.1.0` (`versionCode` `1`), while the QA package remains separate, store/compliance drafts live under `docs/store/`, and refreshed store image assets include five current Russian runtime captures from a validated emulator release build.
 
 ## Recommended Reading Order
 
@@ -39,4 +39,4 @@ The current goal is not to build full gameplay yet. The goal is to prepare a cle
 
 ## Next Safe Step
 
-Connect a real Android device, run `tools/android/run-device-qa.ps1`, and finish the remaining Phase 10 install/FPS QA. Then owner-review generated store image assets and replace screenshot drafts with physical-device captures if needed.
+Connect a real Android device, run `tools/android/run-device-qa.ps1`, and finish the remaining Phase 10 install/FPS QA. Then owner-review the refreshed store image assets and confirm or selectively replace the emulator captures if the physical device reveals a material rendering difference.

@@ -7,6 +7,10 @@
 - Added Unity batchmode validation for store Android settings.
 - Drafted store listing text, privacy policy, Data Safety answers, store asset checklist, and closed-testing checklist under `docs/store/`.
 - Added generated store image assets under `docs/store/assets/`.
+- Replaced the five English synthetic screenshot drafts with current Russian 1080 x 1920 runtime captures from the validated API 34 emulator.
+- Added a non-development x86_64 emulator APK target so store captures do not contain the Unity `Development Build` watermark.
+- Updated the store icon and feature graphic to use the current repo-owned night-garden artwork.
+- Added strict screenshot import validation and prepared Play Console alt text for all seven image assets.
 - Added `tools/android/build-signed-store-aab.ps1` for password-prompted or process-secret store signing.
 - Added `Phase11ProjectSetup.BuildSignedAab` to validate and build the store package as an ARM64 App Bundle while restoring the previous Unity Android settings after completion.
 - The PowerShell wrapper restores an exact byte snapshot of `ProjectSettings.asset` after Unity exits because Unity normalizes an empty keystore field to an internal placeholder.
@@ -54,6 +58,9 @@ Local validation result:
 - `jarsigner -verify` reported `jar verified`.
 - Bundle manifest validation confirmed package `com.berserk031999.catguardtower`, `versionName` `0.1.0`, `versionCode` `1`, min SDK 25, target SDK 36, and an ARM64 native payload.
 - The temporary test key is not a Google Play upload key and was removed after validation.
+- `Phase10ProjectSetup.BuildEmulatorReleaseApk` produced `Builds/Android/CatGuardTowerDefense-emulator-release.apk` on 2026-07-16.
+- The release APK was installed on `CatGuard_API34`, launched at 1080 x 1920, and used to capture main menu, placement, combat, victory, and daily-loop states without a development watermark.
+- All committed screenshot PNG files were normalized to 24-bit 1080 x 1920 output and visually reviewed against the current application.
 
 ## Signed Store Build Command
 
@@ -69,8 +76,8 @@ Passwords are requested as secure input and are passed to the Unity child proces
 
 ## Remaining Phase 11 Work
 
-- Owner-review generated icon, feature graphic, and screenshot assets.
-- Capture or confirm final screenshot image files from physical-device QA.
+- Owner-review the refreshed icon, feature graphic, and validated emulator screenshot set.
+- Confirm the final screenshot set during physical-device QA; replace individual captures only if the device reveals a material rendering difference.
 - Owner-review store listing, privacy policy, and Data Safety drafts.
 - Publish privacy policy to a public non-editable URL.
 - Confirm final target audience and content rating.

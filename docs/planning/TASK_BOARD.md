@@ -268,6 +268,10 @@ Only mark tasks as done when they are actually present in the repository or veri
 * [x] Prepare generated store icon.
 * [x] Prepare generated feature graphic.
 * [x] Prepare pre-device screenshot asset set.
+* [x] Replace synthetic screenshot drafts with validated emulator release captures.
+* [x] Add a non-development x86_64 APK target for clean store capture sessions.
+* [x] Validate store image dimensions, formats, readability, and current-app fidelity.
+* [x] Prepare Play Console alt text for every image asset.
 * [x] Add and verify a secret-free signed store AAB build workflow.
 
 ## Phase 12 - Closed Testing

@@ -9,6 +9,7 @@
 - Set the runtime target frame rate to 60.
 - Produced local APK and AAB artifacts.
 - Produced a debuggable QA APK for save inspection.
+- Produced a non-development x86_64 APK for clean emulator/store captures.
 - Installed and launched the APK on Android emulator fallback.
 - Verified offline launch with Wi-Fi disabled.
 - Verified save persistence across app restart on the debuggable QA APK.
@@ -23,6 +24,7 @@ Generated files:
 ```text
 Builds/Android/CatGuardTowerDefense-qa.apk
 Builds/Android/CatGuardTowerDefense-qa-debug.apk
+Builds/Android/CatGuardTowerDefense-emulator-release.apk
 Builds/Android/CatGuardTowerDefense-qa.aab
 ```
 
@@ -30,6 +32,7 @@ Artifact sizes from the local build:
 
 - APK: 15,769,372 bytes.
 - Debug APK: 22,109,177 bytes.
+- Emulator release APK: 23,368,954 bytes.
 - AAB: 15,675,696 bytes.
 
 These artifacts are ignored by Git and must not be committed.
@@ -52,6 +55,12 @@ Build only the debuggable QA APK:
 
 ```text
 Unity.exe -batchmode -nographics -quit -projectPath "C:\Users\Borodin_Artem\Desktop\Mobile Games\CatGuardTowerDefense" -executeMethod Phase10ProjectSetup.BuildDebugApk -logFile "%TEMP%\catguard-phase10-debug-apk.log"
+```
+
+Build a non-development x86_64 APK for clean emulator/store captures:
+
+```text
+Unity.exe -batchmode -nographics -quit -projectPath "C:\Users\Borodin_Artem\Desktop\Mobile Games\CatGuardTowerDefense" -executeMethod Phase10ProjectSetup.BuildEmulatorReleaseApk -logFile "%TEMP%\catguard-emulator-release-apk.log"
 ```
 
 Run real-device QA when a USB-debugging Android device is connected:

@@ -12,6 +12,7 @@ public static class Phase10ProjectSetup
     private const string ApkPath = BuildFolder + "/CatGuardTowerDefense-qa.apk";
     private const string DebugApkPath = BuildFolder + "/CatGuardTowerDefense-qa-debug.apk";
     private const string EmulatorApkPath = BuildFolder + "/CatGuardTowerDefense-emulator.apk";
+    private const string EmulatorReleaseApkPath = BuildFolder + "/CatGuardTowerDefense-emulator-release.apk";
     private const string AabPath = BuildFolder + "/CatGuardTowerDefense-qa.aab";
 
     private static readonly string[] RequiredScenes =
@@ -50,23 +51,13 @@ public static class Phase10ProjectSetup
 
     public static void BuildEmulatorApk()
     {
-        ConfigureAndroidBuildSettings();
-        var succeeded = false;
+        var succeeded = BuildEmulatorArtifact(EmulatorApkPath, true);
+        EditorApplication.Exit(succeeded ? 0 : 1);
+    }
 
-        try
-        {
-            PlayerSettings.Android.targetArchitectures = AndroidArchitecture.X86_64;
-            AssetDatabase.SaveAssets();
-            succeeded = BuildAndroidArtifact(EmulatorApkPath, false, true);
-        }
-        finally
-        {
-            PlayerSettings.Android.targetArchitectures = AndroidArchitecture.ARM64;
-            EditorUserBuildSettings.development = false;
-            EditorUserBuildSettings.buildAppBundle = false;
-            AssetDatabase.SaveAssets();
-        }
-
+    public static void BuildEmulatorReleaseApk()
+    {
+        var succeeded = BuildEmulatorArtifact(EmulatorReleaseApkPath, false);
         EditorApplication.Exit(succeeded ? 0 : 1);
     }
 
@@ -86,6 +77,25 @@ public static class Phase10ProjectSetup
         EditorUserBuildSettings.development = false;
         EditorUserBuildSettings.buildAppBundle = false;
         EditorApplication.Exit(apkSucceeded && aabSucceeded && debugApkSucceeded ? 0 : 1);
+    }
+
+    private static bool BuildEmulatorArtifact(string path, bool development)
+    {
+        ConfigureAndroidBuildSettings();
+
+        try
+        {
+            PlayerSettings.Android.targetArchitectures = AndroidArchitecture.X86_64;
+            AssetDatabase.SaveAssets();
+            return BuildAndroidArtifact(path, false, development);
+        }
+        finally
+        {
+            PlayerSettings.Android.targetArchitectures = AndroidArchitecture.ARM64;
+            EditorUserBuildSettings.development = false;
+            EditorUserBuildSettings.buildAppBundle = false;
+            AssetDatabase.SaveAssets();
+        }
     }
 
     private static void ConfigureAndroidBuildSettings()

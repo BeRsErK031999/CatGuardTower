@@ -29,8 +29,9 @@ Do not request production access until this physical-device gate is passed or ex
 
 - Confirm package name: `com.berserk031999.catguardtower`.
 - Confirm `versionName` `0.1.0` and `versionCode` `1`.
-- Build and inspect a store AAB.
-- Confirm signing/keystore is prepared outside Git.
+- Create and back up the real upload keystore outside Git.
+- Build the signed store AAB with `tools/android/build-signed-store-aab.ps1`.
+- Confirm the generated AAB uses the store package/version and ARM64 payload.
 - Complete store listing draft.
 - Upload app icon, feature graphic, and screenshots.
 - Publish privacy policy URL.

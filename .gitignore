@@ -55,6 +55,8 @@ consulo/
 ServerData/
 *.apk
 *.aab
+*.keystore
+*.jks
 
 # Keep package lock files tracked when Unity creates them
 !Packages/packages-lock.json

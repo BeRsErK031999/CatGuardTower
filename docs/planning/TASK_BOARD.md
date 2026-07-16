@@ -268,6 +268,7 @@ Only mark tasks as done when they are actually present in the repository or veri
 * [x] Prepare generated store icon.
 * [x] Prepare generated feature graphic.
 * [x] Prepare pre-device screenshot asset set.
+* [x] Add and verify a secret-free signed store AAB build workflow.
 
 ## Phase 12 - Closed Testing
 

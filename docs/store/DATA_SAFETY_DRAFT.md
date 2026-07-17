@@ -2,7 +2,7 @@
 
 Source status: draft for owner/legal review. Keep this file synchronized with actual SDKs, permissions, and runtime behavior.
 
-Official Google Play references checked on 2026-07-07:
+Official Google Play references re-checked on 2026-07-17:
 
 - Data Safety guidance: https://support.google.com/googleplay/android-developer/answer/10787469?hl=en
 - User Data policy: https://support.google.com/googleplay/android-developer/answer/10144311?hl=en
@@ -17,6 +17,12 @@ Official Google Play references checked on 2026-07-07:
 - `FirebaseAnalyticsService` is compile-gated behind `CATGUARD_FIREBASE_ANALYTICS` and is not active in the current build.
 - `FakeAnalyticsService` and `FakeRewardedAdService` are local/test implementations only.
 - `GameSaveService` writes local progress to `Application.persistentDataPath/catguard-save.json`.
+- The signed release AAB produced on 2026-07-16 was re-inspected on 2026-07-17 with Unity's bundled `bundletool 1.17.2`:
+  - package `com.berserk031999.catguardtower`, `versionName` `0.1.0`, `versionCode` `1`;
+  - min SDK 25 and target SDK 36;
+  - no `INTERNET`, advertising ID, billing, storage, camera, microphone, contacts, location, notification, or other sensitive permission;
+  - the only `uses-permission` entry is the package-scoped AndroidX dynamic-receiver protection permission.
+- The localized in-app privacy modal documents the local save, no-live-SDK state, and deletion paths.
 
 ## Draft Data Safety Answers
 

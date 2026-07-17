@@ -33,6 +33,7 @@ namespace CatGuard.UI.Screens
         private Texture2D accentHoverTexture;
         private Texture2D dangerTexture;
         private Texture2D dangerHoverTexture;
+        private Texture2D modalBackdropTexture;
 
         private GUIStyle titleStyle;
         private GUIStyle titleShadowStyle;
@@ -49,14 +50,18 @@ namespace CatGuard.UI.Screens
         private GUIStyle primaryButtonStyle;
         private GUIStyle selectedTabStyle;
         private GUIStyle dangerButtonStyle;
+        private GUIStyle privacyBodyStyle;
+        private GUIStyle privacyMetaStyle;
 
         private Vector2 levelsScrollPosition;
         private Vector2 upgradesScrollPosition;
         private Vector2 missionsScrollPosition;
+        private Vector2 privacyScrollPosition;
         private string dailyMessage = string.Empty;
         private string freeCoinsMessage = string.Empty;
         private bool resetConfirmationArmed;
         private float resetConfirmationExpiresAt;
+        private bool privacyPolicyOpen;
         private MainMenuView currentView = MainMenuView.Levels;
 
         public bool IsConfigured => levelCatalog != null
@@ -119,6 +124,15 @@ namespace CatGuard.UI.Screens
             DestroyRuntimeTexture(accentHoverTexture);
             DestroyRuntimeTexture(dangerTexture);
             DestroyRuntimeTexture(dangerHoverTexture);
+            DestroyRuntimeTexture(modalBackdropTexture);
+        }
+
+        private void Update()
+        {
+            if (privacyPolicyOpen && Input.GetKeyDown(KeyCode.Escape))
+            {
+                privacyPolicyOpen = false;
+            }
         }
 
         private void OnGUI()
@@ -148,6 +162,7 @@ namespace CatGuard.UI.Screens
             var footerY = DesignHeight - safeBottom - 72f;
             var contentBottom = footerY - 14f;
 
+            GUI.enabled = !privacyPolicyOpen;
             DrawHeader(safeTop);
             DrawTabs(tabsY);
 
@@ -165,6 +180,12 @@ namespace CatGuard.UI.Screens
             }
 
             DrawFooter(footerY);
+            GUI.enabled = true;
+            if (privacyPolicyOpen)
+            {
+                DrawPrivacyPolicy(safeTop, safeBottom);
+            }
+
             GUI.matrix = previousMatrix;
         }
 
@@ -196,6 +217,52 @@ namespace CatGuard.UI.Screens
                 coinsRect,
                 string.Format(LocalizationService.Text("menu.fishCoins"), ProgressionService.FishCoins),
                 smallLabelStyle);
+
+            var privacyRect = new Rect(DesignWidth - PageMargin - 104f, safeTop + 56f, 104f, 38f);
+            if (GUI.Button(privacyRect, LocalizationService.Text("privacy.button"), compactButtonStyle))
+            {
+                ProceduralAudioService.Play(ProceduralSoundId.MenuClick);
+                privacyScrollPosition = Vector2.zero;
+                privacyPolicyOpen = true;
+            }
+        }
+
+        private void DrawPrivacyPolicy(float safeTop, float safeBottom)
+        {
+            GUI.DrawTexture(new Rect(0f, 0f, DesignWidth, DesignHeight), modalBackdropTexture, ScaleMode.StretchToFill);
+
+            var modalTop = safeTop + 48f;
+            var modalBottom = DesignHeight - safeBottom - 48f;
+            var modalRect = new Rect(PageMargin, modalTop, PageWidth, modalBottom - modalTop);
+            GUI.Box(modalRect, GUIContent.none, strongPanelStyle);
+            GUI.Label(
+                new Rect(modalRect.x + 24f, modalRect.y + 22f, modalRect.width - 48f, 52f),
+                LocalizationService.Text("privacy.title"),
+                headingStyle);
+            GUI.Label(
+                new Rect(modalRect.x + 24f, modalRect.y + 72f, modalRect.width - 48f, 26f),
+                LocalizationService.Text("privacy.updated"),
+                privacyMetaStyle);
+
+            var viewport = new Rect(modalRect.x + 24f, modalRect.y + 112f, modalRect.width - 48f, modalRect.height - 204f);
+            var body = LocalizationService.Text("privacy.body");
+            var bodyWidth = viewport.width - 20f;
+            var bodyHeight = Mathf.Max(viewport.height, privacyBodyStyle.CalcHeight(new GUIContent(body), bodyWidth) + 24f);
+            privacyScrollPosition = GUI.BeginScrollView(
+                viewport,
+                privacyScrollPosition,
+                new Rect(0f, 0f, bodyWidth, bodyHeight),
+                false,
+                bodyHeight > viewport.height);
+            GUI.Label(new Rect(0f, 0f, bodyWidth, bodyHeight), body, privacyBodyStyle);
+            GUI.EndScrollView();
+
+            var closeRect = new Rect(modalRect.x + 96f, modalRect.yMax - 72f, modalRect.width - 192f, 48f);
+            if (GUI.Button(closeRect, LocalizationService.Text("privacy.close"), primaryButtonStyle))
+            {
+                ProceduralAudioService.Play(ProceduralSoundId.MenuClick);
+                privacyPolicyOpen = false;
+            }
         }
 
         private void DrawTabs(float y)
@@ -603,6 +670,7 @@ namespace CatGuard.UI.Screens
             accentHoverTexture = CreateTexture(new Color(1f, 0.78f, 0.32f, 1f));
             dangerTexture = CreateTexture(new Color(0.48f, 0.16f, 0.16f, 0.96f));
             dangerHoverTexture = CreateTexture(new Color(0.66f, 0.2f, 0.18f, 1f));
+            modalBackdropTexture = CreateTexture(new Color(0f, 0f, 0f, 0.76f));
 
             titleStyle = CreateLabelStyle(28, FontStyle.Bold, TextAnchor.MiddleCenter, Color.white);
             titleShadowStyle = CreateLabelStyle(28, FontStyle.Bold, TextAnchor.MiddleCenter, new Color(0f, 0f, 0f, 0.75f));
@@ -610,6 +678,9 @@ namespace CatGuard.UI.Screens
             labelStyle = CreateLabelStyle(18, FontStyle.Bold, TextAnchor.MiddleCenter, Color.white);
             smallLabelStyle = CreateLabelStyle(15, FontStyle.Bold, TextAnchor.MiddleCenter, new Color(0.92f, 0.96f, 0.91f));
             eyebrowStyle = CreateLabelStyle(13, FontStyle.Bold, TextAnchor.MiddleCenter, new Color(0.96f, 0.72f, 0.3f));
+            privacyBodyStyle = CreateLabelStyle(17, FontStyle.Normal, TextAnchor.UpperLeft, new Color(0.94f, 0.97f, 0.93f));
+            privacyBodyStyle.padding = new RectOffset(4, 10, 4, 4);
+            privacyMetaStyle = CreateLabelStyle(13, FontStyle.Normal, TextAnchor.MiddleCenter, new Color(0.7f, 0.82f, 0.78f));
 
             panelStyle = CreateBoxStyle(panelTexture);
             strongPanelStyle = CreateBoxStyle(strongPanelTexture);

@@ -2,7 +2,7 @@
 
 Source status: draft for owner/legal review. This is not legal advice and must be reviewed before publication.
 
-Official Google Play references checked on 2026-07-07:
+Official Google Play references re-checked on 2026-07-17:
 
 - User Data policy and privacy policy requirements: https://support.google.com/googleplay/android-developer/answer/10144311?hl=en
 - Data Safety guidance: https://support.google.com/googleplay/android-developer/answer/10787469?hl=en
@@ -13,6 +13,14 @@ Official Google Play references checked on 2026-07-07:
 - The policy must be available at an active, publicly accessible, non-geofenced, non-editable URL.
 - The entity shown in the Google Play store listing must appear in the privacy policy.
 - Apps that do not access personal and sensitive user data still need a privacy policy.
+
+## Current In-App Surface
+
+- The Main Menu exposes a localized `Privacy` / `Политика` button in every tab.
+- The modal explains the current local-only save fields, the absence of live data-collecting SDKs/services, and the available local deletion paths.
+- The modal is available in English and Russian, supports scrolling on shorter screens, and closes through its visible button or Android Back.
+- The in-app text directs Google Play distributions to the public policy and developer contact on the app listing. The public URL and owner identity/contact are still required before closed testing.
+- Runtime source: `Assets/_Project/Scripts/UI/Screens/MainMenuController.cs`; localized copy: `Assets/_Project/Scripts/Core/Localization/LocalizationService.cs`.
 
 ## Draft Policy Text
 

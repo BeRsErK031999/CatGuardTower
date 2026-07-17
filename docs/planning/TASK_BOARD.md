@@ -273,6 +273,8 @@ Only mark tasks as done when they are actually present in the repository or veri
 * [x] Validate store image dimensions, formats, readability, and current-app fidelity.
 * [x] Prepare Play Console alt text for every image asset.
 * [x] Add and verify a secret-free signed store AAB build workflow.
+* [x] Add and verify a localized in-app privacy policy surface.
+* [x] Re-audit the release AAB manifest against the Data Safety draft.
 
 ## Phase 12 - Closed Testing
 

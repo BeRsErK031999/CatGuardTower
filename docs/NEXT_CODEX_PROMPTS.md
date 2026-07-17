@@ -33,6 +33,8 @@ Context:
 - Physical-device confirmation and owner approval of the image set remain open.
 - Secret-free signed store AAB automation lives at tools/android/build-signed-store-aab.ps1.
 - The wrapper requires a keystore outside Git and restores the previous Unity Android settings after the build.
+- A localized in-app privacy policy modal is available from every Main Menu tab and has passed RU/EN emulator verification.
+- The public privacy policy URL, developer legal/display name, privacy contact, target audience, and content rating still require owner input.
 
 Do only safe Phase 11 preparation:
 1. Owner-review the refreshed store assets, confirm or selectively replace screenshots during physical-device QA, or prepare signing/build steps without committing secrets.

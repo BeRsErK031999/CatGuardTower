@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using CatGuard.Core.Localization;
 using UnityEditor;
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
@@ -26,6 +27,15 @@ public static class Phase11ProjectSetup
         "Assets/_Project/Scenes/Boot.unity",
         "Assets/_Project/Scenes/MainMenu.unity",
         "Assets/_Project/Scenes/Level.unity"
+    };
+
+    private static readonly string[] RequiredPrivacyLocalizationKeys =
+    {
+        "privacy.button",
+        "privacy.title",
+        "privacy.updated",
+        "privacy.close",
+        "privacy.body"
     };
 
     public static void Run()
@@ -134,6 +144,7 @@ public static class Phase11ProjectSetup
         ValidateStoreIdentity(errors);
         ValidateAndroidSettings(errors);
         ValidateBuildScenes(errors);
+        ValidatePrivacyPolicy(errors);
 
         if (errors.Count > 0)
         {
@@ -220,6 +231,30 @@ public static class Phase11ProjectSetup
         if (PlayerSettings.Android.forceSDCardPermission)
         {
             errors.Add("Android build must not force external storage permission.");
+        }
+    }
+
+    private static void ValidatePrivacyPolicy(ICollection<string> errors)
+    {
+        var originalLanguage = LocalizationService.CurrentLanguageCode;
+        try
+        {
+            foreach (var languageCode in new[] { LocalizationService.English, LocalizationService.Russian })
+            {
+                LocalizationService.SetLanguage(languageCode);
+                foreach (var key in RequiredPrivacyLocalizationKeys)
+                {
+                    var value = LocalizationService.Text(key);
+                    if (string.IsNullOrWhiteSpace(value) || value == key)
+                    {
+                        errors.Add($"Privacy policy localization is missing for {languageCode}: {key}.");
+                    }
+                }
+            }
+        }
+        finally
+        {
+            LocalizationService.SetLanguage(originalLanguage);
         }
     }
 

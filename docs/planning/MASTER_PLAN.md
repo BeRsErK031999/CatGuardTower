@@ -200,7 +200,7 @@ Goal: prepare:
 
 Main result: store materials are ready for closed testing review.
 
-Current repository status: initial store package/version are configured as `com.berserk031999.catguardtower` `0.1.0` (`versionCode` `1`) and validated separately from the Phase 10 QA package. Store listing, privacy policy, Data Safety, asset, and closed-testing drafts live under `docs/store/`.
+Current repository status: initial store package/version are configured as `com.berserk031999.catguardtower` `0.1.0` (`versionCode` `1`) and validated separately from the Phase 10 QA package. Store listing, privacy policy, Data Safety, asset, and closed-testing drafts live under `docs/store/`; a localized in-app privacy policy surface is implemented and emulator-verified.
 
 ## Phase 12. Closed Testing
 

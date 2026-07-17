@@ -13,6 +13,8 @@
 - Added strict screenshot import validation and prepared Play Console alt text for all seven image assets.
 - Added `tools/android/build-signed-store-aab.ps1` for password-prompted or process-secret store signing.
 - Added `Phase11ProjectSetup.BuildSignedAab` to validate and build the store package as an ARM64 App Bundle while restoring the previous Unity Android settings after completion.
+- Added a localized in-app privacy policy modal to the Main Menu with local-data disclosure, deletion paths, scrolling, a visible close action, and Android Back handling.
+- Extended `Phase11ProjectSetup.Validate` to require the complete privacy policy copy in both English and Russian.
 - The PowerShell wrapper restores an exact byte snapshot of `ProjectSettings.asset` after Unity exits because Unity normalizes an empty keystore field to an internal placeholder.
 - Reject keystores stored inside the repository and ignore `*.jks` / `*.keystore` files as defense in depth.
 - Kept the Phase 10 QA package separate from the store package:
@@ -61,6 +63,8 @@ Local validation result:
 - `Phase10ProjectSetup.BuildEmulatorReleaseApk` produced `Builds/Android/CatGuardTowerDefense-emulator-release.apk` on 2026-07-16.
 - The release APK was installed on `CatGuard_API34`, launched at 1080 x 1920, and used to capture main menu, placement, combat, victory, and daily-loop states without a development watermark.
 - All committed screenshot PNG files were normalized to 24-bit 1080 x 1920 output and visually reviewed against the current application.
+- The signed release AAB manifest was re-inspected on 2026-07-17 with `bundletool 1.17.2`: package/version and SDK values match the draft, and no Internet, ads, billing, storage, or sensitive permissions are present.
+- A fresh non-development emulator APK was built and installed on `CatGuard_API34` on 2026-07-17. The privacy modal was visually verified at 1080 x 2400 in Russian and English, including visible-close and Android Back flows; no critical Unity or AndroidRuntime log patterns were found.
 
 ## Signed Store Build Command
 
@@ -80,6 +84,7 @@ Passwords are requested as secure input and are passed to the Unity child proces
 - Confirm the final screenshot set during physical-device QA; replace individual captures only if the device reveals a material rendering difference.
 - Owner-review store listing, privacy policy, and Data Safety drafts.
 - Publish privacy policy to a public non-editable URL.
+- Provide the final developer legal/display name and privacy contact for the published policy.
 - Confirm final target audience and content rating.
 - Create and back up the real Google Play upload keystore outside Git.
 

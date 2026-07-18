@@ -3,7 +3,8 @@ param(
     [string]$ApkPath = "Builds\Android\CatGuardTowerDefense-emulator.apk",
     [string]$PackageName = "com.catguard.towerdefense.qa",
     [int]$BootTimeoutSeconds = 180,
-    [int]$LaunchWaitSeconds = 25
+    [int]$LaunchWaitSeconds = 25,
+    [switch]$Headless
 )
 
 Set-StrictMode -Version Latest
@@ -39,7 +40,7 @@ $serial = [string](@(& $adbPath devices | Select-String '^emulator-\d+\s+device$
 if (-not $serial) {
     $logFolder = Join-Path $repoRoot "Builds\Android\emulator"
     New-Item -ItemType Directory -Force -Path $logFolder | Out-Null
-    Start-Process -FilePath $emulatorPath -ArgumentList @(
+    $emulatorArguments = @(
         '-avd', $AvdName,
         '-no-boot-anim',
         '-no-snapshot',
@@ -47,7 +48,15 @@ if (-not $serial) {
         '-gpu', 'swiftshader_indirect',
         '-netdelay', 'none',
         '-netspeed', 'full'
-    ) -RedirectStandardOutput (Join-Path $logFolder "emulator.stdout.log") `
+    )
+
+    if ($Headless) {
+        $emulatorArguments += '-no-window'
+    }
+
+    Start-Process -FilePath $emulatorPath -ArgumentList $emulatorArguments `
+        -WindowStyle Hidden `
+        -RedirectStandardOutput (Join-Path $logFolder "emulator.stdout.log") `
         -RedirectStandardError (Join-Path $logFolder "emulator.stderr.log")
 }
 

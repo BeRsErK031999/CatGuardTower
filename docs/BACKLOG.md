@@ -47,6 +47,7 @@ Use this file as a short entry point only. The phase-by-phase source of truth is
 * [x] Run offline Android emulator smoke for APK install and MainMenu launch.
 * [x] Verify Android save persistence on a debuggable QA build.
 * [x] Add repeatable real-device Android QA runner.
+* [x] Add calculated Unity SurfaceView FPS metrics and optional performance gates to Android QA.
 * [x] Choose initial Google Play package name and version.
 * [x] Draft Google Play listing, privacy, Data Safety, assets, and closed testing docs.
 * [x] Generate pre-device Google Play icon, feature graphic, and screenshot assets.

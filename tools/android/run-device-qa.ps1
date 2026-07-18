@@ -4,8 +4,12 @@ param(
     [string]$DeviceSerial = "",
     [int]$LaunchWaitSeconds = 25,
     [string]$OutputDir = "Builds\Android\qa-device",
+    [double]$MinimumAverageFps = 30,
+    [double]$MaximumP95FrameTimeMs = 50,
+    [int]$MinimumFrameSamples = 30,
     [switch]$SkipInstall,
-    [switch]$Offline
+    [switch]$Offline,
+    [switch]$RequirePerformance
 )
 
 Set-StrictMode -Version Latest
@@ -101,6 +105,94 @@ function Write-Lines {
     $Lines | Set-Content -LiteralPath $Path -Encoding UTF8
 }
 
+function Get-Percentile {
+    param(
+        [double[]]$Values,
+        [double]$Percentile
+    )
+
+    if ($Values.Count -eq 0) {
+        return 0
+    }
+
+    $sortedValues = @($Values | Sort-Object)
+    $rank = ([Math]::Max(0, [Math]::Min(100, $Percentile)) / 100) * ($sortedValues.Count - 1)
+    $lowerIndex = [Math]::Floor($rank)
+    $upperIndex = [Math]::Ceiling($rank)
+    if ($lowerIndex -eq $upperIndex) {
+        return [double]$sortedValues[$lowerIndex]
+    }
+
+    $weight = $rank - $lowerIndex
+    return ([double]$sortedValues[$lowerIndex] * (1 - $weight)) + ([double]$sortedValues[$upperIndex] * $weight)
+}
+
+function Get-SurfaceFrameMetrics {
+    param(
+        [string[]]$Lines,
+        [double]$MinimumFps,
+        [double]$MaximumP95Ms,
+        [int]$MinimumSamples
+    )
+
+    $refreshPeriodNanoseconds = 0L
+    $presentTimestamps = New-Object System.Collections.Generic.List[long]
+
+    foreach ($line in $Lines) {
+        $trimmed = $line.Trim()
+        if ($refreshPeriodNanoseconds -eq 0 -and $trimmed -match '^\d+$') {
+            $refreshPeriodNanoseconds = [long]$trimmed
+            continue
+        }
+
+        if ($trimmed -match '^(\d+)\s+(\d+)\s+(\d+)$') {
+            $actualPresent = [long]$Matches[2]
+            if ($actualPresent -gt 0) {
+                $presentTimestamps.Add($actualPresent)
+            }
+        }
+    }
+
+    $orderedTimestamps = @($presentTimestamps | Sort-Object -Unique)
+    $frameTimesMs = New-Object System.Collections.Generic.List[double]
+    for ($index = 1; $index -lt $orderedTimestamps.Count; $index++) {
+        $deltaMs = ([long]$orderedTimestamps[$index] - [long]$orderedTimestamps[$index - 1]) / 1000000.0
+        if ($deltaMs -gt 0 -and $deltaMs -le 1000) {
+            $frameTimesMs.Add($deltaMs)
+        }
+    }
+
+    $sampleCount = $frameTimesMs.Count
+    $durationSeconds = if ($orderedTimestamps.Count -gt 1) {
+        ([long]$orderedTimestamps[-1] - [long]$orderedTimestamps[0]) / 1000000000.0
+    }
+    else {
+        0
+    }
+    $averageFps = if ($durationSeconds -gt 0) { $sampleCount / $durationSeconds } else { 0 }
+    $refreshPeriodMs = if ($refreshPeriodNanoseconds -gt 0) { $refreshPeriodNanoseconds / 1000000.0 } else { 0 }
+    $jankThresholdMs = if ($refreshPeriodMs -gt 0) { $refreshPeriodMs * 1.5 } else { 25 }
+    $jankyFrameCount = @($frameTimesMs | Where-Object { $_ -gt $jankThresholdMs }).Count
+    $jankPercent = if ($sampleCount -gt 0) { ($jankyFrameCount * 100.0) / $sampleCount } else { 0 }
+    $medianFrameTimeMs = Get-Percentile -Values $frameTimesMs.ToArray() -Percentile 50
+    $p95FrameTimeMs = Get-Percentile -Values $frameTimesMs.ToArray() -Percentile 95
+    $sampleSufficient = $sampleCount -ge $MinimumSamples
+    $passed = $sampleSufficient -and $averageFps -ge $MinimumFps -and $p95FrameTimeMs -le $MaximumP95Ms
+
+    return [pscustomobject]@{
+        sampleCount = $sampleCount
+        durationSeconds = [Math]::Round($durationSeconds, 2)
+        refreshPeriodMs = [Math]::Round($refreshPeriodMs, 2)
+        averageFps = [Math]::Round($averageFps, 2)
+        medianFrameTimeMs = [Math]::Round($medianFrameTimeMs, 2)
+        p95FrameTimeMs = [Math]::Round($p95FrameTimeMs, 2)
+        jankyFrameCount = $jankyFrameCount
+        jankPercent = [Math]::Round($jankPercent, 2)
+        sampleSufficient = $sampleSufficient
+        passed = $passed
+    }
+}
+
 $resolvedApkPath = Resolve-ProjectPath $ApkPath
 if (-not (Test-Path -LiteralPath $resolvedApkPath)) {
     Write-Host "APK not found: $resolvedApkPath"
@@ -152,6 +244,7 @@ $logcatPath = Join-Path $runDir "logcat.txt"
 $windowPath = Join-Path $runDir "dumpsys-window.txt"
 $displayPath = Join-Path $runDir "dumpsys-display.txt"
 $gfxInfoPath = Join-Path $runDir "dumpsys-gfxinfo.txt"
+$surfaceLatencyPath = Join-Path $runDir "surfaceflinger-latency.txt"
 $screenshotPath = Join-Path $runDir "screen.png"
 $summaryPath = Join-Path $runDir "qa-summary.json"
 $savePath = Join-Path $runDir "catguard-save.json"
@@ -163,6 +256,7 @@ Write-Host "APK: $resolvedApkPath"
 Write-Host "Output: $runDir"
 
 Invoke-TargetAdb -Arguments @("logcat", "-c") -AllowFailure | Out-Null
+Invoke-TargetAdb -Arguments @("shell", "dumpsys", "SurfaceFlinger", "--latency-clear") -AllowFailure | Out-Null
 
 if (-not $SkipInstall) {
     Write-Host "Installing APK..."
@@ -198,6 +292,33 @@ Write-Lines -Path $displayPath -Lines $displayResult.Output
 
 $gfxInfoResult = Invoke-TargetAdb -Arguments @("shell", "dumpsys", "gfxinfo", $PackageName, "framestats") -AllowFailure
 Write-Lines -Path $gfxInfoPath -Lines $gfxInfoResult.Output
+
+$surfaceListResult = Invoke-TargetAdb -Arguments @("shell", "dumpsys", "SurfaceFlinger", "--list") -AllowFailure
+$surfaceLayer = [string](@($surfaceListResult.Output | Where-Object {
+    $_ -like "*$PackageName*" -and $_ -like "*SurfaceView*" -and $_ -like "*(BLAST)*"
+} | Select-Object -First 1))
+if (-not $surfaceLayer) {
+    $surfaceLayer = [string](@($surfaceListResult.Output | Where-Object {
+        $_ -like "*$PackageName*" -and $_ -like "*SurfaceView*"
+    } | Select-Object -First 1))
+}
+
+$surfaceLatencyLines = @()
+if ($surfaceLayer) {
+    $surfaceLatencyResult = Invoke-TargetAdb -Arguments @(
+        "shell",
+        "dumpsys",
+        "SurfaceFlinger",
+        "--latency",
+        "'$surfaceLayer'") -AllowFailure
+    $surfaceLatencyLines = @($surfaceLatencyResult.Output)
+}
+Write-Lines -Path $surfaceLatencyPath -Lines (@("surfaceLayer=$surfaceLayer") + $surfaceLatencyLines)
+$performance = Get-SurfaceFrameMetrics `
+    -Lines $surfaceLatencyLines `
+    -MinimumFps $MinimumAverageFps `
+    -MaximumP95Ms $MaximumP95FrameTimeMs `
+    -MinimumSamples $MinimumFrameSamples
 
 $screenshotCaptured = $false
 $remoteScreenshotPath = "/sdcard/catguard-qa-screen-$timestamp.png"
@@ -246,10 +367,18 @@ $summary = [pscustomobject]@{
     windowPath = $windowPath
     displayPath = $displayPath
     gfxInfoPath = $gfxInfoPath
+    surfaceLatencyPath = $surfaceLatencyPath
     screenshotPath = if ($screenshotCaptured) { $screenshotPath } else { "" }
     savePath = if ($saveReadable) { $savePath } else { "" }
     focusLines = $focusLines
     frameRateLines = $frameRateLines
+    performanceThresholds = [pscustomobject]@{
+        minimumAverageFps = $MinimumAverageFps
+        maximumP95FrameTimeMs = $MaximumP95FrameTimeMs
+        minimumFrameSamples = $MinimumFrameSamples
+        required = [bool]$RequirePerformance
+    }
+    performance = $performance
     fatalLines = $fatalHits
 }
 
@@ -260,8 +389,12 @@ Write-Host "App PID: $appPid"
 Write-Host "Fatal crash pattern count: $($fatalHits.Count)"
 Write-Host "Screenshot captured: $screenshotCaptured"
 Write-Host "Save readable: $saveReadable"
+Write-Host "Surface frame samples: $($performance.sampleCount)"
+Write-Host "Average FPS: $($performance.averageFps)"
+Write-Host "P95 frame time: $($performance.p95FrameTimeMs) ms"
+Write-Host "Performance threshold passed: $($performance.passed)"
 
-if ($appPid.Length -eq 0 -or $fatalHits.Count -gt 0) {
+if ($appPid.Length -eq 0 -or $fatalHits.Count -gt 0 -or ($RequirePerformance -and -not $performance.passed)) {
     exit 1
 }
 

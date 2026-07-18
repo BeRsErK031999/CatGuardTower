@@ -16,6 +16,7 @@
 - Verified MainMenu rendering on emulator screenshot after launch.
 - Checked app logcat for fatal Unity/AndroidRuntime crash signatures.
 - Added a repeatable real-device QA runner for install, launch, logcat, display, screenshot, and save-file checks.
+- Добавлен расчёт фактических кадров Unity через `SurfaceFlinger --latency`: средний FPS, медиана, P95 и доля нестабильных кадров.
 
 ## Local Artifacts
 
@@ -69,7 +70,15 @@ Run real-device QA when a USB-debugging Android device is connected:
 powershell -ExecutionPolicy Bypass -File tools\android\run-device-qa.ps1 -ApkPath Builds\Android\CatGuardTowerDefense-qa.apk
 ```
 
-If multiple devices are connected, pass `-DeviceSerial <serial>`. Use `-Offline` only when an explicit offline run is required because it disables Wi-Fi and mobile data on the target device. The runner writes timestamped artifacts under `Builds/Android/qa-device/`, including `qa-summary.json`, `logcat.txt`, `dumpsys-display.txt`, `dumpsys-gfxinfo.txt`, and `screen.png` when screenshot capture succeeds.
+If multiple devices are connected, pass `-DeviceSerial <serial>`. Use `-Offline` only when an explicit offline run is required because it disables Wi-Fi and mobile data on the target device. The runner writes timestamped artifacts under `Builds/Android/qa-device/`, including `qa-summary.json`, `logcat.txt`, `dumpsys-display.txt`, `dumpsys-gfxinfo.txt`, `surfaceflinger-latency.txt`, and `screen.png` when screenshot capture succeeds.
+
+Обязательная проверка производительности на физическом устройстве:
+
+```text
+powershell -ExecutionPolicy Bypass -File tools\android\run-device-qa.ps1 -ApkPath Builds\Android\CatGuardTowerDefense-qa.apk -DeviceSerial <serial> -MinimumAverageFps 30 -MaximumP95FrameTimeMs 50 -MinimumFrameSamples 30 -RequirePerformance
+```
+
+`dumpsys gfxinfo` не содержит кадры нативного Unity `SurfaceView`, поэтому runner находит слой приложения с суффиксом `(BLAST)` и вычисляет интервалы по фактическим меткам показа `SurfaceFlinger`. Без `-RequirePerformance` метрики записываются в отчёт, но сами по себе не завершают QA ошибкой.
 
 Expected validation result:
 
@@ -102,5 +111,13 @@ The app still rendered after the Android full-screen helper overlay was dismisse
 
 - Test on a real Android device.
 - Measure FPS on a target low/mid real device.
+
+## Проверка FPS runner от 18 июля 2026 года
+
+- Android 14 API 34 x86_64, headless-эмулятор: 126 интервалов кадров за 5,18 секунды.
+- Средний FPS: 24,34; медиана: 39,88 мс; P95: 59,93 мс.
+- Стандартный порог 30 FPS / P95 не более 50 мс ожидаемо не пройден в headless-среде.
+- Режим `-RequirePerformance` проверен отдельным запуском с тестовыми порогами 15 FPS / 100 мс и корректно завершился успешно.
+- Этот результат проверяет расчёт и логику порога, но не заменяет измерение на физическом устройстве.
 
 Do not start Phase 11 until the remaining device QA is complete or explicitly accepted by the owner.

@@ -23,6 +23,7 @@ namespace CatGuard.Gameplay.Levels
         [SerializeField] private Transform runtimeRoot;
 
         private readonly List<BasicEnemy> activeEnemies = new();
+        private readonly List<BasicEnemy> attackTargets = new();
         private readonly List<BasicTower> towers = new();
         private int selectedTowerIndex;
         private bool waveCompleted;
@@ -135,6 +136,41 @@ namespace CatGuard.Gameplay.Levels
             return nearest;
         }
 
+        public void ApplyTowerAttack(BasicEnemy primaryTarget, float damage, float splashRadius)
+        {
+            if (primaryTarget == null || !primaryTarget.IsAlive)
+            {
+                return;
+            }
+
+            if (splashRadius <= 0f)
+            {
+                primaryTarget.ApplyDamage(damage);
+                return;
+            }
+
+            var center = primaryTarget.transform.position;
+            var splashRadiusSquared = splashRadius * splashRadius;
+            attackTargets.Clear();
+
+            foreach (var enemy in activeEnemies)
+            {
+                if (enemy != null
+                    && enemy.IsAlive
+                    && (enemy.transform.position - center).sqrMagnitude <= splashRadiusSquared)
+                {
+                    attackTargets.Add(enemy);
+                }
+            }
+
+            foreach (var enemy in attackTargets)
+            {
+                enemy.ApplyDamage(damage);
+            }
+
+            attackTargets.Clear();
+        }
+
         public bool TryCreateTower(Vector2 worldPosition)
         {
             if (!CanPlaceTowers)
@@ -164,7 +200,10 @@ namespace CatGuard.Gameplay.Levels
             return true;
         }
 
-        public void SpawnEnemy(EnemyConfig enemyConfig)
+        public void SpawnEnemy(
+            EnemyConfig enemyConfig,
+            float healthMultiplier = 1f,
+            float speedMultiplier = 1f)
         {
             if (State != PrototypeLevelState.Running || enemyConfig == null)
             {
@@ -175,7 +214,12 @@ namespace CatGuard.Gameplay.Levels
             enemyObject.transform.SetParent(runtimeRoot, false);
 
             var enemy = enemyObject.AddComponent<BasicEnemy>();
-            enemy.Initialize(this, config.PathPoints, enemyConfig);
+            enemy.Initialize(
+                this,
+                config.PathPoints,
+                enemyConfig,
+                healthMultiplier,
+                speedMultiplier);
 
             activeEnemies.Add(enemy);
             SpawnedEnemies++;

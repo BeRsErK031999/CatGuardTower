@@ -49,9 +49,10 @@ namespace CatGuard.Gameplay.Towers
                 return;
             }
 
-            target.ApplyDamage(damage);
+            var targetPosition = target.transform.position;
+            levelController.ApplyTowerAttack(target, damage, config.SplashRadius);
             ProceduralAudioService.Play(ProceduralSoundId.TowerShot);
-            SimpleVfxFactory.Spawn(target.transform.position, SimpleVfxStyle.TowerShot);
+            SimpleVfxFactory.Spawn(targetPosition, SimpleVfxStyle.TowerShot);
             fireTimer = fireInterval;
         }
 

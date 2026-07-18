@@ -14,14 +14,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CatGuard.Gameplay.Waves.WaveConfig
   groups:
   - enemyConfig: {fileID: 11400000, guid: 52089a4722f098f4282e406958034e46, type: 2}
-    count: 7
-    spawnInterval: 0.58
+    count: 9
+    spawnInterval: 0.52
     delayBeforeGroup: 0
+    healthMultiplier: 2.5
+    speedMultiplier: 1.8
   - enemyConfig: {fileID: 11400000, guid: a52e892d13cddf440a1b5c66acd5069b, type: 2}
-    count: 5
-    spawnInterval: 0.68
-    delayBeforeGroup: 0.5
+    count: 7
+    spawnInterval: 0.62
+    delayBeforeGroup: 0.4
+    healthMultiplier: 2.5
+    speedMultiplier: 1.8
   - enemyConfig: {fileID: 11400000, guid: b47878b293e7cdf4bb20b3301eb7876d, type: 2}
-    count: 4
-    spawnInterval: 0.92
-    delayBeforeGroup: 0.8
+    count: 5
+    spawnInterval: 0.82
+    delayBeforeGroup: 0.6
+    healthMultiplier: 2.5
+    speedMultiplier: 1.8

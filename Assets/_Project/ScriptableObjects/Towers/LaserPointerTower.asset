@@ -14,9 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CatGuard.Gameplay.Towers.TowerConfig
   towerId: laser_pointer
   displayName: Laser
-  range: 3.35
-  damage: 0.72
-  fireInterval: 0.16
+  range: 3.2
+  damage: 0.65
+  fireInterval: 0.14
+  splashRadius: 0
   visualScale: 0.48
   visualColor: {r: 0.38, g: 1, b: 0.62, a: 1}
   buildCost: 60

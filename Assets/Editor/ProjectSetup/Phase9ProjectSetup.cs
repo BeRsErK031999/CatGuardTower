@@ -66,11 +66,11 @@ public static class Phase9ProjectSetup
 
     private static TowerConfig[] EnsureTowerConfigs()
     {
-        var dart = EnsureTower("CatDartTower", "cat_dart", "Dart", 2.7f, 1f, 0.26f, 0.56f, new Color(0.24f, 0.78f, 0.96f), 45);
-        var yarn = EnsureTower("YarnCannonTower", "yarn_cannon", "Yarn", 2.15f, 2.4f, 0.72f, 0.72f, new Color(0.96f, 0.72f, 0.28f), 50);
-        var bell = EnsureTower("BellSniperTower", "bell_sniper", "Bell", 4f, 1.7f, 0.55f, 0.5f, new Color(0.72f, 0.45f, 0.95f), 55);
-        var laser = EnsureTower("LaserPointerTower", "laser_pointer", "Laser", 3.35f, 0.72f, 0.16f, 0.48f, new Color(0.38f, 1f, 0.62f), 60);
-        var blanket = EnsureTower("BlanketBoomTower", "blanket_boom", "Blanket", 1.8f, 3.25f, 0.9f, 0.82f, new Color(1f, 0.42f, 0.62f), 65);
+        var dart = EnsureTower("CatDartTower", "cat_dart", "Dart", 2.7f, 1f, 0.28f, 0.56f, new Color(0.24f, 0.78f, 0.96f), 45, 0f);
+        var yarn = EnsureTower("YarnCannonTower", "yarn_cannon", "Yarn", 2.25f, 1.8f, 0.75f, 0.72f, new Color(0.96f, 0.72f, 0.28f), 50, 0.7f);
+        var bell = EnsureTower("BellSniperTower", "bell_sniper", "Bell", 4.4f, 4.2f, 1.05f, 0.5f, new Color(0.72f, 0.45f, 0.95f), 55, 0f);
+        var laser = EnsureTower("LaserPointerTower", "laser_pointer", "Laser", 3.2f, 0.65f, 0.14f, 0.48f, new Color(0.38f, 1f, 0.62f), 60, 0f);
+        var blanket = EnsureTower("BlanketBoomTower", "blanket_boom", "Blanket", 1.9f, 4.8f, 1.15f, 0.82f, new Color(1f, 0.42f, 0.62f), 65, 1.05f);
 
         return new[] { dart, yarn, bell, laser, blanket };
     }
@@ -84,10 +84,11 @@ public static class Phase9ProjectSetup
         float interval,
         float scale,
         Color color,
-        int buildCost)
+        int buildCost,
+        float splashRadius)
     {
         var tower = EnsureAsset<TowerConfig>($"{TowerConfigFolder}/{assetName}.asset");
-        tower.Configure(id, displayName, range, damage, interval, scale, color, buildCost);
+        tower.Configure(id, displayName, range, damage, interval, scale, color, buildCost, splashRadius);
         EditorUtility.SetDirty(tower);
         return tower;
     }
@@ -131,9 +132,9 @@ public static class Phase9ProjectSetup
             EnsureWave("FishBarrelWave", new[] { new WaveEnemyGroup(enemies[2], 5, 0.66f), new WaveEnemyGroup(enemies[1], 4, 0.78f, 0.5f), new WaveEnemyGroup(enemies[3], 8, 0.32f, 0.5f) }),
             EnsureWave("MoonlitFenceWave", new[] { new WaveEnemyGroup(enemies[0], 6, 0.46f), new WaveEnemyGroup(enemies[4], 2, 1.1f, 0.8f), new WaveEnemyGroup(enemies[2], 5, 0.62f, 0.7f), new WaveEnemyGroup(enemies[3], 6, 0.3f, 0.4f) }),
             EnsureWave("RoofCornerWave", new[] { new WaveEnemyGroup(enemies[1], 5, 0.7f), new WaveEnemyGroup(enemies[4], 3, 1f, 0.6f), new WaveEnemyGroup(enemies[3], 10, 0.28f, 0.6f) }),
-            EnsureWave("OldWellWave", new[] { new WaveEnemyGroup(enemies[2], 7, 0.58f), new WaveEnemyGroup(enemies[1], 5, 0.68f, 0.5f), new WaveEnemyGroup(enemies[4], 4, 0.92f, 0.8f) }),
-            EnsureWave("OrchardWallWave", new[] { new WaveEnemyGroup(enemies[3], 12, 0.26f), new WaveEnemyGroup(enemies[0], 8, 0.4f, 0.4f), new WaveEnemyGroup(enemies[4], 5, 0.88f, 0.7f), new WaveEnemyGroup(enemies[1], 6, 0.62f, 0.5f) }),
-            EnsureWave("QuietAlleyWave", new[] { new WaveEnemyGroup(enemies[2], 8, 0.5f), new WaveEnemyGroup(enemies[1], 6, 0.62f, 0.5f), new WaveEnemyGroup(enemies[4], 6, 0.82f, 0.8f), new WaveEnemyGroup(enemies[3], 14, 0.24f, 0.5f) })
+            EnsureWave("OldWellWave", new[] { new WaveEnemyGroup(enemies[2], 9, 0.52f, 0f, 2.5f, 1.8f), new WaveEnemyGroup(enemies[1], 7, 0.62f, 0.4f, 2.5f, 1.8f), new WaveEnemyGroup(enemies[4], 5, 0.82f, 0.6f, 2.5f, 1.8f) }),
+            EnsureWave("OrchardWallWave", new[] { new WaveEnemyGroup(enemies[3], 14, 0.24f, 0f, 2.8f, 1.9f), new WaveEnemyGroup(enemies[0], 9, 0.36f, 0.3f, 2.8f, 1.9f), new WaveEnemyGroup(enemies[4], 6, 0.78f, 0.6f, 2.8f, 1.9f), new WaveEnemyGroup(enemies[1], 7, 0.56f, 0.4f, 2.8f, 1.9f) }),
+            EnsureWave("QuietAlleyWave", new[] { new WaveEnemyGroup(enemies[2], 10, 0.44f, 0f, 3.1f, 2f), new WaveEnemyGroup(enemies[1], 8, 0.56f, 0.4f, 3.1f, 2f), new WaveEnemyGroup(enemies[4], 7, 0.74f, 0.6f, 3.1f, 2f), new WaveEnemyGroup(enemies[3], 16, 0.22f, 0.4f, 3.1f, 2f) })
         };
 
         return waves;
@@ -424,7 +425,7 @@ public static class Phase9ProjectSetup
             return;
         }
 
-        Debug.Log("Phase 9 validation passed: campaign content, kill rewards, battle budgets, meta-upgrade balance, tutorial, and difficulty ramp are configured.");
+        Debug.Log("Phase 9 validation passed: campaign content, tower roles, splash attacks, kill rewards, battle budgets, meta-upgrade balance, tutorial, and difficulty ramp are configured.");
         EditorApplication.Exit(0);
     }
 
@@ -481,6 +482,24 @@ public static class Phase9ProjectSetup
         if (towers.Count < 3 || towers.Count > 5)
         {
             errors.Add("MVP content must expose 3-5 tower configs.");
+        }
+
+        var splashTowerCount = 0;
+        var hasLongRangeTower = false;
+        foreach (var tower in towers)
+        {
+            splashTowerCount += tower.SplashRadius > 0f ? 1 : 0;
+            hasLongRangeTower |= tower.Range >= 4f;
+        }
+
+        if (splashTowerCount < 2)
+        {
+            errors.Add("MVP tower roster must contain at least two splash-damage roles.");
+        }
+
+        if (!hasLongRangeTower)
+        {
+            errors.Add("MVP tower roster must contain a long-range role.");
         }
 
         if (enemies.Count < 5 || enemies.Count > 8)
@@ -555,7 +574,10 @@ public static class Phase9ProjectSetup
             }
 
             enemies.Add(group.EnemyConfig);
-            threat += group.EnemyConfig.Health * group.Count;
+            threat += group.EnemyConfig.Health
+                * group.HealthMultiplier
+                * group.SpeedMultiplier
+                * group.Count;
         }
 
         return threat;

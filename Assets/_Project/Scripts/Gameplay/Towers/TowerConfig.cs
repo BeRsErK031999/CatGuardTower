@@ -13,6 +13,8 @@ namespace CatGuard.Gameplay.Towers
         [SerializeField] private float damage = 1f;
         [Min(0.05f)]
         [SerializeField] private float fireInterval = 0.35f;
+        [Min(0f)]
+        [SerializeField] private float splashRadius;
         [Min(0.1f)]
         [SerializeField] private float visualScale = 0.62f;
         [SerializeField] private Color visualColor = new(0.24f, 0.78f, 0.96f);
@@ -26,6 +28,7 @@ namespace CatGuard.Gameplay.Towers
         public float Range => Mathf.Max(0.1f, range);
         public float Damage => Mathf.Max(0.1f, damage);
         public float FireInterval => Mathf.Max(0.05f, fireInterval);
+        public float SplashRadius => Mathf.Max(0f, splashRadius);
         public float VisualScale => Mathf.Max(0.1f, visualScale);
         public Color VisualColor => visualColor;
         public int BuildCost => Mathf.Max(1, buildCost);
@@ -36,6 +39,7 @@ namespace CatGuard.Gameplay.Towers
                 && Range > 0f
                 && Damage > 0f
                 && FireInterval > 0f
+                && splashRadius >= 0f
                 && VisualScale > 0f
                 && BuildCost > 0;
         }
@@ -48,13 +52,15 @@ namespace CatGuard.Gameplay.Towers
             float attackInterval,
             float scale,
             Color color,
-            int cost = 45)
+            int cost = 45,
+            float attackSplashRadius = 0f)
         {
             towerId = id;
             displayName = title;
             range = attackRange;
             damage = attackDamage;
             fireInterval = attackInterval;
+            splashRadius = Mathf.Max(0f, attackSplashRadius);
             visualScale = scale;
             visualColor = color;
             buildCost = Mathf.Max(1, cost);

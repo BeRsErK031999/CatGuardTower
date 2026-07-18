@@ -55,7 +55,10 @@ namespace CatGuard.Gameplay.Waves
                         yield break;
                     }
 
-                    levelController.SpawnEnemy(group.EnemyConfig);
+                    levelController.SpawnEnemy(
+                        group.EnemyConfig,
+                        group.HealthMultiplier,
+                        group.SpeedMultiplier);
                     SpawnedCount++;
                     yield return new WaitForSeconds(group.SpawnInterval);
                 }

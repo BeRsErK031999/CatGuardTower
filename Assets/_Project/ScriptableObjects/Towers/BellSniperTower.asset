@@ -14,9 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CatGuard.Gameplay.Towers.TowerConfig
   towerId: bell_sniper
   displayName: Bell
-  range: 4
-  damage: 1.7
-  fireInterval: 0.55
+  range: 4.4
+  damage: 4.2
+  fireInterval: 1.05
+  splashRadius: 0
   visualScale: 0.5
   visualColor: {r: 0.72, g: 0.45, b: 0.95, a: 1}
   buildCost: 55

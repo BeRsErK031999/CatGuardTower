@@ -17,11 +17,17 @@ MonoBehaviour:
     count: 4
     spawnInterval: 0.7
     delayBeforeGroup: 0
+    healthMultiplier: 1
+    speedMultiplier: 1
   - enemyConfig: {fileID: 11400000, guid: 52089a4722f098f4282e406958034e46, type: 2}
     count: 2
     spawnInterval: 0.85
     delayBeforeGroup: 0.8
+    healthMultiplier: 1
+    speedMultiplier: 1
   - enemyConfig: {fileID: 11400000, guid: d8e34b8a87134304781d6f19ceee8c6a, type: 2}
     count: 2
     spawnInterval: 0.45
     delayBeforeGroup: 0.5
+    healthMultiplier: 1
+    speedMultiplier: 1

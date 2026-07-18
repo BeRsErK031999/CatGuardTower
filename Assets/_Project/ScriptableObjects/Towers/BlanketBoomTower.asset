@@ -14,9 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CatGuard.Gameplay.Towers.TowerConfig
   towerId: blanket_boom
   displayName: Blanket
-  range: 1.8
-  damage: 3.25
-  fireInterval: 0.9
+  range: 1.9
+  damage: 4.8
+  fireInterval: 1.15
+  splashRadius: 1.05
   visualScale: 0.82
   visualColor: {r: 1, g: 0.42, b: 0.62, a: 1}
   buildCost: 65

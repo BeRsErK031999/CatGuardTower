@@ -62,26 +62,42 @@ namespace CatGuard.Gameplay.Waves
         [SerializeField] private float spawnInterval = 0.8f;
         [Min(0f)]
         [SerializeField] private float delayBeforeGroup;
+        [Min(0.1f)]
+        [SerializeField] private float healthMultiplier = 1f;
+        [Min(0.1f)]
+        [SerializeField] private float speedMultiplier = 1f;
 
-        public WaveEnemyGroup(EnemyConfig config, int enemyCount, float interval, float delay = 0f)
+        public WaveEnemyGroup(
+            EnemyConfig config,
+            int enemyCount,
+            float interval,
+            float delay = 0f,
+            float healthScale = 1f,
+            float speedScale = 1f)
         {
             enemyConfig = config;
             count = enemyCount;
             spawnInterval = interval;
             delayBeforeGroup = delay;
+            healthMultiplier = healthScale;
+            speedMultiplier = speedScale;
         }
 
         public EnemyConfig EnemyConfig => enemyConfig;
         public int Count => Mathf.Max(1, count);
         public float SpawnInterval => Mathf.Max(0.1f, spawnInterval);
         public float DelayBeforeGroup => Mathf.Max(0f, delayBeforeGroup);
+        public float HealthMultiplier => Mathf.Max(0.1f, healthMultiplier);
+        public float SpeedMultiplier => Mathf.Max(0.1f, speedMultiplier);
 
         public bool IsValid()
         {
             return enemyConfig != null
                 && enemyConfig.IsValid()
                 && Count > 0
-                && SpawnInterval > 0f;
+                && SpawnInterval > 0f
+                && healthMultiplier > 0f
+                && speedMultiplier > 0f;
         }
     }
 }

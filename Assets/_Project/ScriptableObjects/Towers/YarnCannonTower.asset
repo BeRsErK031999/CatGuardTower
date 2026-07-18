@@ -14,9 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CatGuard.Gameplay.Towers.TowerConfig
   towerId: yarn_cannon
   displayName: Yarn
-  range: 2.15
-  damage: 2.4
-  fireInterval: 0.72
+  range: 2.25
+  damage: 1.8
+  fireInterval: 0.75
+  splashRadius: 0.7
   visualScale: 0.72
   visualColor: {r: 0.96, g: 0.72, b: 0.28, a: 1}
   buildCost: 50

@@ -24,14 +24,16 @@ namespace CatGuard.Gameplay.Enemies
         public void Initialize(
             PrototypeLevelController owner,
             Vector2[] path,
-            EnemyConfig enemyConfig)
+            EnemyConfig enemyConfig,
+            float healthMultiplier = 1f,
+            float speedMultiplier = 1f)
         {
             levelController = owner;
             config = enemyConfig;
             pathPoints = path;
-            maxHealth = config.Health;
+            maxHealth = config.Health * Mathf.Max(0.1f, healthMultiplier);
             currentHealth = maxHealth;
-            speed = config.Speed;
+            speed = config.Speed * Mathf.Max(0.1f, speedMultiplier);
             baseDamage = config.BaseDamage;
             nextPathIndex = 1;
             completed = false;

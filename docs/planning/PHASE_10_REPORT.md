@@ -75,10 +75,12 @@ If multiple devices are connected, pass `-DeviceSerial <serial>`. Use `-Offline`
 Обязательная проверка производительности на физическом устройстве:
 
 ```text
-powershell -ExecutionPolicy Bypass -File tools\android\run-device-qa.ps1 -ApkPath Builds\Android\CatGuardTowerDefense-qa.apk -DeviceSerial <serial> -MinimumAverageFps 30 -MaximumP95FrameTimeMs 50 -MinimumFrameSamples 30 -RequirePerformance
+powershell -ExecutionPolicy Bypass -File tools\android\run-device-qa.ps1 -ApkPath Builds\Android\CatGuardTowerDefense-qa.apk -DeviceSerial <serial> -MinimumAverageFps 30 -MaximumP95FrameTimeMs 50 -MinimumFrameSamples 30 -RequirePerformance -RequirePhysicalDevice
 ```
 
 `dumpsys gfxinfo` не содержит кадры нативного Unity `SurfaceView`, поэтому runner находит слой приложения с суффиксом `(BLAST)` и вычисляет интервалы по фактическим меткам показа `SurfaceFlinger`. Без `-RequirePerformance` метрики записываются в отчёт, но сами по себе не завершают QA ошибкой.
+
+Если подключены и телефон, и эмулятор, runner автоматически предпочитает физическое устройство. Флаг `-RequirePhysicalDevice` завершает запуск кодом `2`, когда доступен только эмулятор, и защищает итоговый отчёт от неверной маркировки.
 
 Expected validation result:
 

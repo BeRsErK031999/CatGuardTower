@@ -9,7 +9,8 @@ param(
     [int]$MinimumFrameSamples = 30,
     [switch]$SkipInstall,
     [switch]$Offline,
-    [switch]$RequirePerformance
+    [switch]$RequirePerformance,
+    [switch]$RequirePhysicalDevice
 )
 
 Set-StrictMode -Version Latest
@@ -203,6 +204,9 @@ if (-not (Test-Path -LiteralPath $resolvedApkPath)) {
 $script:AdbPath = Find-Adb
 $devices = Invoke-Adb -Arguments @("devices", "-l")
 $deviceLines = @($devices.Output | Where-Object { $_ -match "^\S+\s+device\b" })
+$physicalDeviceLines = @($deviceLines | Where-Object {
+    $_ -notmatch '^emulator-\d+\s+' -and $_ -notmatch '\bmodel:sdk_'
+})
 
 if ($deviceLines.Count -eq 0) {
     Write-Host "No connected Android device is ready for QA."
@@ -223,16 +227,34 @@ if ($DeviceSerial) {
 
     $targetSerial = $DeviceSerial
 } else {
-    $selectedLine = $deviceLines[0]
+    $selectedLine = if ($physicalDeviceLines.Count -gt 0) {
+        $physicalDeviceLines[0]
+    }
+    else {
+        $deviceLines[0]
+    }
     $targetSerial = ($selectedLine -split "\s+")[0]
 
     if ($deviceLines.Count -gt 1) {
-        Write-Host "Multiple Android devices are ready. Using first device: $targetSerial"
+        Write-Host "Multiple Android devices are ready. Preferring target: $targetSerial"
         Write-Host "Pass -DeviceSerial to target another device."
     }
 }
 
 $script:TargetArgs = @("-s", $targetSerial)
+$emulatorResult = Invoke-TargetAdb -Arguments @("shell", "getprop", "ro.kernel.qemu") -AllowFailure
+$isEmulator = $targetSerial -match '^emulator-\d+$' -or (($emulatorResult.Output -join "").Trim() -eq "1")
+if ($RequirePhysicalDevice -and $isEmulator) {
+    Write-Host "Physical Android device is required, but selected target is an emulator: $targetSerial"
+    Write-Host "Connect the phone with USB debugging enabled or pass its serial through -DeviceSerial."
+    exit 2
+}
+
+$deviceModel = ((Invoke-TargetAdb -Arguments @("shell", "getprop", "ro.product.model") -AllowFailure).Output -join "").Trim()
+$deviceManufacturer = ((Invoke-TargetAdb -Arguments @("shell", "getprop", "ro.product.manufacturer") -AllowFailure).Output -join "").Trim()
+$deviceAbi = ((Invoke-TargetAdb -Arguments @("shell", "getprop", "ro.product.cpu.abi") -AllowFailure).Output -join "").Trim()
+$androidVersion = ((Invoke-TargetAdb -Arguments @("shell", "getprop", "ro.build.version.release") -AllowFailure).Output -join "").Trim()
+$androidApiLevel = ((Invoke-TargetAdb -Arguments @("shell", "getprop", "ro.build.version.sdk") -AllowFailure).Output -join "").Trim()
 
 $resolvedOutputDir = Resolve-ProjectPath $OutputDir
 $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
@@ -351,6 +373,12 @@ $frameRateLines = @($displayResult.Output | Where-Object { $_ -match "(?i)fps|re
 $summary = [pscustomobject]@{
     timestampUtc = (Get-Date).ToUniversalTime().ToString("o")
     deviceSerial = $targetSerial
+    deviceKind = if ($isEmulator) { "emulator" } else { "physical" }
+    deviceManufacturer = $deviceManufacturer
+    deviceModel = $deviceModel
+    deviceAbi = $deviceAbi
+    androidVersion = $androidVersion
+    androidApiLevel = $androidApiLevel
     packageName = $PackageName
     apkPath = $resolvedApkPath
     skipInstall = [bool]$SkipInstall

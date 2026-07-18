@@ -5,6 +5,7 @@ using CatGuard.Gameplay.Levels;
 using CatGuard.Meta.DailyRewards;
 using CatGuard.Meta.Progression;
 using CatGuard.Meta.Upgrades;
+using CatGuard.QA;
 using CatGuard.SDK.Ads;
 using CatGuard.SDK.Analytics;
 using UnityEngine;
@@ -111,6 +112,8 @@ namespace CatGuard.UI.Screens
                 dailyRewardChain,
                 dailyMissionCatalog,
                 new FakeRewardedAdService());
+
+            DevelopmentQaService.TryBeginLevel(levelCatalog);
         }
 
         private void OnDestroy()

@@ -5,6 +5,7 @@ using CatGuard.Gameplay.Grid;
 using CatGuard.Gameplay.Towers;
 using CatGuard.Gameplay.Waves;
 using CatGuard.Meta.Progression;
+using CatGuard.QA;
 using CatGuard.SDK.Ads;
 using CatGuard.SDK.Analytics;
 using CatGuard.UI.HUD;
@@ -345,6 +346,8 @@ namespace CatGuard.Gameplay.Levels
             waveSpawner.Initialize(this, config.WaveConfig);
             hud.Initialize(this);
             AnalyticsService.TrackLevelStart(config, Lives);
+
+            DevelopmentQaService.TryAttach(this, towerGrid);
         }
 
         private void EvaluateResult()

@@ -132,9 +132,9 @@ public static class Phase9ProjectSetup
             EnsureWave("FishBarrelWave", new[] { new WaveEnemyGroup(enemies[2], 5, 0.66f), new WaveEnemyGroup(enemies[1], 4, 0.78f, 0.5f), new WaveEnemyGroup(enemies[3], 8, 0.32f, 0.5f) }),
             EnsureWave("MoonlitFenceWave", new[] { new WaveEnemyGroup(enemies[0], 6, 0.46f), new WaveEnemyGroup(enemies[4], 2, 1.1f, 0.8f), new WaveEnemyGroup(enemies[2], 5, 0.62f, 0.7f), new WaveEnemyGroup(enemies[3], 6, 0.3f, 0.4f) }),
             EnsureWave("RoofCornerWave", new[] { new WaveEnemyGroup(enemies[1], 5, 0.7f), new WaveEnemyGroup(enemies[4], 3, 1f, 0.6f), new WaveEnemyGroup(enemies[3], 10, 0.28f, 0.6f) }),
-            EnsureWave("OldWellWave", new[] { new WaveEnemyGroup(enemies[2], 9, 0.52f, 0f, 2.5f, 1.8f), new WaveEnemyGroup(enemies[1], 7, 0.62f, 0.4f, 2.5f, 1.8f), new WaveEnemyGroup(enemies[4], 5, 0.82f, 0.6f, 2.5f, 1.8f) }),
-            EnsureWave("OrchardWallWave", new[] { new WaveEnemyGroup(enemies[3], 14, 0.24f, 0f, 2.8f, 1.9f), new WaveEnemyGroup(enemies[0], 9, 0.36f, 0.3f, 2.8f, 1.9f), new WaveEnemyGroup(enemies[4], 6, 0.78f, 0.6f, 2.8f, 1.9f), new WaveEnemyGroup(enemies[1], 7, 0.56f, 0.4f, 2.8f, 1.9f) }),
-            EnsureWave("QuietAlleyWave", new[] { new WaveEnemyGroup(enemies[2], 10, 0.44f, 0f, 3.1f, 2f), new WaveEnemyGroup(enemies[1], 8, 0.56f, 0.4f, 3.1f, 2f), new WaveEnemyGroup(enemies[4], 7, 0.74f, 0.6f, 3.1f, 2f), new WaveEnemyGroup(enemies[3], 16, 0.22f, 0.4f, 3.1f, 2f) })
+            EnsureWave("OldWellWave", new[] { new WaveEnemyGroup(enemies[2], 9, 0.52f, 0f, 1.5f, 1.2f), new WaveEnemyGroup(enemies[1], 7, 0.62f, 0.4f, 1.5f, 1.2f), new WaveEnemyGroup(enemies[4], 5, 0.82f, 0.6f, 1.5f, 1.2f) }),
+            EnsureWave("OrchardWallWave", new[] { new WaveEnemyGroup(enemies[3], 14, 0.24f, 0f, 1.7f, 1.3f), new WaveEnemyGroup(enemies[0], 9, 0.36f, 0.3f, 1.7f, 1.3f), new WaveEnemyGroup(enemies[4], 6, 0.78f, 0.6f, 1.7f, 1.3f), new WaveEnemyGroup(enemies[1], 7, 0.56f, 0.4f, 1.7f, 1.3f) }),
+            EnsureWave("QuietAlleyWave", new[] { new WaveEnemyGroup(enemies[2], 10, 0.44f, 0f, 1.9f, 1.4f), new WaveEnemyGroup(enemies[1], 8, 0.56f, 0.4f, 1.9f, 1.4f), new WaveEnemyGroup(enemies[4], 7, 0.74f, 0.6f, 1.9f, 1.4f), new WaveEnemyGroup(enemies[3], 16, 0.22f, 0.4f, 1.9f, 1.4f) })
         };
 
         return waves;

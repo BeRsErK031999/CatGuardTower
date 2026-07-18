@@ -243,6 +243,8 @@ Only mark tasks as done when they are actually present in the repository or veri
 * [x] Check critical Unity/AndroidRuntime errors during emulator smoke.
 * [x] Prepare repeatable real-device Android QA runner.
 * [x] Add SurfaceFlinger FPS metrics and enforceable performance thresholds to the Android QA runner.
+* [x] Add repeatable emulator scenarios that place towers, finish a selected level, and save battle evidence.
+* [x] Rebalance and automatically verify late levels 8-10 on Android 14 emulator.
 
 ## Phase 11 - Google Play Preparation
 

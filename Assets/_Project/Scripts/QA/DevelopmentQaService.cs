@@ -47,9 +47,13 @@ namespace CatGuard.QA
                     return false;
                 }
 
+                if (!TrySelectRequestedLevel(level, command))
+                {
+                    return false;
+                }
+
                 activeCommand = command;
                 Debug.Log($"Development QA starts scenario '{command.scenarioId}' on level '{command.levelId}'.");
-                ProgressionService.SelectLevel(level);
                 SceneLoader.LoadLevel();
                 return true;
             }
@@ -101,6 +105,25 @@ namespace CatGuard.QA
 
             var internalPath = Path.Combine(internalFilesPath, CommandFileName);
             return File.Exists(internalPath) ? internalPath : string.Empty;
+        }
+
+        private static bool TrySelectRequestedLevel(LevelConfig level, DevelopmentQaCommand command)
+        {
+            var save = ProgressionService.EnsureSave();
+            if (!save.unlockedLevelIds.Contains(level.LevelId))
+            {
+                save.unlockedLevelIds.Add(level.LevelId);
+            }
+
+            ProgressionService.SelectLevel(level);
+            var selectedLevel = ProgressionService.GetSelectedLevelOrDefault(null);
+            if (selectedLevel != null && selectedLevel.LevelId == level.LevelId)
+            {
+                return true;
+            }
+
+            WriteFailure(command.scenarioId, command.levelId, "Requested QA level could not be selected.");
+            return false;
         }
 
         private static string GetInternalFilesPath()

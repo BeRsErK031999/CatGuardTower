@@ -230,6 +230,7 @@ $externalFilesPath = "/sdcard/Android/data/$PackageName/files"
 
 Invoke-TargetAdb -Arguments @("shell", "am", "force-stop", $PackageName) -AllowFailure | Out-Null
 Invoke-TargetAdb -Arguments @("shell", "rm", "-f", "$externalFilesPath/catguard-qa-command.json", "$externalFilesPath/catguard-qa-result.json") -AllowFailure | Out-Null
+Invoke-TargetAdb -Arguments @("shell", "run-as", $PackageName, "mkdir", "-p", "files") | Out-Null
 Invoke-TargetAdb -Arguments @("shell", "run-as", $PackageName, "rm", "-f", "files/catguard-qa-command.json", "files/catguard-qa-result.json") | Out-Null
 Invoke-TargetAdb -Arguments @("push", $commandPath, $remoteCommandPath) | Out-Null
 Invoke-TargetAdb -Arguments @("shell", "run-as", $PackageName, "cp", $remoteCommandPath, "files/catguard-qa-command.json") | Out-Null

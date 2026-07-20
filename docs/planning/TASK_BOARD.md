@@ -144,6 +144,7 @@ Only mark tasks as done when they are actually present in the repository or veri
 
 * [x] Add placeholder or free visual assets.
 * [x] Replace runtime tower and enemy geometric placeholders with config-driven illustrated sprites.
+* [x] Polish route, endpoints, and placement cells against the illustrated battlefield.
 * [x] Add basic sounds.
 * [x] Add basic music.
 * [x] Add basic VFX.

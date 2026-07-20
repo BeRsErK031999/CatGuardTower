@@ -32,6 +32,7 @@ namespace CatGuard.Gameplay.Levels
         private bool victoryRewardDoubled;
         private bool reviveUsed;
         private Sprite gameplayBackgroundSprite;
+        private Material gameplayPathMaterial;
 
         public PrototypeLevelState State { get; private set; } = PrototypeLevelState.NotStarted;
         public int Lives { get; private set; }
@@ -404,8 +405,18 @@ namespace CatGuard.Gameplay.Levels
             }
 
             CreatePathLine(mapRoot.transform);
-            CreateMarker("Spawn", config.PathPoints[0], new Color(0.3f, 0.85f, 0.45f), mapRoot.transform);
-            CreateMarker("Base", config.PathPoints[^1], new Color(0.95f, 0.65f, 0.2f), mapRoot.transform);
+            CreateMarker(
+                "Spawn",
+                config.PathPoints[0],
+                new Color(0.035f, 0.16f, 0.14f, 0.88f),
+                new Color(0.3f, 0.82f, 0.48f, 0.9f),
+                mapRoot.transform);
+            CreateMarker(
+                "Base",
+                config.PathPoints[^1],
+                new Color(0.24f, 0.11f, 0.035f, 0.88f),
+                new Color(0.94f, 0.61f, 0.18f, 0.92f),
+                mapRoot.transform);
         }
 
         private void FitCameraToLevel()
@@ -510,18 +521,49 @@ namespace CatGuard.Gameplay.Levels
 
         private void CreatePathLine(Transform parent)
         {
-            var pathObject = new GameObject("EnemyPath");
+            gameplayPathMaterial = new Material(Shader.Find("Sprites/Default"))
+            {
+                name = "GameplayPathMaterial"
+            };
+
+            CreatePathStroke(
+                "EnemyPathBorder",
+                0.42f,
+                4,
+                new Color(0.2f, 0.105f, 0.04f, 0.8f),
+                new Color(0.25f, 0.13f, 0.05f, 0.82f),
+                parent);
+            CreatePathStroke(
+                "EnemyPath",
+                0.29f,
+                5,
+                new Color(0.78f, 0.64f, 0.38f, 0.92f),
+                new Color(0.74f, 0.48f, 0.22f, 0.94f),
+                parent);
+        }
+
+        private void CreatePathStroke(
+            string objectName,
+            float width,
+            int sortingOrder,
+            Color startColor,
+            Color endColor,
+            Transform parent)
+        {
+            var pathObject = new GameObject(objectName);
             pathObject.transform.SetParent(parent, false);
 
             var line = pathObject.AddComponent<LineRenderer>();
             line.positionCount = config.PathPoints.Length;
             line.useWorldSpace = true;
-            line.startWidth = 0.34f;
-            line.endWidth = 0.34f;
-            line.sortingOrder = 5;
-            line.material = new Material(Shader.Find("Sprites/Default"));
-            line.startColor = new Color(0.96f, 0.75f, 0.34f);
-            line.endColor = new Color(0.96f, 0.6f, 0.24f);
+            line.startWidth = width;
+            line.endWidth = width;
+            line.numCornerVertices = 6;
+            line.numCapVertices = 8;
+            line.sortingOrder = sortingOrder;
+            line.sharedMaterial = gameplayPathMaterial;
+            line.startColor = startColor;
+            line.endColor = endColor;
 
             for (var index = 0; index < config.PathPoints.Length; index++)
             {
@@ -539,17 +581,31 @@ namespace CatGuard.Gameplay.Levels
             return config.AvailableTowers[towerIndex];
         }
 
-        private static void CreateMarker(string markerName, Vector2 position, Color color, Transform parent)
+        private static void CreateMarker(
+            string markerName,
+            Vector2 position,
+            Color borderColor,
+            Color fillColor,
+            Transform parent)
         {
             var markerObject = new GameObject(markerName);
             markerObject.transform.SetParent(parent, false);
             markerObject.transform.position = position;
-            markerObject.transform.localScale = new Vector3(0.72f, 0.72f, 1f);
+            markerObject.transform.localScale = new Vector3(0.64f, 0.64f, 1f);
 
             var renderer = markerObject.AddComponent<SpriteRenderer>();
             renderer.sprite = PrototypeSpriteFactory.CircleSprite;
-            renderer.color = color;
-            renderer.sortingOrder = 8;
+            renderer.color = borderColor;
+            renderer.sortingOrder = 7;
+
+            var fillObject = new GameObject("Fill");
+            fillObject.transform.SetParent(markerObject.transform, false);
+            fillObject.transform.localScale = new Vector3(0.7f, 0.7f, 1f);
+
+            var fillRenderer = fillObject.AddComponent<SpriteRenderer>();
+            fillRenderer.sprite = PrototypeSpriteFactory.CircleSprite;
+            fillRenderer.color = fillColor;
+            fillRenderer.sortingOrder = 8;
         }
 
         private void ClearRuntimeObjects()
@@ -561,6 +617,12 @@ namespace CatGuard.Gameplay.Levels
             {
                 Destroy(gameplayBackgroundSprite);
                 gameplayBackgroundSprite = null;
+            }
+
+            if (gameplayPathMaterial != null)
+            {
+                Destroy(gameplayPathMaterial);
+                gameplayPathMaterial = null;
             }
 
             for (var index = runtimeRoot.childCount - 1; index >= 0; index--)

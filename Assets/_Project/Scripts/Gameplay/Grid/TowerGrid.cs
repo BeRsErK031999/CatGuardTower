@@ -8,7 +8,19 @@ namespace CatGuard.Gameplay.Grid
 {
     public sealed class TowerGrid : MonoBehaviour
     {
-        private readonly Dictionary<Vector2Int, SpriteRenderer> cellRenderers = new();
+        private sealed class CellVisual
+        {
+            public CellVisual(SpriteRenderer border, SpriteRenderer fill)
+            {
+                Border = border;
+                Fill = fill;
+            }
+
+            public SpriteRenderer Border { get; }
+            public SpriteRenderer Fill { get; }
+        }
+
+        private readonly Dictionary<Vector2Int, CellVisual> cellRenderers = new();
         private readonly HashSet<Vector2Int> occupiedCells = new();
 
         private PrototypeLevelController levelController;
@@ -100,14 +112,23 @@ namespace CatGuard.Gameplay.Grid
                     var cellObject = new GameObject($"Cell_{column}_{row}");
                     cellObject.transform.SetParent(transform, false);
                     cellObject.transform.position = GetCellCenter(cell);
-                    cellObject.transform.localScale = Vector3.one * (config.CellSize * 0.86f);
+                    cellObject.transform.localScale = Vector3.one * (config.CellSize * 0.82f);
 
-                    var renderer = cellObject.AddComponent<SpriteRenderer>();
-                    renderer.sprite = PrototypeSpriteFactory.SquareSprite;
-                    renderer.sortingOrder = 2;
-                    renderer.color = new Color(0.18f, 0.28f, 0.32f, 0.45f);
+                    var borderRenderer = cellObject.AddComponent<SpriteRenderer>();
+                    borderRenderer.sprite = PrototypeSpriteFactory.SquareSprite;
+                    borderRenderer.sortingOrder = 2;
+                    borderRenderer.color = new Color(0.07f, 0.26f, 0.24f, 0.5f);
 
-                    cellRenderers[cell] = renderer;
+                    var fillObject = new GameObject("Fill");
+                    fillObject.transform.SetParent(cellObject.transform, false);
+                    fillObject.transform.localScale = new Vector3(0.84f, 0.84f, 1f);
+
+                    var fillRenderer = fillObject.AddComponent<SpriteRenderer>();
+                    fillRenderer.sprite = PrototypeSpriteFactory.SquareSprite;
+                    fillRenderer.sortingOrder = 3;
+                    fillRenderer.color = new Color(0.15f, 0.38f, 0.31f, 0.18f);
+
+                    cellRenderers[cell] = new CellVisual(borderRenderer, fillRenderer);
                 }
             }
         }
@@ -147,12 +168,13 @@ namespace CatGuard.Gameplay.Grid
 
         private void UpdateCellVisual(Vector2Int cell)
         {
-            if (!cellRenderers.TryGetValue(cell, out var renderer))
+            if (!cellRenderers.TryGetValue(cell, out var visual))
             {
                 return;
             }
 
-            renderer.color = new Color(0.12f, 0.44f, 0.52f, 0.65f);
+            visual.Border.color = new Color(0.1f, 0.42f, 0.37f, 0.72f);
+            visual.Fill.color = new Color(0.17f, 0.5f, 0.42f, 0.34f);
         }
     }
 }

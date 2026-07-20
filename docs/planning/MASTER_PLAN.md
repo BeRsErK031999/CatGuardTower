@@ -15,7 +15,7 @@ Current state:
 - Phase 3 tower defense core exists: `Level01Config` references 3 tower configs, 3 enemy configs, and `FirstCoreWave`.
 - Phase 4 progression exists: local JSON saves, Fish Coins, three permanent upgrades, level selection, and level unlocks.
 - Phase 5 daily loop exists: local 7-day rewards, daily missions, Daily screen, and a fake rewarded x2 hook behind an ad wrapper.
-- Phase 6 polish exists: illustrated config-driven tower/enemy sprites with procedural fallbacks, generated audio/music, lightweight VFX, RU/EN localization, and sound/language settings.
+- Phase 6 polish exists: illustrated config-driven tower/enemy sprites with procedural fallbacks, a layered garden path and placement grid, generated audio/music, lightweight VFX, RU/EN localization, and sound/language settings.
 - Phase 7 analytics boundary exists: gameplay/meta code emits analytics events through `AnalyticsService`, fake analytics works in Editor, and the Firebase adapter is compile-flag gated until SDK/config files are added.
 - Phase 8 rewarded placements exist through the fake ad wrapper: victory reward x2, revive after defeat, daily reward x2, and daily free coins.
 - Phase 9 MVP content exists: 10 playable level configs, 5 towers, 5 enemies, a tutorial first level, and a validated difficulty ramp.

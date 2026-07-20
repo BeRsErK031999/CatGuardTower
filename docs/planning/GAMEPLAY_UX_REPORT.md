@@ -22,6 +22,9 @@ Date: 2026-07-13
 - Replaced runtime geometric tower placeholders with five config-driven guardian-cat sprites.
 - Replaced runtime geometric enemy placeholders with five config-driven garden-invader sprites.
 - Kept the procedural diamond/circle visuals as a safe fallback when a config has no sprite.
+- Replaced the flat orange route with a rounded two-layer garden path.
+- Reworked spawn/base markers into bordered, color-coded endpoints.
+- Reworked placement cells into quieter two-layer teal tiles with a distinct occupied state.
 
 ## Physical-Device Verification
 
@@ -46,6 +49,15 @@ Date: 2026-07-13
 - Enforced samples passed at 39.94 FPS / 38.67 ms P95 and 37.88 FPS / 40.98 ms P95.
 - Evidence: `Builds/Android/qa-device/level-scenarios/20260720-153250-level_10-unit-art`, `20260720-153422-level_10-unit-art-late`, and `20260720-153620-level_01-unit-art-roster`.
 
+## Emulator Battlefield Verification
+
+- Date: 2026-07-20.
+- The normal menu-to-level flow opened Greenhouse in `Preparing` with an unobstructed tower selector and `Начать волну` action.
+- Empty cells, occupied cells, rounded route corners, spawn, and base markers remained readable against the garden artwork.
+- Level 10 completed with 41/41 defeated, 0 escaped, and 0 fatal signatures.
+- The enforced sample passed at 34.16 FPS average and 40.71 ms P95.
+- Evidence: `Builds/Android/qa-device/battlefield-polish/preparing-final.png` and `Builds/Android/qa-device/level-scenarios/20260720-162042-level_10-battlefield-polish`.
+
 ## Intentionally Not Touched
 
 - Level, wave, upgrade, and economy ScriptableObject values.
@@ -55,7 +67,5 @@ Date: 2026-07-13
 
 ## Known Risks / Next TODO
 
-- Waves begin immediately, leaving too little preparation time for a new player.
-- Route and grid contrast should be tuned after final unit art is introduced.
 - The physical-device QA run advanced the QA save through Greenhouse and unlocked Porch Stand.
 - Final unit-art scale and contrast still need confirmation on the target physical device.

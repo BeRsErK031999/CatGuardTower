@@ -22,6 +22,8 @@ public static class Phase9ProjectSetup
     private const string EnemyConfigFolder = "Assets/_Project/ScriptableObjects/Enemies";
     private const string LevelConfigFolder = "Assets/_Project/ScriptableObjects/Levels";
     private const string EconomyConfigFolder = "Assets/_Project/ScriptableObjects/Economy";
+    private const string TowerArtFolder = "Assets/_Project/Art/Units/Towers";
+    private const string EnemyArtFolder = "Assets/_Project/Art/Units/Enemies";
 
     private const string LevelCatalogPath = LevelConfigFolder + "/LevelCatalog.asset";
     private const string UpgradeCatalogPath = EconomyConfigFolder + "/UpgradeCatalog.asset";
@@ -62,15 +64,17 @@ public static class Phase9ProjectSetup
         Directory.CreateDirectory(EnemyConfigFolder);
         Directory.CreateDirectory(LevelConfigFolder);
         Directory.CreateDirectory(EconomyConfigFolder);
+        Directory.CreateDirectory(TowerArtFolder);
+        Directory.CreateDirectory(EnemyArtFolder);
     }
 
     private static TowerConfig[] EnsureTowerConfigs()
     {
-        var dart = EnsureTower("CatDartTower", "cat_dart", "Dart", 2.7f, 1f, 0.28f, 0.56f, new Color(0.24f, 0.78f, 0.96f), 45, 0f);
-        var yarn = EnsureTower("YarnCannonTower", "yarn_cannon", "Yarn", 2.25f, 1.8f, 0.75f, 0.72f, new Color(0.96f, 0.72f, 0.28f), 50, 0.7f);
-        var bell = EnsureTower("BellSniperTower", "bell_sniper", "Bell", 4.4f, 4.2f, 1.05f, 0.5f, new Color(0.72f, 0.45f, 0.95f), 55, 0f);
-        var laser = EnsureTower("LaserPointerTower", "laser_pointer", "Laser", 3.2f, 0.65f, 0.14f, 0.48f, new Color(0.38f, 1f, 0.62f), 60, 0f);
-        var blanket = EnsureTower("BlanketBoomTower", "blanket_boom", "Blanket", 1.9f, 4.8f, 1.15f, 0.82f, new Color(1f, 0.42f, 0.62f), 65, 1.05f);
+        var dart = EnsureTower("CatDartTower", "cat_dart", "Dart", 2.7f, 1f, 0.28f, 0.56f, new Color(0.24f, 0.78f, 0.96f), 45, 0f, $"{TowerArtFolder}/cat_dart.png");
+        var yarn = EnsureTower("YarnCannonTower", "yarn_cannon", "Yarn", 2.25f, 1.8f, 0.75f, 0.72f, new Color(0.96f, 0.72f, 0.28f), 50, 0.7f, $"{TowerArtFolder}/yarn_cannon.png");
+        var bell = EnsureTower("BellSniperTower", "bell_sniper", "Bell", 4.4f, 4.2f, 1.05f, 0.5f, new Color(0.72f, 0.45f, 0.95f), 55, 0f, $"{TowerArtFolder}/bell_sniper.png");
+        var laser = EnsureTower("LaserPointerTower", "laser_pointer", "Laser", 3.2f, 0.65f, 0.14f, 0.48f, new Color(0.38f, 1f, 0.62f), 60, 0f, $"{TowerArtFolder}/laser_pointer.png");
+        var blanket = EnsureTower("BlanketBoomTower", "blanket_boom", "Blanket", 1.9f, 4.8f, 1.15f, 0.82f, new Color(1f, 0.42f, 0.62f), 65, 1.05f, $"{TowerArtFolder}/blanket_boom.png");
 
         return new[] { dart, yarn, bell, laser, blanket };
     }
@@ -85,21 +89,22 @@ public static class Phase9ProjectSetup
         float scale,
         Color color,
         int buildCost,
-        float splashRadius)
+        float splashRadius,
+        string spritePath)
     {
         var tower = EnsureAsset<TowerConfig>($"{TowerConfigFolder}/{assetName}.asset");
-        tower.Configure(id, displayName, range, damage, interval, scale, color, buildCost, splashRadius);
+        tower.Configure(id, displayName, range, damage, interval, scale, color, buildCost, splashRadius, EnsureUnitSprite(spritePath));
         EditorUtility.SetDirty(tower);
         return tower;
     }
 
     private static EnemyConfig[] EnsureEnemyConfigs()
     {
-        var scout = EnsureEnemy("MouseScoutEnemy", "mouse_scout", "Mouse Scout", 2f, 1.25f, 1, 0.34f, new Color(1f, 0.34f, 0.34f), 5);
-        var bruiser = EnsureEnemy("RatBruiserEnemy", "rat_bruiser", "Rat Bruiser", 6f, 0.55f, 2, 0.58f, new Color(0.86f, 0.42f, 0.18f), 12);
-        var guard = EnsureEnemy("BeetleGuardEnemy", "beetle_guard", "Beetle Guard", 4f, 0.85f, 1, 0.46f, new Color(0.42f, 0.8f, 0.35f), 8);
-        var moth = EnsureEnemy("MothSwarmEnemy", "moth_swarm", "Moth Swarm", 1.5f, 1.55f, 1, 0.3f, new Color(0.95f, 0.74f, 1f), 4);
-        var snail = EnsureEnemy("SnailTankEnemy", "snail_tank", "Snail Tank", 10f, 0.35f, 3, 0.7f, new Color(0.35f, 0.72f, 0.92f), 18);
+        var scout = EnsureEnemy("MouseScoutEnemy", "mouse_scout", "Mouse Scout", 2f, 1.25f, 1, 0.34f, new Color(1f, 0.34f, 0.34f), 5, $"{EnemyArtFolder}/mouse_scout.png");
+        var bruiser = EnsureEnemy("RatBruiserEnemy", "rat_bruiser", "Rat Bruiser", 6f, 0.55f, 2, 0.58f, new Color(0.86f, 0.42f, 0.18f), 12, $"{EnemyArtFolder}/rat_bruiser.png");
+        var guard = EnsureEnemy("BeetleGuardEnemy", "beetle_guard", "Beetle Guard", 4f, 0.85f, 1, 0.46f, new Color(0.42f, 0.8f, 0.35f), 8, $"{EnemyArtFolder}/beetle_guard.png");
+        var moth = EnsureEnemy("MothSwarmEnemy", "moth_swarm", "Moth Swarm", 1.5f, 1.55f, 1, 0.3f, new Color(0.95f, 0.74f, 1f), 4, $"{EnemyArtFolder}/moth_swarm.png");
+        var snail = EnsureEnemy("SnailTankEnemy", "snail_tank", "Snail Tank", 10f, 0.35f, 3, 0.7f, new Color(0.35f, 0.72f, 0.92f), 18, $"{EnemyArtFolder}/snail_tank.png");
 
         return new[] { scout, bruiser, guard, moth, snail };
     }
@@ -113,12 +118,53 @@ public static class Phase9ProjectSetup
         int baseDamage,
         float scale,
         Color color,
-        int battleFishReward)
+        int battleFishReward,
+        string spritePath)
     {
         var enemy = EnsureAsset<EnemyConfig>($"{EnemyConfigFolder}/{assetName}.asset");
-        enemy.Configure(id, displayName, health, speed, baseDamage, scale, color, battleFishReward);
+        enemy.Configure(id, displayName, health, speed, baseDamage, scale, color, battleFishReward, EnsureUnitSprite(spritePath));
         EditorUtility.SetDirty(enemy);
         return enemy;
+    }
+
+    private static Sprite EnsureUnitSprite(string assetPath)
+    {
+        AssetDatabase.ImportAsset(assetPath, ImportAssetOptions.ForceUpdate);
+        var importer = AssetImporter.GetAtPath(assetPath) as TextureImporter;
+        if (importer == null)
+        {
+            throw new InvalidDataException($"Unit sprite texture is missing or invalid: {assetPath}");
+        }
+
+        var requiresReimport = importer.textureType != TextureImporterType.Sprite
+            || importer.spriteImportMode != SpriteImportMode.Single
+            || !importer.alphaIsTransparency
+            || importer.mipmapEnabled
+            || importer.spritePixelsPerUnit != 256f
+            || importer.filterMode != FilterMode.Bilinear
+            || importer.wrapMode != TextureWrapMode.Clamp
+            || importer.textureCompression != TextureImporterCompression.Uncompressed;
+
+        if (requiresReimport)
+        {
+            importer.textureType = TextureImporterType.Sprite;
+            importer.spriteImportMode = SpriteImportMode.Single;
+            importer.alphaIsTransparency = true;
+            importer.mipmapEnabled = false;
+            importer.spritePixelsPerUnit = 256f;
+            importer.filterMode = FilterMode.Bilinear;
+            importer.wrapMode = TextureWrapMode.Clamp;
+            importer.textureCompression = TextureImporterCompression.Uncompressed;
+            importer.SaveAndReimport();
+        }
+
+        var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(assetPath);
+        if (sprite == null)
+        {
+            throw new InvalidDataException($"Unit sprite import did not produce a Sprite: {assetPath}");
+        }
+
+        return sprite;
     }
 
     private static WaveConfig[] EnsureWaveConfigs(IReadOnlyList<EnemyConfig> enemies)
@@ -490,6 +536,10 @@ public static class Phase9ProjectSetup
         {
             splashTowerCount += tower.SplashRadius > 0f ? 1 : 0;
             hasLongRangeTower |= tower.Range >= 4f;
+            if (tower.VisualSprite == null)
+            {
+                errors.Add($"Tower {tower.TowerId} must reference its unit sprite.");
+            }
         }
 
         if (splashTowerCount < 2)
@@ -512,6 +562,11 @@ public static class Phase9ProjectSetup
             if (enemy.BattleFishReward <= 0)
             {
                 errors.Add($"Enemy {enemy.EnemyId} must grant a positive battle Fish reward.");
+            }
+
+            if (enemy.VisualSprite == null)
+            {
+                errors.Add($"Enemy {enemy.EnemyId} must reference its unit sprite.");
             }
         }
 

@@ -20,4 +20,5 @@ MonoBehaviour:
   splashRadius: 0
   visualScale: 0.5
   visualColor: {r: 0.72, g: 0.45, b: 0.95, a: 1}
+  visualSprite: {fileID: 21300000, guid: a47c1f94b5ee3ce4fb7e0efd70312988, type: 3}
   buildCost: 55

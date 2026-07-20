@@ -143,6 +143,7 @@ Only mark tasks as done when they are actually present in the repository or veri
 ### Done
 
 * [x] Add placeholder or free visual assets.
+* [x] Replace runtime tower and enemy geometric placeholders with config-driven illustrated sprites.
 * [x] Add basic sounds.
 * [x] Add basic music.
 * [x] Add basic VFX.
@@ -246,6 +247,7 @@ Only mark tasks as done when they are actually present in the repository or veri
 * [x] Add repeatable emulator scenarios that place towers, finish a selected level, and save battle evidence.
 * [x] Make emulator level scenarios independent of previously unlocked save progress.
 * [x] Rebalance and automatically verify late levels 8-10 on Android 14 emulator.
+* [x] Verify the complete tower/enemy sprite roster in live emulator combat.
 
 ## Phase 11 - Google Play Preparation
 

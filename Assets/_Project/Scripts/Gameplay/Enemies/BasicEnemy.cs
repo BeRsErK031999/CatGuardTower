@@ -94,9 +94,15 @@ namespace CatGuard.Gameplay.Enemies
                 spriteRenderer = gameObject.AddComponent<SpriteRenderer>();
             }
 
-            spriteRenderer.sprite = PrototypeSpriteFactory.CircleSprite;
+            var sprite = config.VisualSprite != null
+                ? config.VisualSprite
+                : PrototypeSpriteFactory.CircleSprite;
+            spriteRenderer.sprite = sprite;
             spriteRenderer.sortingOrder = 20;
-            transform.localScale = new Vector3(config.VisualScale, config.VisualScale, 1f);
+
+            var spriteSize = Mathf.Max(sprite.bounds.size.x, sprite.bounds.size.y);
+            var visualScale = config.VisualScale / Mathf.Max(0.01f, spriteSize);
+            transform.localScale = new Vector3(visualScale, visualScale, 1f);
         }
 
         private void UpdateVisual()
@@ -106,7 +112,11 @@ namespace CatGuard.Gameplay.Enemies
                 return;
             }
 
-            spriteRenderer.color = Color.Lerp(new Color(0.35f, 0.08f, 0.08f), config.VisualColor, HealthPercent);
+            var healthyColor = config.VisualSprite != null ? Color.white : config.VisualColor;
+            var damagedColor = config.VisualSprite != null
+                ? new Color(0.58f, 0.22f, 0.22f)
+                : new Color(0.35f, 0.08f, 0.08f);
+            spriteRenderer.color = Color.Lerp(damagedColor, healthyColor, HealthPercent);
         }
 
         private void ReachBase()

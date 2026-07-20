@@ -18,6 +18,7 @@ namespace CatGuard.Gameplay.Towers
         [Min(0.1f)]
         [SerializeField] private float visualScale = 0.62f;
         [SerializeField] private Color visualColor = new(0.24f, 0.78f, 0.96f);
+        [SerializeField] private Sprite visualSprite;
 
         [Header("Economy")]
         [Min(1)]
@@ -31,6 +32,7 @@ namespace CatGuard.Gameplay.Towers
         public float SplashRadius => Mathf.Max(0f, splashRadius);
         public float VisualScale => Mathf.Max(0.1f, visualScale);
         public Color VisualColor => visualColor;
+        public Sprite VisualSprite => visualSprite;
         public int BuildCost => Mathf.Max(1, buildCost);
 
         public bool IsValid()
@@ -53,7 +55,8 @@ namespace CatGuard.Gameplay.Towers
             float scale,
             Color color,
             int cost = 45,
-            float attackSplashRadius = 0f)
+            float attackSplashRadius = 0f,
+            Sprite sprite = null)
         {
             towerId = id;
             displayName = title;
@@ -63,6 +66,7 @@ namespace CatGuard.Gameplay.Towers
             splashRadius = Mathf.Max(0f, attackSplashRadius);
             visualScale = scale;
             visualColor = color;
+            visualSprite = sprite;
             buildCost = Mathf.Max(1, cost);
         }
     }

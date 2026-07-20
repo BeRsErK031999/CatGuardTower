@@ -19,6 +19,9 @@ Date: 2026-07-13
 - Added Russian level title, compact combat statistics, menu action, tower selector, instruction panel, and result overlay.
 - Added HUD touch exclusion zones so UI taps do not place towers.
 - Changed the default language for new saves and initial localization state to Russian.
+- Replaced runtime geometric tower placeholders with five config-driven guardian-cat sprites.
+- Replaced runtime geometric enemy placeholders with five config-driven garden-invader sprites.
+- Kept the procedural diamond/circle visuals as a safe fallback when a config has no sprite.
 
 ## Physical-Device Verification
 
@@ -32,16 +35,27 @@ Date: 2026-07-13
 - The in-level Menu action returned to the Russian main menu.
 - Fatal crash signatures: none.
 
+## Emulator Unit-Art Verification
+
+- Date: 2026-07-20.
+- Target: `CatGuard_API34`, Android 14 / API 34, `emulator-5554`.
+- A fresh x86_64 Development APK was built and installed.
+- Level 10 displayed all five guardian roles across the late combat frame.
+- Levels 1 and 10 together displayed all five enemy roles in live combat.
+- Level 10 completed twice with 41/41 defeated, 0 escaped, and no fatal signatures.
+- Enforced samples passed at 39.94 FPS / 38.67 ms P95 and 37.88 FPS / 40.98 ms P95.
+- Evidence: `Builds/Android/qa-device/level-scenarios/20260720-153250-level_10-unit-art`, `20260720-153422-level_10-unit-art-late`, and `20260720-153620-level_01-unit-art-roster`.
+
 ## Intentionally Not Touched
 
-- Level, wave, tower, enemy, upgrade, and economy ScriptableObject values.
-- Save schema and progression rules.
+- Level, wave, upgrade, and economy ScriptableObject values.
+- Combat balance, tower costs, rewards, progression rules, and save schema.
 - Rewarded-ad, analytics, Firebase, and IAP service boundaries.
-- Placeholder tower and enemy shape implementation.
+- Physical-device QA; this pass was intentionally limited to the emulator.
 
 ## Known Risks / Next TODO
 
 - Waves begin immediately, leaving too little preparation time for a new player.
-- Tower and enemy visuals are still prototype geometric shapes.
 - Route and grid contrast should be tuned after final unit art is introduced.
 - The physical-device QA run advanced the QA save through Greenhouse and unlocked Porch Stand.
+- Final unit-art scale and contrast still need confirmation on the target physical device.

@@ -15,7 +15,7 @@ Current state:
 - Phase 3 tower defense core exists: `Level01Config` references 3 tower configs, 3 enemy configs, and `FirstCoreWave`.
 - Phase 4 progression exists: local JSON saves, Fish Coins, three permanent upgrades, level selection, and level unlocks.
 - Phase 5 daily loop exists: local 7-day rewards, daily missions, Daily screen, and a fake rewarded x2 hook behind an ad wrapper.
-- Phase 6 polish exists: procedural placeholder visuals, generated audio/music, lightweight VFX, RU/EN localization, and sound/language settings.
+- Phase 6 polish exists: illustrated config-driven tower/enemy sprites with procedural fallbacks, generated audio/music, lightweight VFX, RU/EN localization, and sound/language settings.
 - Phase 7 analytics boundary exists: gameplay/meta code emits analytics events through `AnalyticsService`, fake analytics works in Editor, and the Firebase adapter is compile-flag gated until SDK/config files are added.
 - Phase 8 rewarded placements exist through the fake ad wrapper: victory reward x2, revive after defeat, daily reward x2, and daily free coins.
 - Phase 9 MVP content exists: 10 playable level configs, 5 towers, 5 enemies, a tutorial first level, and a validated difficulty ramp.
@@ -182,7 +182,7 @@ Goal: produce a stable Android build:
 
 Main result: the game can be installed and tested on Android without blocking issues.
 
-Current repository status: Android QA settings and build automation are in place. `Builds/Android/CatGuardTowerDefense-qa.apk`, `CatGuardTowerDefense-qa-debug.apk`, and `.aab` were produced locally and ignored by Git. Emulator fallback confirmed offline install/launch to MainMenu and save persistence across restart on the debug APK, and a real-device QA runner exists, but real-device install/FPS QA remains required before closed testing.
+Current repository status: Android QA settings and build automation are in place. `Builds/Android/CatGuardTowerDefense-qa.apk`, `CatGuardTowerDefense-qa-debug.apk`, and `.aab` were produced locally and ignored by Git. Emulator fallback confirmed offline install/launch, save persistence, late-level victory/performance scenarios, and the complete illustrated unit roster in live combat. A real-device QA runner exists, but final physical-device install/FPS and unit-art scale checks remain required before closed testing.
 
 ## Phase 11. Google Play Preparation
 

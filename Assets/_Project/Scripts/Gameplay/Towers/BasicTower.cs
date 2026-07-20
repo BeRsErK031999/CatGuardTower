@@ -64,10 +64,16 @@ namespace CatGuard.Gameplay.Towers
                 spriteRenderer = gameObject.AddComponent<SpriteRenderer>();
             }
 
-            spriteRenderer.sprite = PrototypeSpriteFactory.DiamondSprite;
-            spriteRenderer.color = config.VisualColor;
+            var sprite = config.VisualSprite != null
+                ? config.VisualSprite
+                : PrototypeSpriteFactory.DiamondSprite;
+            spriteRenderer.sprite = sprite;
+            spriteRenderer.color = config.VisualSprite != null ? Color.white : config.VisualColor;
             spriteRenderer.sortingOrder = 15;
-            transform.localScale = new Vector3(config.VisualScale, config.VisualScale, 1f);
+
+            var spriteSize = Mathf.Max(sprite.bounds.size.x, sprite.bounds.size.y);
+            var visualScale = config.VisualScale / Mathf.Max(0.01f, spriteSize);
+            transform.localScale = new Vector3(visualScale, visualScale, 1f);
         }
     }
 }

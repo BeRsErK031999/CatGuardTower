@@ -7,6 +7,7 @@
 - Added Unity batchmode validation for store Android settings.
 - Drafted store listing text, privacy policy, Data Safety answers, store asset checklist, and closed-testing checklist under `docs/store/`.
 - Added generated store image assets under `docs/store/assets/`.
+- Replaced the geometric placeholder icon and feature characters with reviewed illustrated guardian-cat key art and added reproducible master sources under `docs/store/source/`.
 - Replaced the five English synthetic screenshot drafts with current Russian 1080 x 1920 runtime captures from the validated API 34 emulator.
 - Added a non-development x86_64 emulator APK target so store captures do not contain the Unity `Development Build` watermark.
 - Updated the store icon and feature graphic to use the current repo-owned night-garden artwork.

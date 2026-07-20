@@ -49,6 +49,7 @@ Official Google Play reference checked on 2026-07-16:
 
 ## Completed Asset QA
 
+- Replaced the geometric placeholder icon and feature characters with cohesive illustrated guardian-cat artwork while keeping the night-garden direction.
 - Replaced the English synthetic screenshot drafts with current Russian in-app captures.
 - Captured the five-screen set from a non-development x86_64 QA release APK on the validated API 34 emulator.
 - Used a native 1080 x 1920 capture surface and removed the `Development Build` watermark by using a release build rather than editing screenshots.
@@ -57,7 +58,7 @@ Official Google Play reference checked on 2026-07-16:
 
 ## Prepared Alt Text
 
-- App icon: `Кот-защитник на фоне ночных садовых ворот.`
+- App icon: `Золотой кот-защитник в бирюзовом плаще на фоне ночных садовых ворот.`
 - Feature graphic: `Три кота защищают ночной сад от мыши, мотылька и улитки.`
 - Main menu: `Главное меню КотоОбороны с прогрессом и уровнями кампании.`
 - Placement: `Садовый уровень с маршрутом врагов, сеткой и выбором защитников.`

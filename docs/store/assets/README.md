@@ -2,7 +2,7 @@
 
 These image files are the current Phase 11 Google Play asset candidates.
 
-Refresh only the generated icon and feature graphic with:
+Refresh the curated icon and feature graphic from their checked-in master artwork with:
 
 ```text
 powershell -ExecutionPolicy Bypass -File tools\store\generate-store-assets.ps1
@@ -16,6 +16,8 @@ powershell -ExecutionPolicy Bypass -File tools\store\generate-store-assets.ps1 `
 ```
 
 The source directory must contain `01-main-menu.png`, `02-level-placement.png`, `03-wave-combat.png`, `04-victory.png`, and `05-daily.png`. The importer rejects any source that is not exactly 1080 x 1920 and rewrites captures as 24-bit PNG files without alpha.
+
+The reviewed master artwork lives under `docs/store/source/`. The generation script scales and crops those masters deterministically; it no longer recreates the previous geometric placeholder characters.
 
 Validate the committed dimensions, PNG formats, alpha rules, icon size limit, and screenshot aspect ratios with:
 
@@ -35,7 +37,7 @@ powershell -ExecutionPolicy Bypass -File tools\store\validate-store-assets.ps1
 
 ## Review Notes
 
-- The icon and feature graphic combine repo-owned garden artwork with repo-owned generated mascot shapes.
+- The icon and feature graphic use project-owned generated illustrations reviewed against the current night-garden direction.
 - The screenshot set was captured on 2026-07-16 from the current non-development x86_64 QA release APK on the validated `CatGuard_API34` emulator at 1080 x 1920.
 - The screenshots show the real Russian UI and gameplay; they contain no synthetic replacement UI, device frame, status bar, or `Development Build` watermark.
 - Physical-device confirmation remains open with the rest of Phase 10 device QA.

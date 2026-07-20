@@ -271,6 +271,7 @@ Only mark tasks as done when they are actually present in the repository or veri
 * [x] Prepare closed testing checklist.
 * [x] Prepare generated store icon.
 * [x] Prepare generated feature graphic.
+* [x] Replace geometric placeholder store art with reviewed guardian-cat illustrations.
 * [x] Prepare pre-device screenshot asset set.
 * [x] Replace synthetic screenshot drafts with validated emulator release captures.
 * [x] Add a non-development x86_64 APK target for clean store capture sessions.

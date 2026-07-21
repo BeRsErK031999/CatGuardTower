@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using CatGuard.Core.Audio;
+using CatGuard.Gameplay.Battlefield;
+using CatGuard.Gameplay.CameraControl;
 using CatGuard.Gameplay.Enemies;
 using CatGuard.Gameplay.Grid;
 using CatGuard.Gameplay.Towers;
@@ -9,7 +11,6 @@ using CatGuard.QA;
 using CatGuard.SDK.Ads;
 using CatGuard.SDK.Analytics;
 using CatGuard.UI.HUD;
-using CatGuard.UI.Layout;
 using CatGuard.Utils;
 using CatGuard.VFX;
 using UnityEngine;
@@ -33,11 +34,11 @@ namespace CatGuard.Gameplay.Levels
         private bool victoryRewardDoubled;
         private bool reviveUsed;
         private Sprite gameplayBackgroundSprite;
-        private SpriteRenderer gameplayBackgroundRenderer;
         private Material gameplayPathMaterial;
-        private int lastScreenWidth;
-        private int lastScreenHeight;
-        private Rect lastSafeArea;
+        private BattlefieldCameraController battlefieldCameraController;
+        private BattlefieldInputController battlefieldInputController;
+        private Transform unitsLayer;
+        private Transform vfxLayer;
 
         public PrototypeLevelState State { get; private set; } = PrototypeLevelState.NotStarted;
         public int Lives { get; private set; }
@@ -46,6 +47,9 @@ namespace CatGuard.Gameplay.Levels
         public int SpawnedEnemies { get; private set; }
         public int BattleFish { get; private set; }
         public LevelConfig Config => config;
+        public BattlefieldDefinition Battlefield { get; private set; }
+        public BattlefieldCameraController BattlefieldCamera => battlefieldCameraController;
+        public BattlefieldInputController BattlefieldInput => battlefieldInputController;
         public int SelectedTowerIndex => selectedTowerIndex;
         public int TotalEnemies => config?.WaveConfig == null ? 0 : config.WaveConfig.TotalEnemyCount;
         public int ActiveEnemyCount => activeEnemies.Count;
@@ -199,7 +203,7 @@ namespace CatGuard.Gameplay.Levels
             BattleFish -= towerConfig.BuildCost;
 
             var towerObject = new GameObject($"{towerConfig.DisplayName}_{towers.Count + 1:00}");
-            towerObject.transform.SetParent(runtimeRoot, false);
+            towerObject.transform.SetParent(unitsLayer != null ? unitsLayer : runtimeRoot, false);
             towerObject.transform.position = worldPosition;
 
             var tower = towerObject.AddComponent<BasicTower>();
@@ -208,7 +212,7 @@ namespace CatGuard.Gameplay.Levels
             ProgressionService.RecordTowerPlaced();
             AnalyticsService.TrackTowerPlace(config, towerConfig, towers.Count, worldPosition);
             ProceduralAudioService.Play(ProceduralSoundId.TowerPlaced);
-            SimpleVfxFactory.Spawn(worldPosition, SimpleVfxStyle.TowerPlaced, runtimeRoot);
+            SimpleVfxFactory.Spawn(worldPosition, SimpleVfxStyle.TowerPlaced, vfxLayer != null ? vfxLayer : runtimeRoot);
             return true;
         }
 
@@ -223,12 +227,12 @@ namespace CatGuard.Gameplay.Levels
             }
 
             var enemyObject = new GameObject($"{enemyConfig.DisplayName}_{SpawnedEnemies + 1:00}");
-            enemyObject.transform.SetParent(runtimeRoot, false);
+            enemyObject.transform.SetParent(unitsLayer != null ? unitsLayer : runtimeRoot, false);
 
             var enemy = enemyObject.AddComponent<BasicEnemy>();
             enemy.Initialize(
                 this,
-                config.PathPoints,
+                Battlefield.PathPoints,
                 enemyConfig,
                 healthMultiplier,
                 speedMultiplier);
@@ -247,14 +251,14 @@ namespace CatGuard.Gameplay.Levels
             }
 
             ProceduralAudioService.Play(ProceduralSoundId.EnemyDefeated);
-            SimpleVfxFactory.Spawn(position, SimpleVfxStyle.EnemyDefeated, runtimeRoot);
+            SimpleVfxFactory.Spawn(position, SimpleVfxStyle.EnemyDefeated, vfxLayer != null ? vfxLayer : runtimeRoot);
             Destroy(enemy.gameObject);
             EvaluateResult();
         }
 
         public void HandleEnemyReachedBase(BasicEnemy enemy, int damage)
         {
-            var position = enemy == null ? (Vector3)config.PathPoints[^1] : enemy.transform.position;
+            var position = enemy == null ? (Vector3)Battlefield.GoalPresentationAnchor : enemy.transform.position;
             if (activeEnemies.Remove(enemy))
             {
                 EscapedEnemies++;
@@ -262,7 +266,7 @@ namespace CatGuard.Gameplay.Levels
 
             Lives = Mathf.Max(0, Lives - Mathf.Max(1, damage));
             ProceduralAudioService.Play(ProceduralSoundId.BaseHit);
-            SimpleVfxFactory.Spawn(position, SimpleVfxStyle.BaseHit, runtimeRoot);
+            SimpleVfxFactory.Spawn(position, SimpleVfxStyle.BaseHit, vfxLayer != null ? vfxLayer : runtimeRoot);
             Destroy(enemy.gameObject);
             EvaluateResult();
         }
@@ -296,7 +300,7 @@ namespace CatGuard.Gameplay.Levels
             victoryRewardDoubled = true;
             CompletionResult = CompletionResult.WithRewardedBonus(bonus);
             ProceduralAudioService.Play(ProceduralSoundId.Victory);
-            SimpleVfxFactory.Spawn(Vector3.zero, SimpleVfxStyle.Victory, runtimeRoot);
+            SimpleVfxFactory.Spawn(Battlefield.WorldBounds.center, SimpleVfxStyle.Victory, vfxLayer != null ? vfxLayer : runtimeRoot);
             return true;
         }
 
@@ -317,7 +321,7 @@ namespace CatGuard.Gameplay.Levels
             Lives = Mathf.Max(1, Mathf.CeilToInt((config.BaseLives + ProgressionService.GetBaseLivesBonus()) * 0.5f));
             State = PrototypeLevelState.Running;
             ProceduralAudioService.Play(ProceduralSoundId.Victory);
-            SimpleVfxFactory.Spawn(config.PathPoints[^1], SimpleVfxStyle.Victory, runtimeRoot);
+            SimpleVfxFactory.Spawn(Battlefield.GoalPresentationAnchor, SimpleVfxStyle.Victory, vfxLayer != null ? vfxLayer : runtimeRoot);
             return true;
         }
 
@@ -336,9 +340,19 @@ namespace CatGuard.Gameplay.Levels
         private void StartLevel()
         {
             config = ProgressionService.GetSelectedLevelOrDefault(config);
+            Battlefield = config.ResolveBattlefield();
+            var battlefieldError = "Battlefield definition is missing.";
+            if (Battlefield == null || !Battlefield.IsValid(out battlefieldError))
+            {
+                Debug.LogError($"Level {config.LevelId} has an invalid battlefield: {battlefieldError}");
+                enabled = false;
+                return;
+            }
+
             ClearRuntimeObjects();
-            FitCameraToLevel();
             BuildMapView();
+            EnsureBattlefieldControllers();
+            battlefieldCameraController.Initialize(Battlefield);
 
             Lives = config.BaseLives + ProgressionService.GetBaseLivesBonus();
             DefeatedEnemies = 0;
@@ -353,28 +367,13 @@ namespace CatGuard.Gameplay.Levels
             CompletionResult = null;
             State = PrototypeLevelState.Preparing;
 
-            towerGrid.Initialize(this, config);
+            towerGrid.Initialize(this, Battlefield);
+            battlefieldInputController.Initialize(this, towerGrid, battlefieldCameraController);
             waveSpawner.Initialize(this, config.WaveConfig);
             hud.Initialize(this);
             AnalyticsService.TrackLevelStart(config, Lives);
 
             DevelopmentQaService.TryAttach(this, towerGrid);
-            CacheViewportState();
-        }
-
-        private void LateUpdate()
-        {
-            if (config == null
-                || (lastScreenWidth == Screen.width
-                    && lastScreenHeight == Screen.height
-                    && lastSafeArea == Screen.safeArea))
-            {
-                return;
-            }
-
-            FitCameraToLevel();
-            ResizeArtworkBackdrop();
-            CacheViewportState();
         }
 
         private void EvaluateResult()
@@ -390,7 +389,7 @@ namespace CatGuard.Gameplay.Levels
                 resultApplied = true;
                 AnalyticsService.TrackLevelFail(config, DefeatedEnemies, EscapedEnemies, TowerCount, "base_lost");
                 ProceduralAudioService.Play(ProceduralSoundId.Defeat);
-                SimpleVfxFactory.Spawn(config.PathPoints[^1], SimpleVfxStyle.Defeat, runtimeRoot);
+                SimpleVfxFactory.Spawn(Battlefield.GoalPresentationAnchor, SimpleVfxStyle.Defeat, vfxLayer != null ? vfxLayer : runtimeRoot);
                 return;
             }
 
@@ -412,7 +411,7 @@ namespace CatGuard.Gameplay.Levels
             CompletionResult = ProgressionService.CompleteLevel(config);
             AnalyticsService.TrackLevelComplete(config, CompletionResult, Lives, DefeatedEnemies, EscapedEnemies, TowerCount);
             ProceduralAudioService.Play(ProceduralSoundId.Victory);
-            SimpleVfxFactory.Spawn(Vector3.zero, SimpleVfxStyle.Victory, runtimeRoot);
+            SimpleVfxFactory.Spawn(Battlefield.WorldBounds.center, SimpleVfxStyle.Victory, vfxLayer != null ? vfxLayer : runtimeRoot);
         }
 
         private bool HasRemainingThreats()
@@ -425,88 +424,64 @@ namespace CatGuard.Gameplay.Levels
             var mapRoot = new GameObject("MapView");
             mapRoot.transform.SetParent(runtimeRoot, false);
 
-            if (!CreateArtworkBackdrop(mapRoot.transform))
+            var backgroundLayer = CreateLayer(BattlefieldLayerNames.Background, mapRoot.transform);
+            var terrainLayer = CreateLayer(BattlefieldLayerNames.Terrain, mapRoot.transform);
+            var routeLayer = CreateLayer(BattlefieldLayerNames.Route, mapRoot.transform);
+            var propsBelowLayer = CreateLayer(BattlefieldLayerNames.PropsBelowUnits, mapRoot.transform);
+            unitsLayer = CreateLayer(BattlefieldLayerNames.UnitsAndProjectiles, mapRoot.transform);
+            var propsAboveLayer = CreateLayer(BattlefieldLayerNames.PropsAboveUnits, mapRoot.transform);
+            vfxLayer = CreateLayer(BattlefieldLayerNames.Vfx, mapRoot.transform);
+            var indicatorsLayer = CreateLayer(BattlefieldLayerNames.WorldIndicators, mapRoot.transform);
+
+            if (!CreateArtworkBackdrop(backgroundLayer))
             {
-                CreateBackdrop(mapRoot.transform);
+                CreateFallbackBackdrop(backgroundLayer);
             }
 
-            CreatePathLine(mapRoot.transform);
+            CreateTerrain(terrainLayer);
+            CreateBlockedZoneVisuals(terrainLayer);
+            CreateDecorations(propsBelowLayer, propsAboveLayer);
+            CreatePathLine(routeLayer);
             CreateMarker(
                 "Spawn",
-                config.PathPoints[0],
+                Battlefield.SpawnPresentationAnchor,
                 new Color(0.035f, 0.16f, 0.14f, 0.88f),
                 new Color(0.3f, 0.82f, 0.48f, 0.9f),
-                mapRoot.transform);
+                indicatorsLayer);
             CreateMarker(
                 "Base",
-                config.PathPoints[^1],
+                Battlefield.GoalPresentationAnchor,
                 new Color(0.24f, 0.11f, 0.035f, 0.88f),
                 new Color(0.94f, 0.61f, 0.18f, 0.92f),
-                mapRoot.transform);
+                indicatorsLayer);
         }
 
-        private void FitCameraToLevel()
+        private void EnsureBattlefieldControllers()
         {
-            var camera = Camera.main;
-            if (camera == null || config?.PathPoints == null || config.PathPoints.Length == 0)
+            battlefieldCameraController = GetComponent<BattlefieldCameraController>();
+            if (battlefieldCameraController == null)
             {
-                return;
+                battlefieldCameraController = gameObject.AddComponent<BattlefieldCameraController>();
             }
 
-            var minX = config.PathPoints[0].x;
-            var maxX = minX;
-            var minY = config.PathPoints[0].y;
-            var maxY = minY;
-
-            foreach (var point in config.PathPoints)
+            battlefieldInputController = GetComponent<BattlefieldInputController>();
+            if (battlefieldInputController == null)
             {
-                minX = Mathf.Min(minX, point.x);
-                maxX = Mathf.Max(maxX, point.x);
-                minY = Mathf.Min(minY, point.y);
-                maxY = Mathf.Max(maxY, point.y);
+                battlefieldInputController = gameObject.AddComponent<BattlefieldInputController>();
             }
+        }
 
-            var cellRadius = config.CellSize * 0.55f;
-            minX = Mathf.Min(minX, config.GridOrigin.x - cellRadius);
-            maxX = Mathf.Max(maxX, config.GridOrigin.x + ((config.GridColumns - 1) * config.CellSize) + cellRadius);
-            minY = Mathf.Min(minY, config.GridOrigin.y - cellRadius);
-            maxY = Mathf.Max(maxY, config.GridOrigin.y + ((config.GridRows - 1) * config.CellSize) + cellRadius);
-
-            const float worldPadding = 0.55f;
-            var halfWidth = ((maxX - minX) * 0.5f) + worldPadding;
-            var halfHeight = ((maxY - minY) * 0.5f) + worldPadding;
-            var aspect = Mathf.Max(0.1f, camera.aspect);
-            var layout = LandscapeLayout.Calculate();
-            var battlefieldRect = PrototypeHud.GetBattlefieldRect(layout);
-            var widthFraction = Mathf.Clamp(
-                battlefieldRect.width / Mathf.Max(1f, layout.SurfaceRect.width),
-                0.1f,
-                1f);
-            var heightFraction = Mathf.Clamp(
-                battlefieldRect.height / Mathf.Max(1f, layout.SurfaceRect.height),
-                0.1f,
-                1f);
-            var requiredVisibleWidth = (halfWidth * 2f) / widthFraction;
-            var requiredVisibleHeight = (halfHeight * 2f) / heightFraction;
-            camera.orthographic = true;
-            camera.orthographicSize = Mathf.Max(requiredVisibleHeight * 0.5f, requiredVisibleWidth / (aspect * 2f));
-
-            var mapCenter = new Vector2((minX + maxX) * 0.5f, (minY + maxY) * 0.5f);
-            var visibleHeight = camera.orthographicSize * 2f;
-            var visibleWidth = visibleHeight * aspect;
-            var logicalOffset = battlefieldRect.center - layout.SurfaceRect.center;
-            var cameraCenter = new Vector2(
-                mapCenter.x - ((logicalOffset.x / layout.SurfaceRect.width) * visibleWidth),
-                mapCenter.y + ((logicalOffset.y / layout.SurfaceRect.height) * visibleHeight));
-            camera.transform.position = new Vector3(cameraCenter.x, cameraCenter.y, -10f);
-            camera.backgroundColor = new Color(0.025f, 0.07f, 0.08f);
+        private static Transform CreateLayer(string layerName, Transform parent)
+        {
+            var layer = new GameObject(layerName);
+            layer.transform.SetParent(parent, false);
+            return layer.transform;
         }
 
         private bool CreateArtworkBackdrop(Transform parent)
         {
             var texture = Resources.Load<Texture2D>("UI/gameplay_garden");
-            var camera = Camera.main;
-            if (texture == null || camera == null)
+            if (texture == null)
             {
                 return false;
             }
@@ -516,55 +491,65 @@ namespace CatGuard.Gameplay.Levels
                 new Rect(0f, 0f, texture.width, texture.height),
                 new Vector2(0.5f, 0.5f),
                 100f);
-            gameplayBackgroundSprite.name = "GameplayGardenBackground";
+            gameplayBackgroundSprite.name = $"{Battlefield.BackgroundId}Background";
 
-            var backgroundObject = new GameObject("GardenArtwork");
+            var backgroundObject = new GameObject($"{Battlefield.BackgroundId}Artwork");
             backgroundObject.transform.SetParent(parent, false);
-            backgroundObject.transform.position = new Vector3(
-                camera.transform.position.x,
-                camera.transform.position.y,
-                0f);
+            backgroundObject.transform.position = Battlefield.WorldBounds.center;
 
-            gameplayBackgroundRenderer = backgroundObject.AddComponent<SpriteRenderer>();
-            gameplayBackgroundRenderer.sprite = gameplayBackgroundSprite;
-            gameplayBackgroundRenderer.sortingOrder = -20;
-            gameplayBackgroundRenderer.color = new Color(0.82f, 0.9f, 0.84f, 1f);
-            ResizeArtworkBackdrop();
+            var renderer = backgroundObject.AddComponent<SpriteRenderer>();
+            renderer.sprite = gameplayBackgroundSprite;
+            renderer.sortingOrder = -30;
+            renderer.color = GetBackgroundTint();
+            var scale = Mathf.Max(
+                Battlefield.WorldBounds.width / gameplayBackgroundSprite.bounds.size.x,
+                Battlefield.WorldBounds.height / gameplayBackgroundSprite.bounds.size.y);
+            backgroundObject.transform.localScale = new Vector3(scale, scale, 1f);
             return true;
         }
 
-        private void ResizeArtworkBackdrop()
+        private Color GetBackgroundTint()
         {
-            var camera = Camera.main;
-            if (gameplayBackgroundRenderer == null || gameplayBackgroundSprite == null || camera == null)
+            return Battlefield.BiomeId switch
             {
-                return;
-            }
-
-            gameplayBackgroundRenderer.transform.position = new Vector3(
-                camera.transform.position.x,
-                camera.transform.position.y,
-                0f);
-            var visibleHeight = camera.orthographicSize * 2f;
-            var visibleWidth = visibleHeight * camera.aspect;
-            var scale = Mathf.Max(
-                visibleWidth / gameplayBackgroundSprite.bounds.size.x,
-                visibleHeight / gameplayBackgroundSprite.bounds.size.y);
-            gameplayBackgroundRenderer.transform.localScale = new Vector3(scale, scale, 1f);
+                "old_well" => new Color(0.62f, 0.72f, 0.66f, 1f),
+                "rooftop" => new Color(0.42f, 0.52f, 0.68f, 1f),
+                "legacy_garden" => new Color(0.75f, 0.84f, 0.78f, 1f),
+                _ => new Color(0.82f, 0.9f, 0.84f, 1f)
+            };
         }
 
-        private void CacheViewportState()
+        private void CreateFallbackBackdrop(Transform parent)
         {
-            lastScreenWidth = Screen.width;
-            lastScreenHeight = Screen.height;
-            lastSafeArea = Screen.safeArea;
+            CreateBackdropPatch(
+                "FallbackGround",
+                Battlefield.WorldBounds.center,
+                new Vector3(Battlefield.WorldBounds.width, Battlefield.WorldBounds.height, 1f),
+                Battlefield.BiomeId == "rooftop"
+                    ? new Color(0.08f, 0.11f, 0.18f)
+                    : new Color(0.09f, 0.2f, 0.16f),
+                parent,
+                false,
+                -30);
         }
 
-        private static void CreateBackdrop(Transform parent)
+        private void CreateTerrain(Transform parent)
         {
-            CreateBackdropPatch("GrassPatch", new Vector2(-1.8f, 0.3f), new Vector3(7.5f, 5.8f, 1f), new Color(0.11f, 0.23f, 0.18f), parent);
-            CreateBackdropPatch("SoilPatch", new Vector2(1.7f, -1.7f), new Vector3(3.8f, 1.9f, 1f), new Color(0.22f, 0.15f, 0.09f), parent);
-            CreateBackdropPatch("MoonPatch", new Vector2(3.25f, 3.1f), new Vector3(0.74f, 0.74f, 1f), new Color(0.9f, 0.86f, 0.55f), parent, true);
+            var bounds = Battlefield.WorldBounds;
+            var accentColor = Battlefield.BiomeId switch
+            {
+                "old_well" => new Color(0.12f, 0.22f, 0.2f, 0.32f),
+                "rooftop" => new Color(0.16f, 0.16f, 0.24f, 0.36f),
+                _ => new Color(0.12f, 0.28f, 0.18f, 0.28f)
+            };
+            CreateBackdropPatch(
+                "TerrainAccent",
+                new Vector2(bounds.center.x, bounds.yMin + (bounds.height * 0.22f)),
+                new Vector3(bounds.width * 0.9f, bounds.height * 0.24f, 1f),
+                accentColor,
+                parent,
+                false,
+                -8);
         }
 
         private static void CreateBackdropPatch(
@@ -573,7 +558,8 @@ namespace CatGuard.Gameplay.Levels
             Vector3 scale,
             Color color,
             Transform parent,
-            bool circle = false)
+            bool circle = false,
+            int sortingOrder = 0)
         {
             var patchObject = new GameObject(patchName);
             patchObject.transform.SetParent(parent, false);
@@ -583,7 +569,48 @@ namespace CatGuard.Gameplay.Levels
             var renderer = patchObject.AddComponent<SpriteRenderer>();
             renderer.sprite = circle ? PrototypeSpriteFactory.CircleSprite : PrototypeSpriteFactory.SquareSprite;
             renderer.color = color;
-            renderer.sortingOrder = 0;
+            renderer.sortingOrder = sortingOrder;
+        }
+
+        private void CreateBlockedZoneVisuals(Transform parent)
+        {
+            foreach (var zone in Battlefield.BlockedZones)
+            {
+                CreateBackdropPatch(
+                    $"NoBuild_{zone.ZoneId}",
+                    zone.Bounds.center,
+                    new Vector3(zone.Bounds.width, zone.Bounds.height, 1f),
+                    new Color(0.34f, 0.16f, 0.09f, 0.34f),
+                    parent,
+                    false,
+                    1);
+            }
+        }
+
+        private void CreateDecorations(Transform belowParent, Transform aboveParent)
+        {
+            foreach (var decoration in Battlefield.DecorationAnchors)
+            {
+                var id = decoration.DecorationId.ToLowerInvariant();
+                var circle = id.Contains("well") || id.Contains("moon") || id.Contains("lantern");
+                var color = id.Contains("moon")
+                    ? new Color(0.94f, 0.88f, 0.56f, 0.9f)
+                    : id.Contains("well")
+                        ? new Color(0.26f, 0.3f, 0.32f, 0.92f)
+                        : id.Contains("roof") || id.Contains("chimney")
+                            ? new Color(0.24f, 0.19f, 0.2f, 0.92f)
+                            : new Color(0.16f, 0.34f, 0.22f, 0.88f);
+                var parent = decoration.Foreground ? aboveParent : belowParent;
+                var sortingOrder = decoration.Foreground ? 26 : 10;
+                CreateBackdropPatch(
+                    decoration.DecorationId,
+                    decoration.Position,
+                    Vector3.one * decoration.Scale,
+                    color,
+                    parent,
+                    circle,
+                    sortingOrder);
+            }
         }
 
         private void CreatePathLine(Transform parent)
@@ -595,14 +622,14 @@ namespace CatGuard.Gameplay.Levels
 
             CreatePathStroke(
                 "EnemyPathBorder",
-                0.42f,
+                Battlefield.PathVisualWidth * 1.35f,
                 4,
                 new Color(0.2f, 0.105f, 0.04f, 0.8f),
                 new Color(0.25f, 0.13f, 0.05f, 0.82f),
                 parent);
             CreatePathStroke(
                 "EnemyPath",
-                0.29f,
+                Battlefield.PathVisualWidth,
                 5,
                 new Color(0.78f, 0.64f, 0.38f, 0.92f),
                 new Color(0.74f, 0.48f, 0.22f, 0.94f),
@@ -621,7 +648,7 @@ namespace CatGuard.Gameplay.Levels
             pathObject.transform.SetParent(parent, false);
 
             var line = pathObject.AddComponent<LineRenderer>();
-            line.positionCount = config.PathPoints.Length;
+            line.positionCount = Battlefield.PathPoints.Length;
             line.useWorldSpace = true;
             line.startWidth = width;
             line.endWidth = width;
@@ -632,9 +659,9 @@ namespace CatGuard.Gameplay.Levels
             line.startColor = startColor;
             line.endColor = endColor;
 
-            for (var index = 0; index < config.PathPoints.Length; index++)
+            for (var index = 0; index < Battlefield.PathPoints.Length; index++)
             {
-                line.SetPosition(index, config.PathPoints[index]);
+                line.SetPosition(index, Battlefield.PathPoints[index]);
             }
         }
 
@@ -663,7 +690,7 @@ namespace CatGuard.Gameplay.Levels
             var renderer = markerObject.AddComponent<SpriteRenderer>();
             renderer.sprite = PrototypeSpriteFactory.CircleSprite;
             renderer.color = borderColor;
-            renderer.sortingOrder = 7;
+            renderer.sortingOrder = 27;
 
             var fillObject = new GameObject("Fill");
             fillObject.transform.SetParent(markerObject.transform, false);
@@ -672,7 +699,7 @@ namespace CatGuard.Gameplay.Levels
             var fillRenderer = fillObject.AddComponent<SpriteRenderer>();
             fillRenderer.sprite = PrototypeSpriteFactory.CircleSprite;
             fillRenderer.color = fillColor;
-            fillRenderer.sortingOrder = 8;
+            fillRenderer.sortingOrder = 28;
         }
 
         private void ClearRuntimeObjects()
@@ -686,7 +713,8 @@ namespace CatGuard.Gameplay.Levels
                 gameplayBackgroundSprite = null;
             }
 
-            gameplayBackgroundRenderer = null;
+            unitsLayer = null;
+            vfxLayer = null;
 
             if (gameplayPathMaterial != null)
             {

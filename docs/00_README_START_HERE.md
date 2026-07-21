@@ -44,4 +44,4 @@ The current goal is to expand the working Android MVP into a landscape, multi-ro
 
 ## Next Safe Step
 
-E1 is complete and its full gate is recorded in `docs/planning/E1_LANDSCAPE_REPORT.md`. The next safe implementation block is `E2 — Scalable Battlefield, Camera, And Larger Maps`; start it only as a separate scoped task with its own block gate.
+E2 is complete and its full gate is recorded in `docs/planning/E2_BATTLEFIELD_REPORT.md`. The next safe implementation block is E3 multi-route gameplay, which must be delivered as a separate task with its own scope and Block Test Gate.

@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using CatGuard.Gameplay.Battlefield;
 using CatGuard.Core.SceneLoading;
 using CatGuard.Gameplay.Grid;
 using CatGuard.Gameplay.Levels;
@@ -12,9 +14,11 @@ namespace CatGuard.QA
     {
         private const string CommandFileName = "catguard-qa-command.json";
         private const string ResultFileName = "catguard-qa-result.json";
+        private const string SnapshotFileName = "catguard-qa-snapshot.json";
 
         private static DevelopmentQaCommand activeCommand;
         private static string activeResultPath;
+        private static string activeSnapshotPath;
 
         public static bool TryBeginLevel(LevelCatalogConfig levelCatalog)
         {
@@ -32,8 +36,11 @@ namespace CatGuard.QA
             try
             {
                 var command = JsonUtility.FromJson<DevelopmentQaCommand>(File.ReadAllText(commandPath));
-                activeResultPath = Path.Combine(Path.GetDirectoryName(commandPath) ?? string.Empty, ResultFileName);
+                var commandDirectory = Path.GetDirectoryName(commandPath) ?? string.Empty;
+                activeResultPath = Path.Combine(commandDirectory, ResultFileName);
+                activeSnapshotPath = Path.Combine(commandDirectory, SnapshotFileName);
                 File.Delete(commandPath);
+                File.Delete(activeSnapshotPath);
                 if (command == null || string.IsNullOrWhiteSpace(command.levelId))
                 {
                     WriteFailure(command?.scenarioId, command?.levelId, "QA command must contain levelId.");
@@ -87,6 +94,18 @@ namespace CatGuard.QA
             File.WriteAllText(resultPath, JsonUtility.ToJson(result, true));
             activeCommand = null;
             activeResultPath = null;
+            activeSnapshotPath = null;
+        }
+
+        internal static void WriteSnapshot(DevelopmentQaSnapshot snapshot)
+        {
+            if (string.IsNullOrWhiteSpace(activeSnapshotPath) || snapshot == null)
+            {
+                return;
+            }
+
+            Directory.CreateDirectory(Path.GetDirectoryName(activeSnapshotPath) ?? Application.persistentDataPath);
+            File.WriteAllText(activeSnapshotPath, JsonUtility.ToJson(snapshot, true));
         }
 
         private static string FindCommandPath()
@@ -164,6 +183,39 @@ namespace CatGuard.QA
         public string scenarioId;
         public string levelId;
         public string[] towerIds = Array.Empty<string>();
+        public bool manualInput;
+    }
+
+    [Serializable]
+    public sealed class DevelopmentQaCellSnapshot
+    {
+        public int cellIndex;
+        public float worldX;
+        public float worldY;
+        public int screenX;
+        public int screenY;
+        public bool visible;
+        public bool occupied;
+    }
+
+    [Serializable]
+    public sealed class DevelopmentQaSnapshot
+    {
+        public string scenarioId;
+        public string levelId;
+        public string battlefieldId;
+        public string cameraMode;
+        public bool legacyBattlefield;
+        public string state;
+        public int towerCount;
+        public bool lastGestureWasDrag;
+        public float cameraFocusX;
+        public float cameraFocusY;
+        public float cameraMinFocusX;
+        public float cameraMaxFocusX;
+        public float cameraMinFocusY;
+        public float cameraMaxFocusY;
+        public DevelopmentQaCellSnapshot[] cells = Array.Empty<DevelopmentQaCellSnapshot>();
     }
 
     [Serializable]
@@ -171,6 +223,9 @@ namespace CatGuard.QA
     {
         public string scenarioId;
         public string levelId;
+        public string battlefieldId;
+        public string cameraMode;
+        public bool legacyBattlefield;
         public string state;
         public int lives;
         public int defeatedEnemies;
@@ -184,28 +239,30 @@ namespace CatGuard.QA
 
     public sealed class DevelopmentQaScenarioRunner : MonoBehaviour
     {
-        private static readonly Vector2Int[] PlacementOrder =
+        private static readonly float[] PlacementFractions =
         {
-            new(1, 1),
-            new(2, 1),
-            new(1, 0),
-            new(2, 0),
-            new(0, 1),
-            new(3, 1),
-            new(0, 0),
-            new(3, 0),
-            new(1, 2),
-            new(2, 2),
-            new(0, 2),
-            new(3, 2)
+            0.5f,
+            0.25f,
+            0.75f,
+            0.125f,
+            0.875f,
+            0.375f,
+            0.625f,
+            0f,
+            1f,
+            0.18f,
+            0.82f,
+            0.68f
         };
 
+        private readonly HashSet<int> attemptedCells = new();
         private PrototypeLevelController controller;
         private TowerGrid towerGrid;
         private DevelopmentQaCommand command;
         private int nextTowerIndex;
         private int nextCellIndex;
         private float startedAt;
+        private float nextSnapshotAt;
         private bool completed;
 
         public void Initialize(
@@ -218,6 +275,12 @@ namespace CatGuard.QA
             command = qaCommand;
             startedAt = Time.unscaledTime;
 
+            if (command.manualInput)
+            {
+                WriteManualSnapshot();
+                return;
+            }
+
             PlaceAffordableTowers();
             controller.TryStartWave();
         }
@@ -226,6 +289,16 @@ namespace CatGuard.QA
         {
             if (completed || controller == null)
             {
+                return;
+            }
+
+            if (command.manualInput)
+            {
+                if (Time.unscaledTime >= nextSnapshotAt)
+                {
+                    WriteManualSnapshot();
+                }
+
                 return;
             }
 
@@ -241,6 +314,9 @@ namespace CatGuard.QA
                 {
                     scenarioId = command.scenarioId ?? string.Empty,
                     levelId = controller.Config.LevelId,
+                    battlefieldId = controller.Battlefield.BattlefieldId,
+                    cameraMode = controller.Battlefield.CameraMode.ToString(),
+                    legacyBattlefield = controller.Battlefield.IsLegacy,
                     state = controller.State.ToString().ToLowerInvariant(),
                     lives = controller.Lives,
                     defeatedEnemies = controller.DefeatedEnemies,
@@ -257,7 +333,7 @@ namespace CatGuard.QA
         private void PlaceAffordableTowers()
         {
             var requestedTowers = command.towerIds ?? Array.Empty<string>();
-            while (nextTowerIndex < requestedTowers.Length && nextCellIndex < PlacementOrder.Length)
+            while (nextTowerIndex < requestedTowers.Length && nextCellIndex < PlacementFractions.Length)
             {
                 var towerIndex = FindTowerIndex(requestedTowers[nextTowerIndex]);
                 if (towerIndex < 0)
@@ -272,19 +348,96 @@ namespace CatGuard.QA
                 }
 
                 controller.SelectTower(towerIndex);
-                var cell = PlacementOrder[nextCellIndex];
-                var worldPosition = controller.Config.GridOrigin + new Vector2(
-                    cell.x * controller.Config.CellSize,
-                    cell.y * controller.Config.CellSize);
-                if (!towerGrid.TryPlaceAtWorld(worldPosition))
+                var cellIndex = GetPlacementCellIndex(nextCellIndex);
+                nextCellIndex++;
+                if (cellIndex < 0 || !towerGrid.TryPlaceAtCellIndex(cellIndex))
                 {
-                    nextCellIndex++;
                     continue;
                 }
 
                 nextTowerIndex++;
-                nextCellIndex++;
             }
+        }
+
+        private int GetPlacementCellIndex(int orderIndex)
+        {
+            var count = towerGrid.CellCenters.Count;
+            if (count == 0 || orderIndex < 0 || orderIndex >= PlacementFractions.Length)
+            {
+                return -1;
+            }
+
+            var requested = Mathf.RoundToInt((count - 1) * PlacementFractions[orderIndex]);
+            if (attemptedCells.Add(requested))
+            {
+                return requested;
+            }
+
+            for (var offset = 1; offset < count; offset++)
+            {
+                var candidate = (requested + offset) % count;
+                if (attemptedCells.Add(candidate))
+                {
+                    return candidate;
+                }
+            }
+
+            return -1;
+        }
+
+        private void WriteManualSnapshot()
+        {
+            nextSnapshotAt = Time.unscaledTime + 0.2f;
+            var camera = Camera.main;
+            var battlefield = controller.Battlefield;
+            var cameraController = controller.BattlefieldCamera;
+            if (camera == null || battlefield == null || cameraController == null)
+            {
+                return;
+            }
+
+            var cells = new DevelopmentQaCellSnapshot[towerGrid.CellCenters.Count];
+            for (var index = 0; index < towerGrid.CellCenters.Count; index++)
+            {
+                var world = towerGrid.CellCenters[index];
+                var screen = camera.WorldToScreenPoint(world);
+                var inputPoint = new Vector2(screen.x, screen.y);
+                cells[index] = new DevelopmentQaCellSnapshot
+                {
+                    cellIndex = index,
+                    worldX = world.x,
+                    worldY = world.y,
+                    screenX = Mathf.RoundToInt(screen.x),
+                    screenY = Mathf.RoundToInt(Screen.height - screen.y),
+                    visible = screen.z >= 0f
+                        && screen.x >= 0f
+                        && screen.x <= Screen.width
+                        && screen.y >= 0f
+                        && screen.y <= Screen.height
+                        && !controller.IsScreenPointOverHud(inputPoint),
+                    occupied = towerGrid.IsOccupied(index)
+                };
+            }
+
+            var limits = cameraController.FocusLimits;
+            DevelopmentQaService.WriteSnapshot(new DevelopmentQaSnapshot
+            {
+                scenarioId = command.scenarioId ?? string.Empty,
+                levelId = controller.Config.LevelId,
+                battlefieldId = battlefield.BattlefieldId,
+                cameraMode = battlefield.CameraMode.ToString(),
+                legacyBattlefield = battlefield.IsLegacy,
+                state = controller.State.ToString().ToLowerInvariant(),
+                towerCount = controller.TowerCount,
+                lastGestureWasDrag = controller.BattlefieldInput?.LastGestureWasDrag == true,
+                cameraFocusX = cameraController.FocusPoint.x,
+                cameraFocusY = cameraController.FocusPoint.y,
+                cameraMinFocusX = limits.xMin,
+                cameraMaxFocusX = limits.xMax,
+                cameraMinFocusY = limits.yMin,
+                cameraMaxFocusY = limits.yMax,
+                cells = cells
+            });
         }
 
         private int FindTowerIndex(string towerId)

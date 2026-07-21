@@ -61,6 +61,8 @@ Before moving to closed-testing preparation, run physical-device QA with `tools/
 
 For the E1 emulator orientation/layout regression, run `tools/android/run-emulator-landscape-qa.ps1`. It forces the emulator into portrait before launch, verifies automatic landscape startup, rotates through both landscape directions, exercises the current MainMenu and Level controls, and captures ignored evidence for 16:9 and wide-phone viewports.
 
+For the E2 map/camera regression, run `tools/android/run-emulator-battlefield-qa.ps1`. It validates all three map themes, the legacy level adapter, fixed and scrollable cameras, pan boundaries, drag-versus-tap behavior, and tower placement near all map edges at 16:9 and wide-phone sizes.
+
 ## Store Materials
 
 Current drafts live under `docs/store/`:

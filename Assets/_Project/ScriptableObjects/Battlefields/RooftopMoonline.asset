@@ -1,0 +1,106 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7337a675361a4274684b3303a33e2c84, type: 3}
+  m_Name: RooftopMoonline
+  m_EditorClassIdentifier: Assembly-CSharp::CatGuard.Gameplay.Battlefield.BattlefieldConfig
+  battlefieldId: rooftop_moonline
+  displayName: Rooftop Moonline
+  backgroundId: rooftop_night
+  biomeId: rooftop
+  cameraMode: 0
+  worldBounds:
+    serializedVersion: 2
+    x: -8
+    y: -4.5
+    width: 16
+    height: 9
+  cameraBounds:
+    serializedVersion: 2
+    x: -8
+    y: -4.5
+    width: 16
+    height: 9
+  initialCameraFocus: {x: 0, y: -0.1}
+  scrollableViewHeight: 8.2
+  pathPoints:
+  - {x: -7.2, y: 2.8}
+  - {x: -5.3, y: -0.1}
+  - {x: -2.1, y: -0.6}
+  - {x: 0.2, y: 1.55}
+  - {x: 3.25, y: 0.35}
+  - {x: 5.1, y: -1.25}
+  - {x: 7.15, y: -2.75}
+  pathVisualWidth: 0.5
+  spawnPresentationAnchor: {x: -7.2, y: 2.8}
+  goalPresentationAnchor: {x: 7.15, y: -2.75}
+  placementCellSize: 1.05
+  placementZones:
+  - zoneId: south_roof
+    bounds:
+      serializedVersion: 2
+      x: -6.8
+      y: -4
+      width: 13.6
+      height: 1.85
+  - zoneId: north_west_roof
+    bounds:
+      serializedVersion: 2
+      x: -6.5
+      y: 1.55
+      width: 3.5
+      height: 2.1
+  - zoneId: north_east_roof
+    bounds:
+      serializedVersion: 2
+      x: 2.5
+      y: 1.75
+      width: 3.9
+      height: 1.9
+  - zoneId: center_roof
+    bounds:
+      serializedVersion: 2
+      x: -1.65
+      y: -1.15
+      width: 3.3
+      height: 1.55
+  blockedZones:
+  - zoneId: chimney
+    bounds:
+      serializedVersion: 2
+      x: -0.85
+      y: -3.55
+      width: 1.7
+      height: 1.45
+  - zoneId: water_tank
+    bounds:
+      serializedVersion: 2
+      x: 4.75
+      y: 2.15
+      width: 1.45
+      height: 1.35
+  decorationAnchors:
+  - decorationId: moon
+    position: {x: 6.65, y: 3.55}
+    scale: 1.05
+    foreground: 0
+  - decorationId: chimney
+    position: {x: 0, y: -2.85}
+    scale: 1.5
+    foreground: 1
+  - decorationId: roof_vent_west
+    position: {x: -6.2, y: -1.6}
+    scale: 0.95
+    foreground: 1
+  - decorationId: roof_vent_east
+    position: {x: 5.6, y: 1.1}
+    scale: 0.9
+    foreground: 1

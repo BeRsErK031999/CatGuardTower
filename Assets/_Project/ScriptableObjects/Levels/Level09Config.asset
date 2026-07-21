@@ -16,6 +16,7 @@ MonoBehaviour:
   displayName: Orchard Wall
   baseLives: 10
   startingBattleFish: 185
+  battlefieldConfig: {fileID: 11400000, guid: 4053abfe8ce86f241b1c01a90ddff3ef, type: 2}
   gridColumns: 4
   gridRows: 3
   cellSize: 1.15

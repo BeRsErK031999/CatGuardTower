@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using CatGuard.Gameplay.Battlefield;
 using CatGuard.Gameplay.Levels;
 using CatGuard.Gameplay.Towers;
 using CatGuard.Utils;
@@ -20,19 +21,21 @@ namespace CatGuard.Gameplay.Grid
             public SpriteRenderer Fill { get; }
         }
 
-        private readonly Dictionary<Vector2Int, CellVisual> cellRenderers = new();
-        private readonly HashSet<Vector2Int> occupiedCells = new();
+        private readonly Dictionary<int, CellVisual> cellRenderers = new();
+        private readonly HashSet<int> occupiedCells = new();
+        private readonly List<Vector2> cellCenters = new();
 
         private PrototypeLevelController levelController;
-        private LevelConfig config;
+        private BattlefieldDefinition battlefield;
         private Camera mainCamera;
 
         public int PlacedTowerCount => occupiedCells.Count;
+        public IReadOnlyList<Vector2> CellCenters => cellCenters;
 
-        public void Initialize(PrototypeLevelController owner, LevelConfig levelConfig)
+        public void Initialize(PrototypeLevelController owner, BattlefieldDefinition definition)
         {
             levelController = owner;
-            config = levelConfig;
+            battlefield = definition;
             mainCamera = Camera.main;
 
             ClearCells();
@@ -41,33 +44,50 @@ namespace CatGuard.Gameplay.Grid
 
         public bool TryPlaceAtWorld(Vector2 worldPosition)
         {
-            if (levelController == null || config == null || !levelController.CanPlaceTowers)
+            if (levelController == null || battlefield == null || !levelController.CanPlaceTowers)
             {
                 return false;
             }
 
-            if (!TryGetCell(worldPosition, out var cell))
+            if (!TryGetCellIndex(worldPosition, out var cellIndex))
             {
                 return false;
             }
 
-            if (occupiedCells.Contains(cell))
+            if (occupiedCells.Contains(cellIndex))
             {
                 return false;
             }
 
-            if (!levelController.TryCreateTower(GetCellCenter(cell)))
+            if (!levelController.TryCreateTower(cellCenters[cellIndex]))
             {
                 return false;
             }
 
-            occupiedCells.Add(cell);
-            UpdateCellVisual(cell);
+            occupiedCells.Add(cellIndex);
+            UpdateCellVisual(cellIndex);
             return true;
         }
 
-        private void Update()
+        public bool TryPlaceAtCellIndex(int cellIndex)
         {
+            return cellIndex >= 0
+                && cellIndex < cellCenters.Count
+                && TryPlaceAtWorld(cellCenters[cellIndex]);
+        }
+
+        public bool IsOccupied(int cellIndex)
+        {
+            return occupiedCells.Contains(cellIndex);
+        }
+
+        public bool TryPlaceFromScreen(Vector2 screenPosition)
+        {
+            if (levelController == null || levelController.IsScreenPointOverHud(screenPosition))
+            {
+                return false;
+            }
+
             if (mainCamera == null)
             {
                 mainCamera = Camera.main;
@@ -75,60 +95,44 @@ namespace CatGuard.Gameplay.Grid
 
             if (mainCamera == null)
             {
-                return;
-            }
-
-            if (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began)
-            {
-                TryPlaceFromScreen(Input.GetTouch(0).position);
-                return;
-            }
-
-            if (Input.GetMouseButtonDown(0))
-            {
-                TryPlaceFromScreen(Input.mousePosition);
-            }
-        }
-
-        private void TryPlaceFromScreen(Vector2 screenPosition)
-        {
-            if (levelController.IsScreenPointOverHud(screenPosition))
-            {
-                return;
+                return false;
             }
 
             var world = mainCamera.ScreenToWorldPoint(new Vector3(screenPosition.x, screenPosition.y, 0f));
-            TryPlaceAtWorld(world);
+            return TryPlaceAtWorld(world);
         }
 
         private void CreateCells()
         {
-            for (var row = 0; row < config.GridRows; row++)
+            if (battlefield?.BuildCellCenters == null)
             {
-                for (var column = 0; column < config.GridColumns; column++)
-                {
-                    var cell = new Vector2Int(column, row);
-                    var cellObject = new GameObject($"Cell_{column}_{row}");
-                    cellObject.transform.SetParent(transform, false);
-                    cellObject.transform.position = GetCellCenter(cell);
-                    cellObject.transform.localScale = Vector3.one * (config.CellSize * 0.82f);
+                return;
+            }
 
-                    var borderRenderer = cellObject.AddComponent<SpriteRenderer>();
-                    borderRenderer.sprite = PrototypeSpriteFactory.SquareSprite;
-                    borderRenderer.sortingOrder = 2;
-                    borderRenderer.color = new Color(0.07f, 0.26f, 0.24f, 0.5f);
+            for (var index = 0; index < battlefield.BuildCellCenters.Count; index++)
+            {
+                var center = battlefield.BuildCellCenters[index];
+                cellCenters.Add(center);
+                var cellObject = new GameObject($"Cell_{index:00}");
+                cellObject.transform.SetParent(transform, false);
+                cellObject.transform.position = center;
+                cellObject.transform.localScale = Vector3.one * (battlefield.PlacementCellSize * 0.82f);
 
-                    var fillObject = new GameObject("Fill");
-                    fillObject.transform.SetParent(cellObject.transform, false);
-                    fillObject.transform.localScale = new Vector3(0.84f, 0.84f, 1f);
+                var borderRenderer = cellObject.AddComponent<SpriteRenderer>();
+                borderRenderer.sprite = PrototypeSpriteFactory.SquareSprite;
+                borderRenderer.sortingOrder = 2;
+                borderRenderer.color = new Color(0.07f, 0.26f, 0.24f, 0.5f);
 
-                    var fillRenderer = fillObject.AddComponent<SpriteRenderer>();
-                    fillRenderer.sprite = PrototypeSpriteFactory.SquareSprite;
-                    fillRenderer.sortingOrder = 3;
-                    fillRenderer.color = new Color(0.15f, 0.38f, 0.31f, 0.18f);
+                var fillObject = new GameObject("Fill");
+                fillObject.transform.SetParent(cellObject.transform, false);
+                fillObject.transform.localScale = new Vector3(0.84f, 0.84f, 1f);
 
-                    cellRenderers[cell] = new CellVisual(borderRenderer, fillRenderer);
-                }
+                var fillRenderer = fillObject.AddComponent<SpriteRenderer>();
+                fillRenderer.sprite = PrototypeSpriteFactory.SquareSprite;
+                fillRenderer.sortingOrder = 3;
+                fillRenderer.color = new Color(0.15f, 0.38f, 0.31f, 0.18f);
+
+                cellRenderers[index] = new CellVisual(borderRenderer, fillRenderer);
             }
         }
 
@@ -136,6 +140,7 @@ namespace CatGuard.Gameplay.Grid
         {
             cellRenderers.Clear();
             occupiedCells.Clear();
+            cellCenters.Clear();
 
             for (var index = transform.childCount - 1; index >= 0; index--)
             {
@@ -143,31 +148,29 @@ namespace CatGuard.Gameplay.Grid
             }
         }
 
-        private bool TryGetCell(Vector2 worldPosition, out Vector2Int cell)
+        private bool TryGetCellIndex(Vector2 worldPosition, out int cellIndex)
         {
-            var local = worldPosition - config.GridOrigin;
-            var column = Mathf.RoundToInt(local.x / config.CellSize);
-            var row = Mathf.RoundToInt(local.y / config.CellSize);
-            cell = new Vector2Int(column, row);
-
-            if (column < 0 || column >= config.GridColumns || row < 0 || row >= config.GridRows)
+            cellIndex = -1;
+            var nearestDistance = float.MaxValue;
+            for (var index = 0; index < cellCenters.Count; index++)
             {
-                return false;
+                var distance = (worldPosition - cellCenters[index]).sqrMagnitude;
+                if (distance >= nearestDistance)
+                {
+                    continue;
+                }
+
+                nearestDistance = distance;
+                cellIndex = index;
             }
 
-            var center = GetCellCenter(cell);
-            return Mathf.Abs(worldPosition.x - center.x) <= config.CellSize * 0.45f
-                && Mathf.Abs(worldPosition.y - center.y) <= config.CellSize * 0.45f;
+            var maximumDistance = battlefield.PlacementCellSize * 0.45f;
+            return cellIndex >= 0 && nearestDistance <= maximumDistance * maximumDistance;
         }
 
-        private Vector2 GetCellCenter(Vector2Int cell)
+        private void UpdateCellVisual(int cellIndex)
         {
-            return config.GridOrigin + new Vector2(cell.x * config.CellSize, cell.y * config.CellSize);
-        }
-
-        private void UpdateCellVisual(Vector2Int cell)
-        {
-            if (!cellRenderers.TryGetValue(cell, out var visual))
+            if (!cellRenderers.TryGetValue(cellIndex, out var visual))
             {
                 return;
             }

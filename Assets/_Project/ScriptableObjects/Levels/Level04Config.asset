@@ -16,6 +16,7 @@ MonoBehaviour:
   displayName: Lantern Path
   baseLives: 8
   startingBattleFish: 135
+  battlefieldConfig: {fileID: 11400000, guid: ba0bfc9f7f008534cba9f9b01bbb9b00, type: 2}
   gridColumns: 4
   gridRows: 3
   cellSize: 1.15

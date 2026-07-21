@@ -16,6 +16,7 @@ MonoBehaviour:
   displayName: Quiet Alley
   baseLives: 10
   startingBattleFish: 195
+  battlefieldConfig: {fileID: 11400000, guid: 6f329977a8953ef41a6e0596d86b3c80, type: 2}
   gridColumns: 4
   gridRows: 3
   cellSize: 1.15

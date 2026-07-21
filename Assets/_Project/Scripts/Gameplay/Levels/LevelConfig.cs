@@ -1,4 +1,5 @@
 using System;
+using CatGuard.Gameplay.Battlefield;
 using CatGuard.Gameplay.Towers;
 using CatGuard.Gameplay.Waves;
 using UnityEngine;
@@ -18,7 +19,10 @@ namespace CatGuard.Gameplay.Levels
         [Min(1)]
         [SerializeField] private int startingBattleFish = 135;
 
-        [Header("Grid")]
+        [Header("Battlefield")]
+        [SerializeField] private BattlefieldConfig battlefieldConfig;
+
+        [Header("Legacy Geometry Compatibility")]
         [Min(1)]
         [SerializeField] private int gridColumns = 4;
         [Min(1)]
@@ -55,11 +59,18 @@ namespace CatGuard.Gameplay.Levels
         public string DisplayName => string.IsNullOrWhiteSpace(displayName) ? LevelId : displayName;
         public int BaseLives => Mathf.Max(1, baseLives);
         public int StartingBattleFish => Mathf.Max(1, startingBattleFish);
+        public BattlefieldConfig BattlefieldConfig => battlefieldConfig;
+        public bool UsesLegacyBattlefield => battlefieldConfig == null;
         public int GridColumns => Mathf.Max(1, gridColumns);
         public int GridRows => Mathf.Max(1, gridRows);
         public float CellSize => Mathf.Max(0.5f, cellSize);
         public Vector2 GridOrigin => gridOrigin;
-        public Vector2[] PathPoints => pathPoints;
+        public Vector2[] PathPoints => ResolveBattlefield()?.PathPoints ?? Array.Empty<Vector2>();
+        public int LegacyGridColumns => Mathf.Max(1, gridColumns);
+        public int LegacyGridRows => Mathf.Max(1, gridRows);
+        public float LegacyCellSize => Mathf.Max(0.5f, cellSize);
+        public Vector2 LegacyGridOrigin => gridOrigin;
+        public Vector2[] LegacyPathPoints => pathPoints ?? Array.Empty<Vector2>();
         public TowerConfig[] AvailableTowers => availableTowers;
         public WaveConfig WaveConfig => waveConfig;
         public int FirstClearRewardCoins => Mathf.Max(0, firstClearRewardCoins);
@@ -75,12 +86,13 @@ namespace CatGuard.Gameplay.Levels
                 return false;
             }
 
-            if (BaseLives <= 0 || StartingBattleFish <= 0 || GridColumns <= 0 || GridRows <= 0 || CellSize <= 0f)
+            if (BaseLives <= 0 || StartingBattleFish <= 0)
             {
                 return false;
             }
 
-            if (pathPoints == null || pathPoints.Length < 2)
+            var battlefield = ResolveBattlefield();
+            if (battlefield == null || !battlefield.IsValid(out _))
             {
                 return false;
             }
@@ -107,6 +119,18 @@ namespace CatGuard.Gameplay.Levels
             }
 
             return waveConfig != null && waveConfig.IsValid();
+        }
+
+        public BattlefieldDefinition ResolveBattlefield()
+        {
+            return battlefieldConfig != null
+                ? battlefieldConfig.CreateDefinition()
+                : LegacyBattlefieldAdapter.Create(this);
+        }
+
+        public void ConfigureBattlefield(BattlefieldConfig mapConfig)
+        {
+            battlefieldConfig = mapConfig;
         }
 
         public void Configure(

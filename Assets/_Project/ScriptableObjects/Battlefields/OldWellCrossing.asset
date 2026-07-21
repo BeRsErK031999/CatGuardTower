@@ -1,0 +1,114 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7337a675361a4274684b3303a33e2c84, type: 3}
+  m_Name: OldWellCrossing
+  m_EditorClassIdentifier: Assembly-CSharp::CatGuard.Gameplay.Battlefield.BattlefieldConfig
+  battlefieldId: old_well_crossing
+  displayName: Old Well Crossing
+  backgroundId: old_well_twilight
+  biomeId: old_well
+  cameraMode: 1
+  worldBounds:
+    serializedVersion: 2
+    x: -12
+    y: -4.8
+    width: 24
+    height: 9.6
+  cameraBounds:
+    serializedVersion: 2
+    x: -11.5
+    y: -4.3
+    width: 23
+    height: 8.6
+  initialCameraFocus: {x: -6, y: 0}
+  scrollableViewHeight: 6
+  pathPoints:
+  - {x: -11, y: 2.5}
+  - {x: -8, y: 1.2}
+  - {x: -4.7, y: 1.8}
+  - {x: -2, y: -0.9}
+  - {x: 2.2, y: -0.8}
+  - {x: 5.1, y: 1.5}
+  - {x: 8.2, y: 0.8}
+  - {x: 11, y: -2.5}
+  pathVisualWidth: 0.58
+  spawnPresentationAnchor: {x: -11, y: 2.5}
+  goalPresentationAnchor: {x: 11, y: -2.5}
+  placementCellSize: 1.05
+  placementZones:
+  - zoneId: south_crossing
+    bounds:
+      serializedVersion: 2
+      x: -10.9
+      y: -4.05
+      width: 21.8
+      height: 1.9
+  - zoneId: north_west
+    bounds:
+      serializedVersion: 2
+      x: -10.7
+      y: 2.1
+      width: 7.4
+      height: 1.75
+  - zoneId: north_east
+    bounds:
+      serializedVersion: 2
+      x: 3.3
+      y: 2
+      width: 7.4
+      height: 1.85
+  - zoneId: west_bank
+    bounds:
+      serializedVersion: 2
+      x: -7.4
+      y: -0.85
+      width: 3.2
+      height: 1.75
+  - zoneId: east_bank
+    bounds:
+      serializedVersion: 2
+      x: 4.1
+      y: -0.75
+      width: 3.2
+      height: 1.75
+  blockedZones:
+  - zoneId: old_well
+    bounds:
+      serializedVersion: 2
+      x: -1.7
+      y: -1.7
+      width: 3.4
+      height: 3.4
+  - zoneId: broken_cart
+    bounds:
+      serializedVersion: 2
+      x: 7.55
+      y: -3.55
+      width: 1.65
+      height: 1.25
+  decorationAnchors:
+  - decorationId: old_well
+    position: {x: 0, y: 0}
+    scale: 2.6
+    foreground: 0
+  - decorationId: lantern_west
+    position: {x: -7.7, y: 3.35}
+    scale: 0.72
+    foreground: 1
+  - decorationId: lantern_east
+    position: {x: 7.4, y: 3.2}
+    scale: 0.72
+    foreground: 1
+  - decorationId: hedge_far_east
+    position: {x: 10.6, y: 0.2}
+    scale: 1.3
+    foreground: 1

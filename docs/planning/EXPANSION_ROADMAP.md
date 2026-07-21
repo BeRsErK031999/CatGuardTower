@@ -227,6 +227,8 @@ Status: completed by this documentation task.
 
 Размер: `XL`
 
+Статус: завершён 2026-07-21; полный Block Test Gate зафиксирован в [E2_BATTLEFIELD_REPORT.md](E2_BATTLEFIELD_REPORT.md).
+
 Главный результат: карта становится отдельной конфигурацией мира и может быть заметно больше текущего портретного поля.
 
 ### Scope
@@ -1129,6 +1131,6 @@ Ceilings здесь означают ожидаемую способность d
 
 ## 9. Next Action
 
-`E1 — Landscape Foundation And Automatic Rotation` завершён; фактический gate находится в [E1_LANDSCAPE_REPORT.md](E1_LANDSCAPE_REPORT.md).
+`E2 — Scalable Battlefield, Camera, And Larger Maps` завершён; фактический gate находится в [E2_BATTLEFIELD_REPORT.md](E2_BATTLEFIELD_REPORT.md).
 
-Следующий допустимый implementation block: **`E2 — Scalable Battlefield, Camera, And Larger Maps`**. Он должен выполняться отдельной самостоятельной задачей с собственным scope и Block Test Gate; E1-delivery не включает реализацию E2.
+Следующий допустимый implementation block: **`E3 — Multi-Route Engine And Split-Attack Gameplay`**. Он должен выполняться отдельной самостоятельной задачей с собственным scope и Block Test Gate; E2-delivery не включает реализацию E3.

@@ -1,0 +1,94 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7337a675361a4274684b3303a33e2c84, type: 3}
+  m_Name: GardenGateWide
+  m_EditorClassIdentifier: Assembly-CSharp::CatGuard.Gameplay.Battlefield.BattlefieldConfig
+  battlefieldId: garden_gate_wide
+  displayName: Garden Gate Wide
+  backgroundId: garden_day
+  biomeId: garden
+  cameraMode: 0
+  worldBounds:
+    serializedVersion: 2
+    x: -7
+    y: -4.5
+    width: 14
+    height: 9
+  cameraBounds:
+    serializedVersion: 2
+    x: -7
+    y: -4.5
+    width: 14
+    height: 9
+  initialCameraFocus: {x: 0, y: 0}
+  scrollableViewHeight: 8.4
+  pathPoints:
+  - {x: -6.25, y: 2.45}
+  - {x: -3.8, y: 1.55}
+  - {x: -0.7, y: 2.05}
+  - {x: 2.35, y: 0.75}
+  - {x: 1.1, y: -1.25}
+  - {x: 6.15, y: -2.45}
+  pathVisualWidth: 0.48
+  spawnPresentationAnchor: {x: -6.25, y: 2.45}
+  goalPresentationAnchor: {x: 6.15, y: -2.45}
+  placementCellSize: 1.1
+  placementZones:
+  - zoneId: south_garden
+    bounds:
+      serializedVersion: 2
+      x: -5.9
+      y: -3.95
+      width: 11.8
+      height: 2.25
+  - zoneId: west_pocket
+    bounds:
+      serializedVersion: 2
+      x: -6.25
+      y: -1.2
+      width: 2.35
+      height: 2.55
+  - zoneId: east_pocket
+    bounds:
+      serializedVersion: 2
+      x: 3.9
+      y: -1.2
+      width: 2.35
+      height: 2.55
+  - zoneId: north_pocket
+    bounds:
+      serializedVersion: 2
+      x: -2.1
+      y: 2.2
+      width: 4.2
+      height: 1.65
+  blockedZones:
+  - zoneId: guardian_tree
+    bounds:
+      serializedVersion: 2
+      x: -0.75
+      y: -3.65
+      width: 1.5
+      height: 1.45
+  decorationAnchors:
+  - decorationId: hedge_west
+    position: {x: -5.75, y: 3.55}
+    scale: 1.4
+    foreground: 0
+  - decorationId: guardian_tree
+    position: {x: 0, y: -2.9}
+    scale: 1.35
+    foreground: 1
+  - decorationId: lantern_gate
+    position: {x: 5.7, y: -1.2}
+    scale: 0.72
+    foreground: 1

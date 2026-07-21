@@ -31,6 +31,16 @@ The previous `_project_scaffold/` contents have been moved into `Assets/_Project
 - `PrototypeLevelController` reframes the existing single-path map when resolution or safe area changes. It does not change `LevelConfig.pathPoints`, map size, waves, towers, enemies, or battle balance.
 - `E1ProjectSetup` validates the layout/orientation contract through Unity batchmode. Android emulator tooling confirms the rendered screen is landscape, including a launch that starts from forced portrait.
 
+## E2 Battlefield Boundary
+
+- `BattlefieldConfig` owns world/camera bounds, `FixedOverview` or `ScrollableLarge` mode, biome/background ids, route geometry/width, spawn and goal anchors, world-space placement zones, blocked zones, and decoration anchors.
+- `BattlefieldDefinition` is the validated runtime representation. `LevelConfig` references a map and keeps its former grid/path fields only behind `LegacyBattlefieldAdapter`; `level_03` is the explicit compatibility proof.
+- `BattlefieldCameraController` frames the configured world inside the safe HUD viewport. Scrollable maps expose a focus rect derived from `cameraBounds`, and every pan is clamped to that rect.
+- `BattlefieldInputController` owns the full pointer gesture. Movement past the drag threshold suppresses placement and pans only a scrollable camera; a released tap delegates to `TowerGrid`.
+- `TowerGrid` builds cells from placement zones in world space and excludes blocked-zone centers. It no longer reads pointer input or owns a rectangular LevelConfig grid.
+- Runtime map presentation is organized into `Background`, `Terrain`, `Route`, `PropsBelowUnits`, `UnitsAndProjectiles`, `PropsAboveUnits`, `VFX`, and `WorldIndicators` layers. Missing final art falls back to the existing self-made texture and procedural shapes without changing combat.
+- `E2ProjectSetup` creates and validates `Garden Gate Wide`, `Old Well Crossing`, and `Rooftop Moonline`. `tools/android/run-emulator-battlefield-qa.ps1` exercises the manual camera/placement boundary on Android.
+
 ## Initial Scenes
 
 - `Boot`: initial bootstrap scene with a 2D camera and `GameBootstrap`.

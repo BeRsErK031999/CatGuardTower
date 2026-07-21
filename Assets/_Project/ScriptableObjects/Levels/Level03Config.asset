@@ -16,6 +16,7 @@ MonoBehaviour:
   displayName: Porch Stand
   baseLives: 7
   startingBattleFish: 125
+  battlefieldConfig: {fileID: 0}
   gridColumns: 4
   gridRows: 3
   cellSize: 1.15

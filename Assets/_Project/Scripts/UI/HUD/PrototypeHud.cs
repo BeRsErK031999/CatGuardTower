@@ -26,6 +26,7 @@ namespace CatGuard.UI.HUD
         private GUIStyle selectedButtonStyle;
         private GUIStyle towerButtonStyle;
         private GUIStyle selectedTowerButtonStyle;
+        private GUIStyle indicatorStyle;
         private Texture2D panelTexture;
         private Texture2D strongPanelTexture;
         private Texture2D buttonTexture;
@@ -97,6 +98,7 @@ namespace CatGuard.UI.HUD
                 DrawTopHud(GetTopBarRect(layout));
                 if (levelController.State is PrototypeLevelState.Preparing or PrototypeLevelState.Running)
                 {
+                    DrawWorldIndicators(layout);
                     DrawBottomHud(GetBottomTrayRect(layout));
                 }
                 else if (levelController.State is PrototypeLevelState.Won or PrototypeLevelState.Lost)
@@ -183,12 +185,18 @@ namespace CatGuard.UI.HUD
                 actionWidth,
                 panelRect.height - 24f);
 
+            var trayTitle = LocalizationService.Text(
+                levelController.State == PrototypeLevelState.Preparing
+                    ? "hud.prepareDefenders"
+                    : "hud.chooseTower");
+            if (levelController.Battlefield?.CanPan == true)
+            {
+                trayTitle = $"{trayTitle}  •  {LocalizationService.Text("hud.cameraPan")}";
+            }
+
             GUI.Label(
                 new Rect(towerArea.x, towerArea.y, towerArea.width, 26f),
-                LocalizationService.Text(
-                    levelController.State == PrototypeLevelState.Preparing
-                        ? "hud.prepareDefenders"
-                        : "hud.chooseTower"),
+                trayTitle,
                 statsStyle);
 
             const float spacing = 9f;
@@ -320,6 +328,56 @@ namespace CatGuard.UI.HUD
             }
         }
 
+        private void DrawWorldIndicators(LandscapeLayout.Context layout)
+        {
+            var battlefield = levelController.Battlefield;
+            var camera = Camera.main;
+            if (battlefield == null || camera == null)
+            {
+                return;
+            }
+
+            var battlefieldRect = LandscapeLayout.Inset(GetBattlefieldRect(layout), 44f, 34f);
+            DrawWorldIndicator(
+                battlefield.SpawnPresentationAnchor,
+                LocalizationService.Text("hud.spawnShort"),
+                new Color(0.18f, 0.55f, 0.35f, 0.94f),
+                camera,
+                layout,
+                battlefieldRect);
+            DrawWorldIndicator(
+                battlefield.GoalPresentationAnchor,
+                LocalizationService.Text("hud.goalShort"),
+                new Color(0.72f, 0.38f, 0.12f, 0.94f),
+                camera,
+                layout,
+                battlefieldRect);
+        }
+
+        private void DrawWorldIndicator(
+            Vector2 worldPosition,
+            string label,
+            Color color,
+            Camera camera,
+            LandscapeLayout.Context layout,
+            Rect battlefieldRect)
+        {
+            var screenPosition = camera.WorldToScreenPoint(worldPosition);
+            var logicalPosition = layout.ScreenToLogical(screenPosition);
+            var clamped = new Vector2(
+                Mathf.Clamp(logicalPosition.x, battlefieldRect.xMin, battlefieldRect.xMax),
+                Mathf.Clamp(logicalPosition.y, battlefieldRect.yMin, battlefieldRect.yMax));
+            var suffix = logicalPosition.x < battlefieldRect.xMin
+                ? $"< {label}"
+                : logicalPosition.x > battlefieldRect.xMax
+                    ? $"{label} >"
+                    : label;
+            var previousColor = GUI.backgroundColor;
+            GUI.backgroundColor = color;
+            GUI.Box(new Rect(clamped.x - 38f, clamped.y - 18f, 76f, 36f), suffix, indicatorStyle);
+            GUI.backgroundColor = previousColor;
+        }
+
         private static Rect GetTopBarRect(LandscapeLayout.Context layout)
         {
             return new Rect(
@@ -364,6 +422,13 @@ namespace CatGuard.UI.HUD
             selectedButtonStyle = CreateButtonStyle(accentTexture, accentHoverTexture, 20, new Color(0.12f, 0.09f, 0.03f));
             towerButtonStyle = CreateButtonStyle(buttonTexture, buttonHoverTexture, 17, Color.white);
             selectedTowerButtonStyle = CreateButtonStyle(accentTexture, accentHoverTexture, 17, new Color(0.12f, 0.09f, 0.03f));
+            indicatorStyle = new GUIStyle(GUI.skin.box)
+            {
+                alignment = TextAnchor.MiddleCenter,
+                fontSize = 16,
+                fontStyle = FontStyle.Bold,
+                normal = { textColor = Color.white }
+            };
         }
 
         private static GUIStyle CreateLabelStyle(int fontSize, FontStyle fontStyle, TextAnchor alignment, Color color)

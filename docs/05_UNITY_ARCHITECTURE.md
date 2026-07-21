@@ -52,6 +52,16 @@ The previous `_project_scaffold/` contents have been moved into `Assets/_Project
 - `E3ProjectSetup` validates the single-route control, independent Old Well lanes, Rooftop shared-spawn/shared-goal fork, boss-only routes, wave references, targeting, analytics, and runtime source boundaries.
 - `tools/android/run-emulator-route-qa.ps1` aggregates victory, route-filtered defeat, simultaneous-spawn, restart/save, screenshot, and fatal-log evidence.
 
+## E4 Map Authoring Pipeline
+
+- `BattlefieldDesignCard` stores intended difficulty, route concept, tower-role opportunities, dominant threat, ultimate opportunities, and accessibility notes on each map asset.
+- `MapAuthoringAssetFactory` creates battlefield/wave/level ScriptableObjects from existing content references without gameplay-script changes or automatic campaign insertion.
+- `MapAuthoringValidator` reports stable issue codes with exact asset paths and field/route context.
+- `MapAuthoringPreview.unity` is an editor-only scene excluded from Build Settings. `BattlefieldAuthoringPreview` draws world/camera bounds, placement/no-build zones, runtime cells, routes, endpoints, and decorations in Scene/Game gizmos.
+- `BattlefieldAuthoringPreviewEditor` edits the real serialized route points with Scene handles.
+- Runtime and authoring preview resolve route colors through `BattlefieldRouteVisualStyle`; both consume the same `BattlefieldDefinition` route geometry.
+- `MapAuthoringMigrationService` supports explicit `main` migration for legacy battlefield paths and creation of a new battlefield asset from a legacy level.
+
 ## Initial Scenes
 
 - `Boot`: initial bootstrap scene with a 2D camera and `GameBootstrap`.

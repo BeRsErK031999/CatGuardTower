@@ -31,6 +31,7 @@ The current goal is to expand the working Android MVP into a landscape, multi-ro
 - Expansion section E1 implements the landscape-only runtime boundary, adaptive MainMenu/HUD, safe-area-aware battlefield framing, and Android orientation validation. Its block gate evidence is recorded in `docs/planning/E1_LANDSCAPE_REPORT.md`.
 - Expansion section E2 adds data-driven battlefield bounds, fixed/scrollable cameras, safe placement, and larger maps. Its block gate evidence is recorded in `docs/planning/E2_BATTLEFIELD_REPORT.md`.
 - Expansion section E3 adds explicit multi-route battlefields and waves, normalized cross-route targeting, route presentation/analytics, legacy `main` migration, and deterministic Android route QA. Its block gate evidence is recorded in `docs/planning/E3_MULTI_ROUTE_REPORT.md`.
+- Expansion section E4 implements a data-only map factory, design cards, asset-path validation, preview gizmos/route handles, reproducible preview evidence, and legacy migration. Its completed block gate is recorded in `docs/planning/E4_MAP_AUTHORING_REPORT.md`.
 
 ## Recommended Reading Order
 
@@ -46,4 +47,4 @@ The current goal is to expand the working Android MVP into a landscape, multi-ro
 
 ## Next Safe Step
 
-E3 is complete. The next safe implementation block is E4, the map-authoring and content-validation pipeline. Keep E4 isolated and pass its own block gate before beginning E5.
+E4 is complete. The next safe isolated block is E5 — Animated Enemies And Unit Presentation. Keep external-art dependencies explicit and execute the full E5 block gate before moving to E6 or E7.

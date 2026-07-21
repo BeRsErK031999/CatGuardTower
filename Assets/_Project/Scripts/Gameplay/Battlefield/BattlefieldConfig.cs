@@ -84,6 +84,9 @@ namespace CatGuard.Gameplay.Battlefield
         [Header("Presentation")]
         [SerializeField] private BattlefieldDecorationAnchor[] decorationAnchors = Array.Empty<BattlefieldDecorationAnchor>();
 
+        [Header("Authoring Design Card")]
+        [SerializeField] private BattlefieldDesignCard designCard = new();
+
         public string BattlefieldId => string.IsNullOrWhiteSpace(battlefieldId) ? name : battlefieldId;
         public string DisplayName => string.IsNullOrWhiteSpace(displayName) ? BattlefieldId : displayName;
         public string BackgroundId => backgroundId ?? string.Empty;
@@ -110,6 +113,7 @@ namespace CatGuard.Gameplay.Battlefield
         public BattlefieldZone[] PlacementZones => placementZones ?? Array.Empty<BattlefieldZone>();
         public BattlefieldZone[] BlockedZones => blockedZones ?? Array.Empty<BattlefieldZone>();
         public BattlefieldDecorationAnchor[] DecorationAnchors => decorationAnchors ?? Array.Empty<BattlefieldDecorationAnchor>();
+        public BattlefieldDesignCard DesignCard => designCard ??= new BattlefieldDesignCard();
 
         public BattlefieldDefinition CreateDefinition()
         {
@@ -177,6 +181,17 @@ namespace CatGuard.Gameplay.Battlefield
         public void ConfigureRoutes(PathRouteConfig[] routeConfigs)
         {
             routes = routeConfigs ?? Array.Empty<PathRouteConfig>();
+        }
+
+        public void ConfigureDesignCard(
+            string difficulty,
+            string concept,
+            string[] towerRoles,
+            string threat,
+            string ultimateUses,
+            string accessibility)
+        {
+            DesignCard.Configure(difficulty, concept, towerRoles, threat, ultimateUses, accessibility);
         }
     }
 }

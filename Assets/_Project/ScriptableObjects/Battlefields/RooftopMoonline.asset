@@ -52,6 +52,7 @@ MonoBehaviour:
     - fork
     spawnDelayOffset: 0
     validationMetadata: Shared spawn and goal; lower western branch.
+    allowPointsOutsideWorldBounds: 0
   - routeId: moon_branch
     displayName: Moon Roof Branch
     points:
@@ -72,6 +73,7 @@ MonoBehaviour:
     - fork
     spawnDelayOffset: 0
     validationMetadata: Shared spawn and goal; upper moon branch.
+    allowPointsOutsideWorldBounds: 0
   - routeId: chimney_boss
     displayName: Chimney Boss Route
     points:
@@ -93,6 +95,7 @@ MonoBehaviour:
     - fork
     spawnDelayOffset: 0.3
     validationMetadata: Boss-only central chimney branch.
+    allowPointsOutsideWorldBounds: 0
   pathPoints:
   - {x: -7.2, y: 2.8}
   - {x: -5.3, y: -0.1}
@@ -166,3 +169,16 @@ MonoBehaviour:
     position: {x: 5.6, y: 1.1}
     scale: 0.9
     foreground: 1
+  designCard:
+    intendedDifficulty: Campaign / medium
+    routeConcept: Shared spawn and goal split into visually distinct forked routes
+      around rooftop props.
+    towerRoleOpportunities:
+    - Splash near shared endpoints
+    - Long-range coverage across the fork
+    - Last targeting for leak control
+    dominantThreat: Uneven route lengths create timing offsets before enemies reconverge.
+    ultimateOpportunities: Future ultimates are legible at the fork center or shared
+      goal.
+    accessibilityNotes: Shared endpoint markers are deduplicated and route colors
+      remain distinct at crossings.

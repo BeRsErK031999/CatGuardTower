@@ -702,7 +702,7 @@ namespace CatGuard.Gameplay.Levels
             for (var index = 0; index < Battlefield.Routes.Length; index++)
             {
                 var route = Battlefield.Routes[index];
-                var (startColor, endColor) = GetRouteColors(route.VisualStyleId, index);
+                var (startColor, endColor) = BattlefieldRouteVisualStyle.GetColors(route.VisualStyleId, index);
                 CreatePathStroke(
                     $"Route_{route.RouteId}_Border",
                     route,
@@ -797,30 +797,6 @@ namespace CatGuard.Gameplay.Levels
                 renderer.color = new Color(color.r, color.g, color.b, 0.86f);
                 renderer.sortingOrder = sortingOrder;
             }
-        }
-
-        private static (Color Start, Color End) GetRouteColors(string styleId, int index)
-        {
-            var normalized = (styleId ?? string.Empty).ToLowerInvariant();
-            if (normalized.Contains("north") || normalized.Contains("moon"))
-            {
-                return (new Color(0.42f, 0.78f, 0.86f, 0.9f), new Color(0.25f, 0.62f, 0.78f, 0.94f));
-            }
-
-            if (normalized.Contains("south") || normalized.Contains("west"))
-            {
-                return (new Color(0.86f, 0.68f, 0.36f, 0.92f), new Color(0.82f, 0.46f, 0.22f, 0.95f));
-            }
-
-            if (normalized.Contains("boss") || normalized.Contains("chimney"))
-            {
-                return (new Color(0.72f, 0.4f, 0.72f, 0.92f), new Color(0.52f, 0.24f, 0.58f, 0.96f));
-            }
-
-            var tint = Mathf.Repeat(index * 0.13f, 0.32f);
-            return (
-                new Color(0.78f - tint, 0.64f + (tint * 0.25f), 0.38f + tint, 0.92f),
-                new Color(0.74f - tint, 0.48f + (tint * 0.2f), 0.22f + tint, 0.94f));
         }
 
         private static void CreateRouteMarkerOnce(

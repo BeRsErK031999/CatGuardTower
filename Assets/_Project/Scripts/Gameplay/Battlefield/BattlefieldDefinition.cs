@@ -7,6 +7,8 @@ namespace CatGuard.Gameplay.Battlefield
     public sealed class BattlefieldDefinition
     {
         private readonly Vector2[] buildCellCenters;
+        private readonly List<Vector2> pathRejectedCellCenters = new();
+        private readonly List<Vector2> blockedRejectedCellCenters = new();
         private readonly Dictionary<string, PathRouteDefinition> routesById = new(StringComparer.Ordinal);
 
         internal BattlefieldDefinition(
@@ -77,6 +79,8 @@ namespace CatGuard.Gameplay.Battlefield
         public bool IsLegacy { get; }
         public bool UsesLegacyRoute { get; }
         public IReadOnlyList<Vector2> BuildCellCenters => buildCellCenters;
+        public IReadOnlyList<Vector2> PathRejectedCellCenters => pathRejectedCellCenters;
+        public IReadOnlyList<Vector2> BlockedRejectedCellCenters => blockedRejectedCellCenters;
         public bool CanPan => CameraMode == BattlefieldCameraMode.ScrollableLarge;
 
         public static BattlefieldDefinition FromConfig(BattlefieldConfig config)
@@ -106,7 +110,8 @@ namespace CatGuard.Gameplay.Battlefield
                             1f,
                             new[] { "ground", "legacy" },
                             0f,
-                            "Runtime migration from legacy battlefield pathPoints.")
+                            "Runtime migration from legacy battlefield pathPoints.",
+                            false)
                     };
             }
             else
@@ -197,14 +202,15 @@ namespace CatGuard.Gameplay.Battlefield
 
                 foreach (var point in route.Points)
                 {
-                    if (!Contains(WorldBounds, point))
+                    if (!route.AllowPointsOutsideWorldBounds && !Contains(WorldBounds, point))
                     {
                         error = $"Route '{route.RouteId}' contains a point outside world bounds.";
                         return false;
                     }
                 }
 
-                if (!Contains(WorldBounds, route.SpawnAnchor) || !Contains(WorldBounds, route.GoalAnchor))
+                if (!route.AllowPointsOutsideWorldBounds
+                    && (!Contains(WorldBounds, route.SpawnAnchor) || !Contains(WorldBounds, route.GoalAnchor)))
                 {
                     error = $"Route '{route.RouteId}' endpoints must stay inside world bounds.";
                     return false;
@@ -287,18 +293,27 @@ namespace CatGuard.Gameplay.Battlefield
                     for (var column = 0; column < columns; column++)
                     {
                         var center = start + new Vector2(column * cellSize, row * cellSize);
-                        if (IsBlocked(center))
+                        var key = new Vector2Int(
+                            Mathf.RoundToInt(center.x * 1000f),
+                            Mathf.RoundToInt(center.y * 1000f));
+                        if (!unique.Add(key))
                         {
                             continue;
                         }
 
-                        var key = new Vector2Int(
-                            Mathf.RoundToInt(center.x * 1000f),
-                            Mathf.RoundToInt(center.y * 1000f));
-                        if (unique.Add(key))
+                        if (IntersectsBlockedCell(center, cellSize))
                         {
-                            result.Add(center);
+                            blockedRejectedCellCenters.Add(center);
+                            continue;
                         }
+
+                        if (IntersectsRouteCell(center, cellSize))
+                        {
+                            pathRejectedCellCenters.Add(center);
+                            continue;
+                        }
+
+                        result.Add(center);
                     }
                 }
             }
@@ -309,6 +324,55 @@ namespace CatGuard.Gameplay.Battlefield
                 return xComparison != 0 ? xComparison : left.y.CompareTo(right.y);
             });
             return result.ToArray();
+        }
+
+        private bool IntersectsBlockedCell(Vector2 center, float cellSize)
+        {
+            var margin = cellSize * 0.08f;
+            foreach (var zone in BlockedZones)
+            {
+                var expanded = Rect.MinMaxRect(
+                    zone.Bounds.xMin - margin,
+                    zone.Bounds.yMin - margin,
+                    zone.Bounds.xMax + margin,
+                    zone.Bounds.yMax + margin);
+                if (expanded.Contains(center))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private bool IntersectsRouteCell(Vector2 center, float cellSize)
+        {
+            foreach (var route in Routes)
+            {
+                var clearance = (route.VisualWidth * 0.5f) + (cellSize * 0.16f);
+                for (var index = 1; index < route.Points.Length; index++)
+                {
+                    if (DistanceToSegment(center, route.Points[index - 1], route.Points[index]) < clearance)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        private static float DistanceToSegment(Vector2 point, Vector2 start, Vector2 end)
+        {
+            var segment = end - start;
+            var lengthSquared = segment.sqrMagnitude;
+            if (lengthSquared <= 0.000001f)
+            {
+                return Vector2.Distance(point, start);
+            }
+
+            var projection = Mathf.Clamp01(Vector2.Dot(point - start, segment) / lengthSquared);
+            return Vector2.Distance(point, start + (segment * projection));
         }
 
         private static bool Contains(Rect outer, Rect inner)

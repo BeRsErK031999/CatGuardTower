@@ -20,6 +20,7 @@ namespace CatGuard.Gameplay.Battlefield
         [Min(0f)]
         [SerializeField] private float spawnDelayOffset;
         [SerializeField] private string validationMetadata = string.Empty;
+        [SerializeField] private bool allowPointsOutsideWorldBounds;
 
         public PathRouteConfig(
             string id,
@@ -32,7 +33,8 @@ namespace CatGuard.Gameplay.Battlefield
             float weight,
             string[] routeTags,
             float delayOffset = 0f,
-            string metadata = "")
+            string metadata = "",
+            bool allowOutOfBoundsPoints = false)
         {
             Configure(
                 id,
@@ -45,7 +47,8 @@ namespace CatGuard.Gameplay.Battlefield
                 weight,
                 routeTags,
                 delayOffset,
-                metadata);
+                metadata,
+                allowOutOfBoundsPoints);
         }
 
         public string RouteId => routeId ?? string.Empty;
@@ -59,6 +62,7 @@ namespace CatGuard.Gameplay.Battlefield
         public string[] Tags => tags ?? Array.Empty<string>();
         public float SpawnDelayOffset => Mathf.Max(0f, spawnDelayOffset);
         public string ValidationMetadata => validationMetadata ?? string.Empty;
+        public bool AllowPointsOutsideWorldBounds => allowPointsOutsideWorldBounds;
 
         public bool HasTag(string tag)
         {
@@ -91,7 +95,8 @@ namespace CatGuard.Gameplay.Battlefield
                 RouteWeight,
                 Tags,
                 SpawnDelayOffset,
-                ValidationMetadata);
+                ValidationMetadata,
+                AllowPointsOutsideWorldBounds);
         }
 
         public void Configure(
@@ -105,7 +110,8 @@ namespace CatGuard.Gameplay.Battlefield
             float weight,
             string[] routeTags,
             float delayOffset = 0f,
-            string metadata = "")
+            string metadata = "",
+            bool allowOutOfBoundsPoints = false)
         {
             routeId = id;
             displayName = title;
@@ -118,6 +124,7 @@ namespace CatGuard.Gameplay.Battlefield
             tags = routeTags ?? Array.Empty<string>();
             spawnDelayOffset = Mathf.Max(0f, delayOffset);
             validationMetadata = metadata ?? string.Empty;
+            allowPointsOutsideWorldBounds = allowOutOfBoundsPoints;
         }
     }
 
@@ -136,7 +143,8 @@ namespace CatGuard.Gameplay.Battlefield
             float weight,
             string[] routeTags,
             float delayOffset,
-            string metadata)
+            string metadata,
+            bool allowOutOfBoundsPoints)
         {
             RouteId = id ?? string.Empty;
             DisplayName = string.IsNullOrWhiteSpace(title) ? RouteId : title;
@@ -149,6 +157,7 @@ namespace CatGuard.Gameplay.Battlefield
             Tags = routeTags == null ? Array.Empty<string>() : (string[])routeTags.Clone();
             SpawnDelayOffset = Mathf.Max(0f, delayOffset);
             ValidationMetadata = metadata ?? string.Empty;
+            AllowPointsOutsideWorldBounds = allowOutOfBoundsPoints;
 
             cumulativeDistances = new float[Points.Length];
             for (var index = 1; index < Points.Length; index++)
@@ -171,6 +180,7 @@ namespace CatGuard.Gameplay.Battlefield
         public string[] Tags { get; }
         public float SpawnDelayOffset { get; }
         public string ValidationMetadata { get; }
+        public bool AllowPointsOutsideWorldBounds { get; }
         public float TotalLength { get; }
 
         public bool HasTag(string tag)

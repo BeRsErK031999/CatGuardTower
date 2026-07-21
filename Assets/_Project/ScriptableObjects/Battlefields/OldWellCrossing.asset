@@ -53,6 +53,7 @@ MonoBehaviour:
     - lane
     spawnDelayOffset: 0
     validationMetadata: Separate northern lane.
+    allowPointsOutsideWorldBounds: 0
   - routeId: south_lane
     displayName: South Lane
     points:
@@ -74,6 +75,7 @@ MonoBehaviour:
     - lane
     spawnDelayOffset: 0
     validationMetadata: Separate southern lane.
+    allowPointsOutsideWorldBounds: 0
   - routeId: well_boss
     displayName: Well Boss Route
     points:
@@ -95,6 +97,7 @@ MonoBehaviour:
     - boss
     spawnDelayOffset: 0.35
     validationMetadata: Boss-only route around the old well.
+    allowPointsOutsideWorldBounds: 0
   pathPoints:
   - {x: -11, y: 2.5}
   - {x: -8, y: 1.2}
@@ -176,3 +179,17 @@ MonoBehaviour:
     position: {x: 10.6, y: 0.2}
     scale: 1.3
     foreground: 1
+  designCard:
+    intendedDifficulty: Campaign / medium-high
+    routeConcept: Two separated lanes plus a central boss route on a horizontally
+      scrollable map.
+    towerRoleOpportunities:
+    - Lane-specialized towers
+    - Long-range cross-lane support
+    - Strong targeting on the boss lane
+    dominantThreat: Simultaneous pressure at distant goals with a durable central
+      threat.
+    ultimateOpportunities: Future map-scale control rewards timing while both lane
+      fronts are visible.
+    accessibilityNotes: Distinct vertical lanes, numbered endpoints, route colors,
+      and bounded camera panning.

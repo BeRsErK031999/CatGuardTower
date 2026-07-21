@@ -49,7 +49,8 @@ namespace CatGuard.Gameplay.Battlefield
                 1f,
                 new[] { "ground", "legacy" },
                 0f,
-                "LevelConfig legacy geometry adapter.");
+                "LevelConfig legacy geometry adapter.",
+                false);
             return new BattlefieldDefinition(
                 $"legacy_{level.LevelId}",
                 $"Legacy {level.DisplayName}",

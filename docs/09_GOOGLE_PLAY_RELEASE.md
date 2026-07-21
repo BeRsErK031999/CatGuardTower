@@ -65,6 +65,8 @@ For the E2 map/camera regression, run `tools/android/run-emulator-battlefield-qa
 
 For the E3 multi-route regression, run `tools/android/run-emulator-route-qa.ps1`. It covers the single-route control, concurrent independent lanes, shared-endpoint forks, boss-only routes, route-filtered defeat, victory, local-save persistence across app restarts, screenshots, and fatal log signatures.
 
+For E4 authoring changes, first run `E4ProjectSetup.Validate`, then reuse `tools/android/run-emulator-battlefield-qa.ps1` and `tools/android/run-emulator-route-qa.ps1`. Together they prove that all three player maps still render, pan, place towers, and complete through the data-only pipeline.
+
 ## Store Materials
 
 Current drafts live under `docs/store/`:

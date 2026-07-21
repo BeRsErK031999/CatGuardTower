@@ -374,6 +374,8 @@ Status: completed by this documentation task.
 
 Размер: `L`
 
+Статус: завершён; полный Block Test Gate записан в [E4_MAP_AUTHORING_REPORT.md](E4_MAP_AUTHORING_REPORT.md).
+
 Главный результат: новые масштабные карты создаются через данные и инструменты, а не ручные изменения runtime-кода.
 
 ### Scope
@@ -1133,6 +1135,6 @@ Ceilings здесь означают ожидаемую способность d
 
 ## 9. Next Action
 
-`E3 — Multi-Route Enemy Path Engine` завершён; фактический gate находится в [E3_MULTI_ROUTE_REPORT.md](E3_MULTI_ROUTE_REPORT.md).
+`E4 — Map Authoring And Content Validation Pipeline` завершён; фактический gate находится в [E4_MAP_AUTHORING_REPORT.md](E4_MAP_AUTHORING_REPORT.md).
 
-Следующий допустимый implementation block: **`E4 — Map Authoring And Content Validation Pipeline`**. Он должен выполняться отдельной самостоятельной задачей с собственным scope и Block Test Gate; E3-delivery не включает реализацию E4.
+Следующий допустимый implementation block: **`E5 — Animated Enemies And Unit Presentation`**. Он должен выполняться отдельной самостоятельной задачей с собственным scope, external-art boundary и Block Test Gate; E4-delivery не включает реализацию E5.

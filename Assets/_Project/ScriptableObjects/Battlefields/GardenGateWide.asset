@@ -51,6 +51,7 @@ MonoBehaviour:
     - control
     spawnDelayOffset: 0
     validationMetadata: E3 single-route regression control.
+    allowPointsOutsideWorldBounds: 0
   pathPoints:
   - {x: -6.25, y: 2.45}
   - {x: -3.8, y: 1.55}
@@ -112,3 +113,15 @@ MonoBehaviour:
     position: {x: 5.7, y: -1.2}
     scale: 0.72
     foreground: 1
+  designCard:
+    intendedDifficulty: Intro / low
+    routeConcept: Single readable route used as the control layout for onboarding
+      and regression.
+    towerRoleOpportunities:
+    - Short-range coverage at bends
+    - Long-range coverage across the center
+    dominantThreat: A single predictable stream that teaches route progress.
+    ultimateOpportunities: Future ultimates can cover the central bend without requiring
+      precision.
+    accessibilityNotes: One high-contrast route, large placement pockets, and stable
+      fixed camera framing.

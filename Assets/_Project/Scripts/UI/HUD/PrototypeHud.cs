@@ -2,14 +2,17 @@ using CatGuard.Core.Audio;
 using CatGuard.Core.Localization;
 using CatGuard.Core.SceneLoading;
 using CatGuard.Gameplay.Levels;
+using CatGuard.UI.Layout;
 using UnityEngine;
 
 namespace CatGuard.UI.HUD
 {
     public sealed class PrototypeHud : MonoBehaviour
     {
-        private const float DesignWidth = 540f;
-        private const float DesignHeight = 1200f;
+        private const float HudMargin = 24f;
+        private const float TopBarHeight = 82f;
+        private const float BottomTrayHeight = 136f;
+        private const float BattlefieldGap = 16f;
 
         private PrototypeLevelController levelController;
         private GUIStyle panelStyle;
@@ -29,12 +32,44 @@ namespace CatGuard.UI.HUD
         private Texture2D buttonHoverTexture;
         private Texture2D accentTexture;
         private Texture2D accentHoverTexture;
+        private Texture2D modalBackdropTexture;
         private string resultMessage = string.Empty;
 
         public void Initialize(PrototypeLevelController controller)
         {
             levelController = controller;
             resultMessage = string.Empty;
+        }
+
+        public bool BlocksBattlefieldInput(Vector2 screenPosition)
+        {
+            var layout = LandscapeLayout.Calculate();
+            var logicalPosition = layout.ScreenToLogical(screenPosition);
+            if (!layout.SafeRect.Contains(logicalPosition))
+            {
+                return true;
+            }
+
+            if (levelController != null
+                && levelController.State is PrototypeLevelState.Won or PrototypeLevelState.Lost)
+            {
+                return true;
+            }
+
+            return GetTopBarRect(layout).Contains(logicalPosition)
+                || GetBottomTrayRect(layout).Contains(logicalPosition);
+        }
+
+        public static Rect GetBattlefieldRect(LandscapeLayout.Context layout)
+        {
+            var topBar = GetTopBarRect(layout);
+            var bottomTray = GetBottomTrayRect(layout);
+            var safeRect = layout.SafeRect;
+            return new Rect(
+                safeRect.x + HudMargin,
+                topBar.yMax + BattlefieldGap,
+                Mathf.Max(0f, safeRect.width - (HudMargin * 2f)),
+                Mathf.Max(0f, bottomTray.y - topBar.yMax - (BattlefieldGap * 2f)));
         }
 
         private void OnDestroy()
@@ -45,6 +80,7 @@ namespace CatGuard.UI.HUD
             DestroyRuntimeTexture(buttonHoverTexture);
             DestroyRuntimeTexture(accentTexture);
             DestroyRuntimeTexture(accentHoverTexture);
+            DestroyRuntimeTexture(modalBackdropTexture);
         }
 
         private void OnGUI()
@@ -55,61 +91,43 @@ namespace CatGuard.UI.HUD
             }
 
             EnsureStyles();
-            var previousMatrix = GUI.matrix;
-            var scale = Mathf.Min(Screen.width / DesignWidth, Screen.height / DesignHeight);
-            var offsetX = (Screen.width - (DesignWidth * scale)) * 0.5f;
-            var offsetY = (Screen.height - (DesignHeight * scale)) * 0.5f;
-            GUI.matrix = Matrix4x4.TRS(
-                new Vector3(offsetX, offsetY, 0f),
-                Quaternion.identity,
-                new Vector3(scale, scale, 1f));
-
-            var safeArea = Screen.safeArea;
-            var safeTop = Mathf.Clamp((Screen.height - safeArea.yMax) / scale, 0f, 64f);
-            var safeBottom = Mathf.Clamp(safeArea.yMin / scale, 0f, 64f);
-
-            DrawTopHud(safeTop);
-            if (levelController.State is PrototypeLevelState.Preparing or PrototypeLevelState.Running)
+            var layout = LandscapeLayout.Begin(out var previousMatrix);
+            try
             {
-                DrawTowerSelector(safeBottom);
-                if (levelController.State == PrototypeLevelState.Preparing)
+                DrawTopHud(GetTopBarRect(layout));
+                if (levelController.State is PrototypeLevelState.Preparing or PrototypeLevelState.Running)
                 {
-                    DrawPreparationButton(safeBottom);
+                    DrawBottomHud(GetBottomTrayRect(layout));
                 }
-                else
+                else if (levelController.State is PrototypeLevelState.Won or PrototypeLevelState.Lost)
                 {
-                    DrawInstruction(safeBottom);
+                    DrawResultOverlay(layout.SurfaceRect, layout.SafeRect);
                 }
             }
-            else if (levelController.State is PrototypeLevelState.Won or PrototypeLevelState.Lost)
+            finally
             {
-                DrawResultOverlay();
+                GUI.enabled = true;
+                LandscapeLayout.End(previousMatrix);
             }
-
-            GUI.matrix = previousMatrix;
         }
 
-        private void DrawTopHud(float safeTop)
+        private void DrawTopHud(Rect panelRect)
         {
-            var panelRect = new Rect(16f, safeTop + 8f, DesignWidth - 32f, 90f);
             GUI.Box(panelRect, GUIContent.none, strongPanelStyle);
 
             var levelName = levelController.Config == null
                 ? LocalizationService.Text("common.none")
                 : LocalizationService.LevelName(levelController.Config);
+            var menuWidth = 150f;
+            var stateWidth = Mathf.Clamp(panelRect.width * 0.18f, 210f, 320f);
+            var levelWidth = Mathf.Clamp(panelRect.width * 0.3f, 360f, 620f);
+            var statsX = panelRect.x + 18f + levelWidth + 12f;
+            var statsWidth = Mathf.Max(300f, panelRect.width - levelWidth - stateWidth - menuWidth - 72f);
+
             GUI.Label(
-                new Rect(panelRect.x + 14f, panelRect.y + 8f, panelRect.width - 116f, 32f),
+                new Rect(panelRect.x + 18f, panelRect.y + 10f, levelWidth, panelRect.height - 20f),
                 string.Format(LocalizationService.Text("hud.level"), levelName),
                 levelStyle);
-
-            if (GUI.Button(
-                    new Rect(panelRect.xMax - 92f, panelRect.y + 8f, 78f, 32f),
-                    LocalizationService.Text("button.menu"),
-                    compactButtonStyle))
-            {
-                ProceduralAudioService.Play(ProceduralSoundId.MenuClick);
-                SceneLoader.LoadMainMenu();
-            }
 
             var enemiesHandled = levelController.DefeatedEnemies + levelController.EscapedEnemies;
             var stats = string.Format(
@@ -120,35 +138,64 @@ namespace CatGuard.UI.HUD
                 levelController.TotalEnemies,
                 levelController.TowerCount);
             GUI.Label(
-                new Rect(panelRect.x + 12f, panelRect.y + 46f, panelRect.width - 24f, 32f),
+                new Rect(statsX, panelRect.y + 8f, statsWidth, panelRect.height - 16f),
                 stats,
                 statsStyle);
+
+            var stateLabel = LocalizationService.Text(
+                levelController.State == PrototypeLevelState.Preparing
+                    ? "hud.statePreparing"
+                    : "hud.stateRunning");
+            GUI.Label(
+                new Rect(statsX + statsWidth + 8f, panelRect.y + 8f, stateWidth, panelRect.height - 16f),
+                string.Format(LocalizationService.Text("hud.waveState"), stateLabel),
+                statsStyle);
+
+            if (GUI.Button(
+                    new Rect(panelRect.xMax - menuWidth - 14f, panelRect.y + 13f, menuWidth, panelRect.height - 26f),
+                    LocalizationService.Text("button.menu"),
+                    compactButtonStyle))
+            {
+                ProceduralAudioService.Play(ProceduralSoundId.MenuClick);
+                SceneLoader.LoadMainMenu();
+            }
         }
 
-        private void DrawTowerSelector(float safeBottom)
+        private void DrawBottomHud(Rect panelRect)
         {
+            GUI.Box(panelRect, GUIContent.none, strongPanelStyle);
+
             var config = levelController.Config;
             if (config?.AvailableTowers == null || config.AvailableTowers.Length == 0)
             {
                 return;
             }
 
-            var bottom = DesignHeight - safeBottom;
-            var panelRect = new Rect(16f, bottom - 146f, DesignWidth - 32f, 82f);
-            GUI.Box(panelRect, GUIContent.none, strongPanelStyle);
+            var actionWidth = Mathf.Clamp(panelRect.width * 0.23f, 300f, 480f);
+            var towerArea = new Rect(
+                panelRect.x + 14f,
+                panelRect.y + 8f,
+                panelRect.width - actionWidth - 40f,
+                panelRect.height - 16f);
+            var actionRect = new Rect(
+                towerArea.xMax + 14f,
+                panelRect.y + 12f,
+                actionWidth,
+                panelRect.height - 24f);
+
             GUI.Label(
-                new Rect(panelRect.x + 8f, panelRect.y + 3f, panelRect.width - 16f, 22f),
+                new Rect(towerArea.x, towerArea.y, towerArea.width, 26f),
                 LocalizationService.Text(
                     levelController.State == PrototypeLevelState.Preparing
                         ? "hud.prepareDefenders"
                         : "hud.chooseTower"),
                 statsStyle);
 
-            const float spacing = 7f;
+            const float spacing = 9f;
             var count = config.AvailableTowers.Length;
-            var buttonWidth = (panelRect.width - 16f - (spacing * (count - 1))) / count;
-            var startX = panelRect.x + 8f;
-            var buttonY = panelRect.y + 27f;
+            var buttonWidth = (towerArea.width - (spacing * (count - 1))) / count;
+            var buttonY = towerArea.y + 32f;
+            var buttonHeight = towerArea.height - 32f;
 
             for (var index = 0; index < count; index++)
             {
@@ -158,7 +205,7 @@ namespace CatGuard.UI.HUD
                     continue;
                 }
 
-                var rect = new Rect(startX + ((buttonWidth + spacing) * index), buttonY, buttonWidth, 47f);
+                var rect = new Rect(towerArea.x + ((buttonWidth + spacing) * index), buttonY, buttonWidth, buttonHeight);
                 var style = index == levelController.SelectedTowerIndex ? selectedTowerButtonStyle : towerButtonStyle;
                 var label = string.Format(
                     LocalizationService.Text("hud.towerWithCost"),
@@ -170,41 +217,49 @@ namespace CatGuard.UI.HUD
                     ProceduralAudioService.Play(ProceduralSoundId.MenuClick);
                     levelController.SelectTower(index);
                 }
-
-                GUI.enabled = true;
             }
-        }
 
-        private void DrawInstruction(float safeBottom)
-        {
-            var bottom = DesignHeight - safeBottom;
-            var rect = new Rect(16f, bottom - 56f, DesignWidth - 32f, 44f);
-            GUI.Box(rect, GUIContent.none, panelStyle);
-            var instruction = levelController.Config != null && levelController.Config.HasTutorialText
-                ? LocalizationService.Text(levelController.Config.TutorialTextKey)
-                : LocalizationService.Text("hud.instruction");
-            GUI.Label(new Rect(rect.x + 10f, rect.y + 4f, rect.width - 20f, rect.height - 8f), instruction, instructionStyle);
-        }
-
-        private void DrawPreparationButton(float safeBottom)
-        {
-            var bottom = DesignHeight - safeBottom;
-            var rect = new Rect(16f, bottom - 58f, DesignWidth - 32f, 48f);
-            if (GUI.Button(rect, LocalizationService.Text("button.startWave"), selectedButtonStyle)
-                && levelController.TryStartWave())
+            GUI.enabled = true;
+            if (levelController.State == PrototypeLevelState.Preparing)
             {
-                ProceduralAudioService.Play(ProceduralSoundId.MenuClick);
+                if (GUI.Button(actionRect, LocalizationService.Text("button.startWave"), selectedButtonStyle)
+                    && levelController.TryStartWave())
+                {
+                    ProceduralAudioService.Play(ProceduralSoundId.MenuClick);
+                }
+            }
+            else
+            {
+                GUI.Box(actionRect, GUIContent.none, panelStyle);
+                var instruction = config.HasTutorialText
+                    ? LocalizationService.Text(config.TutorialTextKey)
+                    : LocalizationService.Text("hud.instruction");
+                GUI.Label(
+                    new Rect(actionRect.x + 12f, actionRect.y + 8f, actionRect.width - 24f, actionRect.height - 16f),
+                    instruction,
+                    instructionStyle);
             }
         }
 
-        private void DrawResultOverlay()
+        private void DrawResultOverlay(Rect surfaceRect, Rect safeRect)
         {
-            var overlayRect = new Rect(28f, 372f, DesignWidth - 56f, 332f);
+            GUI.DrawTexture(surfaceRect, modalBackdropTexture, ScaleMode.StretchToFill);
+
+            var overlayWidth = Mathf.Min(900f, safeRect.width - 120f);
+            var overlayHeight = Mathf.Min(520f, safeRect.height - 100f);
+            var overlayRect = new Rect(
+                safeRect.center.x - (overlayWidth * 0.5f),
+                safeRect.center.y - (overlayHeight * 0.5f),
+                overlayWidth,
+                overlayHeight);
             GUI.Box(overlayRect, GUIContent.none, strongPanelStyle);
 
             var won = levelController.State == PrototypeLevelState.Won;
             var status = won ? LocalizationService.Text("result.victory") : LocalizationService.Text("result.defeat");
-            GUI.Label(new Rect(overlayRect.x + 20f, overlayRect.y + 18f, overlayRect.width - 40f, 58f), status, statusStyle);
+            GUI.Label(
+                new Rect(overlayRect.x + 28f, overlayRect.y + 22f, overlayRect.width - 56f, 70f),
+                status,
+                statusStyle);
 
             if (won && levelController.CompletionResult != null)
             {
@@ -217,7 +272,7 @@ namespace CatGuard.UI.HUD
                         LocalizationService.Text("result.reward"),
                         levelController.CompletionResult.EarnedFishCoins);
                 GUI.Label(
-                    new Rect(overlayRect.x + 18f, overlayRect.y + 80f, overlayRect.width - 36f, 34f),
+                    new Rect(overlayRect.x + 28f, overlayRect.y + 104f, overlayRect.width - 56f, 42f),
                     rewardText,
                     instructionStyle);
             }
@@ -225,12 +280,12 @@ namespace CatGuard.UI.HUD
             if (!string.IsNullOrWhiteSpace(resultMessage))
             {
                 GUI.Label(
-                    new Rect(overlayRect.x + 18f, overlayRect.y + 112f, overlayRect.width - 36f, 28f),
+                    new Rect(overlayRect.x + 28f, overlayRect.y + 150f, overlayRect.width - 56f, 34f),
                     resultMessage,
                     instructionStyle);
             }
 
-            var adButtonRect = new Rect(overlayRect.x + 70f, overlayRect.y + 148f, overlayRect.width - 140f, 52f);
+            var adButtonRect = new Rect(overlayRect.center.x - 210f, overlayRect.y + 202f, 420f, 62f);
             if (won && levelController.CanClaimVictoryDoubleReward)
             {
                 if (GUI.Button(adButtonRect, LocalizationService.Text("button.claimX2"), selectedButtonStyle)
@@ -248,9 +303,9 @@ namespace CatGuard.UI.HUD
                 }
             }
 
-            var buttonWidth = (overlayRect.width - 52f) * 0.5f;
-            var retryRect = new Rect(overlayRect.x + 18f, overlayRect.y + 244f, buttonWidth, 62f);
-            var menuRect = new Rect(retryRect.xMax + 16f, overlayRect.y + 244f, buttonWidth, 62f);
+            var buttonWidth = (overlayRect.width - 78f) * 0.5f;
+            var retryRect = new Rect(overlayRect.x + 30f, overlayRect.yMax - 90f, buttonWidth, 62f);
+            var menuRect = new Rect(retryRect.xMax + 18f, overlayRect.yMax - 90f, buttonWidth, 62f);
 
             if (GUI.Button(retryRect, LocalizationService.Text("button.retry"), buttonStyle))
             {
@@ -263,6 +318,24 @@ namespace CatGuard.UI.HUD
                 ProceduralAudioService.Play(ProceduralSoundId.MenuClick);
                 SceneLoader.LoadMainMenu();
             }
+        }
+
+        private static Rect GetTopBarRect(LandscapeLayout.Context layout)
+        {
+            return new Rect(
+                layout.SafeRect.x + HudMargin,
+                layout.SafeRect.y + HudMargin,
+                Mathf.Max(0f, layout.SafeRect.width - (HudMargin * 2f)),
+                TopBarHeight);
+        }
+
+        private static Rect GetBottomTrayRect(LandscapeLayout.Context layout)
+        {
+            return new Rect(
+                layout.SafeRect.x + HudMargin,
+                layout.SafeRect.yMax - HudMargin - BottomTrayHeight,
+                Mathf.Max(0f, layout.SafeRect.width - (HudMargin * 2f)),
+                BottomTrayHeight);
         }
 
         private void EnsureStyles()
@@ -278,18 +351,19 @@ namespace CatGuard.UI.HUD
             buttonHoverTexture = CreateTexture(new Color(0.1f, 0.31f, 0.28f, 1f));
             accentTexture = CreateTexture(new Color(0.97f, 0.68f, 0.2f, 1f));
             accentHoverTexture = CreateTexture(new Color(1f, 0.78f, 0.3f, 1f));
+            modalBackdropTexture = CreateTexture(new Color(0f, 0f, 0f, 0.68f));
 
             panelStyle = CreateBoxStyle(panelTexture);
             strongPanelStyle = CreateBoxStyle(strongPanelTexture);
-            levelStyle = CreateLabelStyle(18, FontStyle.Bold, TextAnchor.MiddleLeft, Color.white);
-            statsStyle = CreateLabelStyle(14, FontStyle.Bold, TextAnchor.MiddleCenter, new Color(0.92f, 0.96f, 0.9f));
-            instructionStyle = CreateLabelStyle(15, FontStyle.Bold, TextAnchor.MiddleCenter, Color.white);
-            statusStyle = CreateLabelStyle(38, FontStyle.Bold, TextAnchor.MiddleCenter, new Color(1f, 0.76f, 0.28f));
-            buttonStyle = CreateButtonStyle(buttonTexture, buttonHoverTexture, 16, Color.white);
-            compactButtonStyle = CreateButtonStyle(buttonTexture, buttonHoverTexture, 13, Color.white);
-            selectedButtonStyle = CreateButtonStyle(accentTexture, accentHoverTexture, 16, new Color(0.12f, 0.09f, 0.03f));
-            towerButtonStyle = CreateButtonStyle(buttonTexture, buttonHoverTexture, 13, Color.white);
-            selectedTowerButtonStyle = CreateButtonStyle(accentTexture, accentHoverTexture, 13, new Color(0.12f, 0.09f, 0.03f));
+            levelStyle = CreateLabelStyle(23, FontStyle.Bold, TextAnchor.MiddleLeft, Color.white);
+            statsStyle = CreateLabelStyle(17, FontStyle.Bold, TextAnchor.MiddleCenter, new Color(0.92f, 0.96f, 0.9f));
+            instructionStyle = CreateLabelStyle(18, FontStyle.Bold, TextAnchor.MiddleCenter, Color.white);
+            statusStyle = CreateLabelStyle(46, FontStyle.Bold, TextAnchor.MiddleCenter, new Color(1f, 0.76f, 0.28f));
+            buttonStyle = CreateButtonStyle(buttonTexture, buttonHoverTexture, 20, Color.white);
+            compactButtonStyle = CreateButtonStyle(buttonTexture, buttonHoverTexture, 17, Color.white);
+            selectedButtonStyle = CreateButtonStyle(accentTexture, accentHoverTexture, 20, new Color(0.12f, 0.09f, 0.03f));
+            towerButtonStyle = CreateButtonStyle(buttonTexture, buttonHoverTexture, 17, Color.white);
+            selectedTowerButtonStyle = CreateButtonStyle(accentTexture, accentHoverTexture, 17, new Color(0.12f, 0.09f, 0.03f));
         }
 
         private static GUIStyle CreateLabelStyle(int fontSize, FontStyle fontStyle, TextAnchor alignment, Color color)

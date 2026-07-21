@@ -8,7 +8,7 @@ The first public path is Android closed testing, then a small soft launch.
 
 - Unity Android Build Support installed.
 - Package name selected.
-- Legacy portrait orientation is configured in the current build; the accepted landscape direction will replace it only when expansion section E1 is complete and verified.
+- Landscape-only Auto Rotation is configured: `Landscape Left` and `Landscape Right` are allowed, while both portrait directions are disabled.
 - Version code and version name set.
 - Keystore created and stored safely outside Git.
 - Basic privacy declarations prepared.
@@ -58,6 +58,8 @@ Builds/Android/CatGuardTowerDefense-store.aab
 Do not reuse the temporary validation key from development checks for Google Play. The owner must create and back up the real upload keystore before the first closed-testing upload.
 
 Before moving to closed-testing preparation, run physical-device QA with `tools/android/run-device-qa.ps1` and keep its generated evidence under ignored `Builds/Android/qa-device/` artifacts.
+
+For the E1 emulator orientation/layout regression, run `tools/android/run-emulator-landscape-qa.ps1`. It forces the emulator into portrait before launch, verifies automatic landscape startup, rotates through both landscape directions, exercises the current MainMenu and Level controls, and captures ignored evidence for 16:9 and wide-phone viewports.
 
 ## Store Materials
 

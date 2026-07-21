@@ -343,13 +343,29 @@ $performance = Get-SurfaceFrameMetrics `
     -MinimumSamples $MinimumFrameSamples
 
 $screenshotCaptured = $false
+$screenshotWidth = 0
+$screenshotHeight = 0
 $remoteScreenshotPath = "/sdcard/catguard-qa-screen-$timestamp.png"
 $screencapResult = Invoke-TargetAdb -Arguments @("shell", "screencap", "-p", $remoteScreenshotPath) -AllowFailure
 if ($screencapResult.ExitCode -eq 0) {
     $pullResult = Invoke-TargetAdb -Arguments @("pull", $remoteScreenshotPath, $screenshotPath) -AllowFailure
     $screenshotCaptured = $pullResult.ExitCode -eq 0 -and (Test-Path -LiteralPath $screenshotPath)
     Invoke-TargetAdb -Arguments @("shell", "rm", $remoteScreenshotPath) -AllowFailure | Out-Null
+
+    if ($screenshotCaptured) {
+        Add-Type -AssemblyName System.Drawing
+        $screenshotImage = [System.Drawing.Image]::FromFile($screenshotPath)
+        try {
+            $screenshotWidth = $screenshotImage.Width
+            $screenshotHeight = $screenshotImage.Height
+        }
+        finally {
+            $screenshotImage.Dispose()
+        }
+    }
 }
+
+$landscapeConfirmed = $screenshotCaptured -and $screenshotWidth -gt $screenshotHeight
 
 $saveReadable = $false
 $externalSavePath = "/sdcard/Android/data/$PackageName/files/catguard-save.json"
@@ -390,6 +406,9 @@ $summary = [pscustomobject]@{
     currentFocusFound = $focusLines.Count -gt 0
     saveReadable = $saveReadable
     screenshotCaptured = $screenshotCaptured
+    screenshotWidth = $screenshotWidth
+    screenshotHeight = $screenshotHeight
+    landscapeConfirmed = $landscapeConfirmed
     runDir = $runDir
     logcatPath = $logcatPath
     windowPath = $windowPath
@@ -416,13 +435,17 @@ Write-Host "QA summary: $summaryPath"
 Write-Host "App PID: $appPid"
 Write-Host "Fatal crash pattern count: $($fatalHits.Count)"
 Write-Host "Screenshot captured: $screenshotCaptured"
+Write-Host "Landscape confirmed: $landscapeConfirmed ($screenshotWidth x $screenshotHeight)"
 Write-Host "Save readable: $saveReadable"
 Write-Host "Surface frame samples: $($performance.sampleCount)"
 Write-Host "Average FPS: $($performance.averageFps)"
 Write-Host "P95 frame time: $($performance.p95FrameTimeMs) ms"
 Write-Host "Performance threshold passed: $($performance.passed)"
 
-if ($appPid.Length -eq 0 -or $fatalHits.Count -gt 0 -or ($RequirePerformance -and -not $performance.passed)) {
+if ($appPid.Length -eq 0 `
+    -or $fatalHits.Count -gt 0 `
+    -or -not $landscapeConfirmed `
+    -or ($RequirePerformance -and -not $performance.passed)) {
     exit 1
 }
 

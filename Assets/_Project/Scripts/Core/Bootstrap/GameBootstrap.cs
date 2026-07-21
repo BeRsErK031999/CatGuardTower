@@ -13,6 +13,7 @@ namespace CatGuard.Core.Bootstrap
 
         private void Awake()
         {
+            OrientationPolicy.Apply();
             Application.targetFrameRate = 60;
 
             if (instance != null && instance != this)

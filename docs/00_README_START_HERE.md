@@ -28,6 +28,7 @@ The current goal is to expand the working Android MVP into a landscape, multi-ro
 - Phase 11 Google Play preparation has started: the initial store package/version are configured as `com.berserk031999.catguardtower` `0.1.0` (`versionCode` `1`), while the QA package remains separate, store/compliance drafts live under `docs/store/`, and refreshed store image assets include five current Russian runtime captures from a validated emulator release build.
 - The post-MVP expansion direction was accepted on 2026-07-21: landscape auto-rotation, larger maps, multiple enemy routes, animated units, in-battle tower upgrades, map-scale ultimates, a home hub, quests, progression, and achievements.
 - `docs/planning/EXPANSION_ROADMAP.md` is the source of truth for that expansion.
+- Expansion section E1 implements the landscape-only runtime boundary, adaptive MainMenu/HUD, safe-area-aware battlefield framing, and Android orientation validation. Its block gate evidence is recorded in `docs/planning/E1_LANDSCAPE_REPORT.md`.
 
 ## Recommended Reading Order
 
@@ -43,4 +44,4 @@ The current goal is to expand the working Android MVP into a landscape, multi-ro
 
 ## Next Safe Step
 
-Complete only `E1 — Landscape Foundation And Automatic Rotation` from `docs/planning/EXPANSION_ROADMAP.md`. Do not start larger maps or multi-route runtime until the complete E1 block passes its test gate.
+E1 is complete and its full gate is recorded in `docs/planning/E1_LANDSCAPE_REPORT.md`. The next safe implementation block is `E2 — Scalable Battlefield, Camera, And Larger Maps`; start it only as a separate scoped task with its own block gate.

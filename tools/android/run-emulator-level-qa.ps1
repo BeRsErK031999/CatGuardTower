@@ -177,6 +177,23 @@ function Capture-Screenshot {
     Invoke-TargetAdb -Arguments @("shell", "rm", "-f", $RemotePath) -AllowFailure | Out-Null
 }
 
+function Get-ScreenshotDimensions {
+    param([string]$Path)
+
+    Add-Type -AssemblyName System.Drawing
+    $image = [System.Drawing.Image]::FromFile($Path)
+    try {
+        return [pscustomobject]@{
+            width = $image.Width
+            height = $image.Height
+            landscape = $image.Width -gt $image.Height
+        }
+    }
+    finally {
+        $image.Dispose()
+    }
+}
+
 Invoke-Adb -Arguments @("start-server") | Out-Null
 $deviceLines = @((Invoke-Adb -Arguments @("devices", "-l")).Output | Where-Object { $_ -match '^\S+\s+device\b' })
 if (-not @($deviceLines | Where-Object { $_ -match '^emulator-\d+\s+' -or $_ -match '\bmodel:sdk_' })) {
@@ -292,6 +309,9 @@ $resultLines = (Invoke-TargetAdb -Arguments @(
 $resultLines | Set-Content -LiteralPath $resultPath -Encoding UTF8
 $scenarioResult = ($resultLines -join [Environment]::NewLine) | ConvertFrom-Json
 Capture-Screenshot -RemotePath "/sdcard/catguard-result.png" -LocalPath $resultScreenshotPath
+$combatDimensions = Get-ScreenshotDimensions -Path $combatScreenshotPath
+$resultDimensions = Get-ScreenshotDimensions -Path $resultScreenshotPath
+$landscapeConfirmed = $combatDimensions.landscape -and $resultDimensions.landscape
 
 $logcatLines = (Invoke-TargetAdb -Arguments @("logcat", "-d", "-v", "time") -AllowFailure).Output
 $logcatLines | Set-Content -LiteralPath $logcatPath -Encoding UTF8
@@ -309,6 +329,9 @@ $summary = [pscustomobject]@{
     levelId = $LevelId
     result = $scenarioResult
     fatalPatternCount = $fatalLines.Count
+    landscapeConfirmed = $landscapeConfirmed
+    combatViewport = $combatDimensions
+    resultViewport = $resultDimensions
     performance = $performance
     performancePassed = $performancePassed
     runDir = $runDir
@@ -318,10 +341,12 @@ $summary | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $summaryPath -Enco
 Write-Host "Результат: $($scenarioResult.state), жизни: $($scenarioResult.lives), побеждено: $($scenarioResult.defeatedEnemies), пропущено: $($scenarioResult.escapedEnemies)."
 Write-Host "Боевая производительность: $($performance.averageFps) FPS, P95 $($performance.p95FrameTimeMs) мс, кадров $($performance.sampleCount)."
 Write-Host "Фатальные ошибки: $($fatalLines.Count)."
+Write-Host "Landscape подтверждён: $landscapeConfirmed (бой $($combatDimensions.width)x$($combatDimensions.height), результат $($resultDimensions.width)x$($resultDimensions.height))."
 Write-Host "Материалы QA: $runDir"
 
 $failed = $scenarioResult.state -eq "error" `
     -or $fatalLines.Count -gt 0 `
+    -or -not $landscapeConfirmed `
     -or ($RequireVictory -and $scenarioResult.state -ne "won") `
     -or ($RequirePerformance -and -not $performancePassed)
 if ($failed) {

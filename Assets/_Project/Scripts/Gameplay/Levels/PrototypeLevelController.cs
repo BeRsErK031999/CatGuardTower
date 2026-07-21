@@ -9,6 +9,7 @@ using CatGuard.QA;
 using CatGuard.SDK.Ads;
 using CatGuard.SDK.Analytics;
 using CatGuard.UI.HUD;
+using CatGuard.UI.Layout;
 using CatGuard.Utils;
 using CatGuard.VFX;
 using UnityEngine;
@@ -32,7 +33,11 @@ namespace CatGuard.Gameplay.Levels
         private bool victoryRewardDoubled;
         private bool reviveUsed;
         private Sprite gameplayBackgroundSprite;
+        private SpriteRenderer gameplayBackgroundRenderer;
         private Material gameplayPathMaterial;
+        private int lastScreenWidth;
+        private int lastScreenHeight;
+        private Rect lastSafeArea;
 
         public PrototypeLevelState State { get; private set; } = PrototypeLevelState.NotStarted;
         public int Lives { get; private set; }
@@ -58,6 +63,11 @@ namespace CatGuard.Gameplay.Levels
             && !reviveUsed
             && HasRemainingThreats()
             && ProgressionService.IsRewardedPlacementAvailable(RewardedAdPlacementIds.Revive);
+
+        public bool IsScreenPointOverHud(Vector2 screenPosition)
+        {
+            return hud != null && hud.BlocksBattlefieldInput(screenPosition);
+        }
 
         public bool IsConfigured => config != null
             && towerGrid != null
@@ -349,6 +359,22 @@ namespace CatGuard.Gameplay.Levels
             AnalyticsService.TrackLevelStart(config, Lives);
 
             DevelopmentQaService.TryAttach(this, towerGrid);
+            CacheViewportState();
+        }
+
+        private void LateUpdate()
+        {
+            if (config == null
+                || (lastScreenWidth == Screen.width
+                    && lastScreenHeight == Screen.height
+                    && lastSafeArea == Screen.safeArea))
+            {
+                return;
+            }
+
+            FitCameraToLevel();
+            ResizeArtworkBackdrop();
+            CacheViewportState();
         }
 
         private void EvaluateResult()
@@ -450,9 +476,29 @@ namespace CatGuard.Gameplay.Levels
             var halfWidth = ((maxX - minX) * 0.5f) + worldPadding;
             var halfHeight = ((maxY - minY) * 0.5f) + worldPadding;
             var aspect = Mathf.Max(0.1f, camera.aspect);
+            var layout = LandscapeLayout.Calculate();
+            var battlefieldRect = PrototypeHud.GetBattlefieldRect(layout);
+            var widthFraction = Mathf.Clamp(
+                battlefieldRect.width / Mathf.Max(1f, layout.SurfaceRect.width),
+                0.1f,
+                1f);
+            var heightFraction = Mathf.Clamp(
+                battlefieldRect.height / Mathf.Max(1f, layout.SurfaceRect.height),
+                0.1f,
+                1f);
+            var requiredVisibleWidth = (halfWidth * 2f) / widthFraction;
+            var requiredVisibleHeight = (halfHeight * 2f) / heightFraction;
             camera.orthographic = true;
-            camera.orthographicSize = Mathf.Max(halfHeight / 0.72f, halfWidth / (aspect * 0.9f));
-            camera.transform.position = new Vector3((minX + maxX) * 0.5f, (minY + maxY) * 0.5f, -10f);
+            camera.orthographicSize = Mathf.Max(requiredVisibleHeight * 0.5f, requiredVisibleWidth / (aspect * 2f));
+
+            var mapCenter = new Vector2((minX + maxX) * 0.5f, (minY + maxY) * 0.5f);
+            var visibleHeight = camera.orthographicSize * 2f;
+            var visibleWidth = visibleHeight * aspect;
+            var logicalOffset = battlefieldRect.center - layout.SurfaceRect.center;
+            var cameraCenter = new Vector2(
+                mapCenter.x - ((logicalOffset.x / layout.SurfaceRect.width) * visibleWidth),
+                mapCenter.y + ((logicalOffset.y / layout.SurfaceRect.height) * visibleHeight));
+            camera.transform.position = new Vector3(cameraCenter.x, cameraCenter.y, -10f);
             camera.backgroundColor = new Color(0.025f, 0.07f, 0.08f);
         }
 
@@ -479,18 +525,39 @@ namespace CatGuard.Gameplay.Levels
                 camera.transform.position.y,
                 0f);
 
-            var renderer = backgroundObject.AddComponent<SpriteRenderer>();
-            renderer.sprite = gameplayBackgroundSprite;
-            renderer.sortingOrder = -20;
-            renderer.color = new Color(0.82f, 0.9f, 0.84f, 1f);
+            gameplayBackgroundRenderer = backgroundObject.AddComponent<SpriteRenderer>();
+            gameplayBackgroundRenderer.sprite = gameplayBackgroundSprite;
+            gameplayBackgroundRenderer.sortingOrder = -20;
+            gameplayBackgroundRenderer.color = new Color(0.82f, 0.9f, 0.84f, 1f);
+            ResizeArtworkBackdrop();
+            return true;
+        }
 
+        private void ResizeArtworkBackdrop()
+        {
+            var camera = Camera.main;
+            if (gameplayBackgroundRenderer == null || gameplayBackgroundSprite == null || camera == null)
+            {
+                return;
+            }
+
+            gameplayBackgroundRenderer.transform.position = new Vector3(
+                camera.transform.position.x,
+                camera.transform.position.y,
+                0f);
             var visibleHeight = camera.orthographicSize * 2f;
             var visibleWidth = visibleHeight * camera.aspect;
             var scale = Mathf.Max(
                 visibleWidth / gameplayBackgroundSprite.bounds.size.x,
                 visibleHeight / gameplayBackgroundSprite.bounds.size.y);
-            backgroundObject.transform.localScale = new Vector3(scale, scale, 1f);
-            return true;
+            gameplayBackgroundRenderer.transform.localScale = new Vector3(scale, scale, 1f);
+        }
+
+        private void CacheViewportState()
+        {
+            lastScreenWidth = Screen.width;
+            lastScreenHeight = Screen.height;
+            lastSafeArea = Screen.safeArea;
         }
 
         private static void CreateBackdrop(Transform parent)
@@ -618,6 +685,8 @@ namespace CatGuard.Gameplay.Levels
                 Destroy(gameplayBackgroundSprite);
                 gameplayBackgroundSprite = null;
             }
+
+            gameplayBackgroundRenderer = null;
 
             if (gameplayPathMaterial != null)
             {

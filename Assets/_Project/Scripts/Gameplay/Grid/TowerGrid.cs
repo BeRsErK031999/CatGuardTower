@@ -78,22 +78,21 @@ namespace CatGuard.Gameplay.Grid
                 return;
             }
 
-            if (Input.GetMouseButtonDown(0))
-            {
-                TryPlaceFromScreen(Input.mousePosition);
-            }
-
             if (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began)
             {
                 TryPlaceFromScreen(Input.GetTouch(0).position);
+                return;
+            }
+
+            if (Input.GetMouseButtonDown(0))
+            {
+                TryPlaceFromScreen(Input.mousePosition);
             }
         }
 
         private void TryPlaceFromScreen(Vector2 screenPosition)
         {
-            var bottomHudHeight = Screen.height * 0.16f;
-            var topHudStart = Screen.height * 0.86f;
-            if (screenPosition.y < bottomHudHeight || screenPosition.y > topHudStart)
+            if (levelController.IsScreenPointOverHud(screenPosition))
             {
                 return;
             }

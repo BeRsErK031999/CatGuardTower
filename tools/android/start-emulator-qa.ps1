@@ -86,6 +86,9 @@ if (-not $serial -or $bootCompleted -ne '1') {
 & $adbPath -s $serial shell settings put secure immersive_mode_confirmations confirmed
 & $adbPath -s $serial shell settings put global hide_error_dialogs 1
 & $adbPath -s $serial shell wm dismiss-keyguard
+& $adbPath -s $serial shell am force-stop $PackageName
+& $adbPath -s $serial shell settings put system accelerometer_rotation 0
+& $adbPath -s $serial shell settings put system user_rotation 0
 
 Write-Host "Installing emulator APK on $serial..."
 & $adbPath -s $serial install -r -t $resolvedApkPath
@@ -97,7 +100,7 @@ $env:ANDROID_HOME = $androidSdk
 $env:ANDROID_SDK_ROOT = $androidSdk
 $qaScript = Join-Path $PSScriptRoot "run-device-qa.ps1"
 
-Write-Host "Launching Cat Guard and collecting QA evidence..."
+Write-Host "Launching Cat Guard from forced portrait and collecting landscape QA evidence..."
 & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $qaScript `
     -ApkPath $resolvedApkPath `
     -PackageName $PackageName `

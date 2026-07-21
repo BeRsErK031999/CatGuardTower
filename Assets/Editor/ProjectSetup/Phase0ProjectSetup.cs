@@ -42,11 +42,7 @@ public static class Phase0ProjectSetup
         EditorSettings.defaultBehaviorMode = EditorBehaviorMode.Mode2D;
         PlayerSettings.productName = "Cat Guard: Tower Defense";
         PlayerSettings.companyName = "CatGuard";
-        PlayerSettings.defaultInterfaceOrientation = UIOrientation.Portrait;
-        PlayerSettings.allowedAutorotateToPortrait = false;
-        PlayerSettings.allowedAutorotateToPortraitUpsideDown = false;
-        PlayerSettings.allowedAutorotateToLandscapeLeft = false;
-        PlayerSettings.allowedAutorotateToLandscapeRight = false;
+        AndroidOrientationSettings.ConfigureLandscapeAutoRotation();
     }
 
     private static void CreateInitialScenes()

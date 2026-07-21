@@ -116,11 +116,7 @@ public static class Phase10ProjectSetup
 
         PlayerSettings.productName = "Cat Guard: Tower Defense";
         PlayerSettings.companyName = "CatGuard";
-        PlayerSettings.defaultInterfaceOrientation = UIOrientation.Portrait;
-        PlayerSettings.allowedAutorotateToPortrait = false;
-        PlayerSettings.allowedAutorotateToPortraitUpsideDown = false;
-        PlayerSettings.allowedAutorotateToLandscapeLeft = false;
-        PlayerSettings.allowedAutorotateToLandscapeRight = false;
+        AndroidOrientationSettings.ConfigureLandscapeAutoRotation();
         PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, QaApplicationIdentifier);
         PlayerSettings.SetScriptingBackend(NamedBuildTarget.Android, ScriptingImplementation.IL2CPP);
 
@@ -225,10 +221,7 @@ public static class Phase10ProjectSetup
             errors.Add("Android target architecture must be ARM64 for QA/App Bundle readiness.");
         }
 
-        if (PlayerSettings.defaultInterfaceOrientation != UIOrientation.Portrait)
-        {
-            errors.Add("Android build must use portrait orientation.");
-        }
+        AndroidOrientationSettings.ValidateLandscapeAutoRotation(errors);
 
         if (PlayerSettings.Android.forceInternetPermission)
         {

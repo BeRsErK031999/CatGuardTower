@@ -142,6 +142,8 @@ Status: completed by this documentation task.
 
 Размер: `XL`
 
+Статус: завершён 2026-07-21; реализация и Block Test Gate зафиксированы в [E1_LANDSCAPE_REPORT.md](E1_LANDSCAPE_REPORT.md).
+
 Главный результат: приложение запускается в landscape и всё существующее MVP-поведение помещается в новую композицию.
 
 ### Scope
@@ -1127,19 +1129,6 @@ Ceilings здесь означают ожидаемую способность d
 
 ## 9. Next Action
 
-Следующий и только следующий implementation block: **`E1 — Landscape Foundation And Automatic Rotation`**.
+`E1 — Landscape Foundation And Automatic Rotation` завершён; фактический gate находится в [E1_LANDSCAPE_REPORT.md](E1_LANDSCAPE_REPORT.md).
 
-Готовый self-contained prompt для новой задачи: [E1_IMPLEMENTATION_PROMPT.md](E1_IMPLEMENTATION_PROMPT.md).
-
-До его завершения нельзя начинать большие карты, multi-route runtime, tower upgrades, ultimates или hub. Причина — все эти системы зависят от стабильного landscape viewport и новой UI-композиции.
-
-Новый task prompt должен прямо сказать:
-
-```text
-Работаем только над E1 из docs/planning/EXPANSION_ROADMAP.md.
-Сначала заверши весь landscape и auto-rotation scope.
-Не запускай Unity runtime и эмулятор до готовности всех exit criteria E1.
-После готовности выполни полный Block Test Gate E1, исправь дефекты,
-обнови документы, сделай Conventional Commit и push в develop.
-Не начинай E2.
-```
+Следующий допустимый implementation block: **`E2 — Scalable Battlefield, Camera, And Larger Maps`**. Он должен выполняться отдельной самостоятельной задачей с собственным scope и Block Test Gate; E1-delivery не включает реализацию E2.

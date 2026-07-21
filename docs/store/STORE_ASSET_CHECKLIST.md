@@ -27,7 +27,7 @@ Official Google Play reference checked on 2026-07-16:
 ## Screenshots
 
 - At least two screenshots are required across device types.
-- For this Android portrait game, prepare at least three phone portrait screenshots at 1080 x 1920 px for stronger game eligibility.
+- The files listed below are legacy portrait MVP captures at 1080 x 1920. Do not use them to represent the E1 landscape runtime; create the replacement landscape store set only at E15.
 - Use JPEG or 24-bit PNG, no alpha.
 - Minimum dimension: 320 px.
 - Maximum dimension: 3840 px.

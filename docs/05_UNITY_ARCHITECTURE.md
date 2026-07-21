@@ -21,6 +21,16 @@ The previous `_project_scaffold/` contents have been moved into `Assets/_Project
 - UI reads state from gameplay/meta services and does not own economy formulas.
 - Config data belongs in ScriptableObject assets, not hardcoded UI or MonoBehaviour constants.
 
+## E1 Landscape Foundation
+
+- `OrientationPolicy` is the single runtime orientation boundary. `GameBootstrap.Awake()` applies landscape-left/right auto-rotation before MainMenu is loaded.
+- Android `PlayerSettings` use `Auto Rotation`, allow only `Landscape Left` and `Landscape Right`, and reject both portrait directions through `AndroidOrientationSettings`.
+- `LandscapeLayout` owns the shared `1920 x 1080` reference surface, `1280 x 720` minimum logical viewport, height-based scaling, wide-screen gutters, safe-area conversion, and screen-to-logical input conversion.
+- `MainMenuController` uses a horizontal navigation/content/footer composition. Levels, upgrades, daily rewards/missions, voluntary rewards, settings, privacy, reset confirmation, RU/EN text, and level launch remain available without introducing the E8 hub.
+- `PrototypeHud` reserves a compact top status bar and bottom tower/action tray. The battlefield viewport between them is reused by camera framing and placement-input exclusion.
+- `PrototypeLevelController` reframes the existing single-path map when resolution or safe area changes. It does not change `LevelConfig.pathPoints`, map size, waves, towers, enemies, or battle balance.
+- `E1ProjectSetup` validates the layout/orientation contract through Unity batchmode. Android emulator tooling confirms the rendered screen is landscape, including a launch that starts from forced portrait.
+
 ## Initial Scenes
 
 - `Boot`: initial bootstrap scene with a 2D camera and `GameBootstrap`.
@@ -199,7 +209,7 @@ This phase still uses the existing prototype combat behavior; the new content is
 ## Phase 10 Android Build And QA
 
 - `Phase10ProjectSetup` configures Android QA build settings through Unity Editor APIs.
-- Android QA builds currently use application id `com.catguard.towerdefense.qa`, legacy portrait orientation, min SDK 25, automatic target SDK, IL2CPP, and ARM64. Expansion section E1 will migrate orientation and validators together.
+- Android QA builds use application id `com.catguard.towerdefense.qa`, landscape-only Auto Rotation, min SDK 25, automatic target SDK, IL2CPP, and ARM64.
 - Forced Internet and external storage permissions remain disabled so offline smoke is meaningful.
 - `GameBootstrap` sets `Application.targetFrameRate` to `60` for the Android QA baseline.
 - Local build artifacts are generated under `Builds/Android/`:
@@ -220,5 +230,5 @@ This phase still uses the existing prototype combat behavior; the new content is
 - `Phase11ProjectSetup` configures the initial store Android identity separately from the Phase 10 QA package.
 - Store package: `com.berserk031999.catguardtower`.
 - Initial store version: `versionName` `0.1.0`, `versionCode` `1`.
-- Store Android settings currently keep the legacy portrait, IL2CPP, ARM64, API 25+, and no-forced-permission baseline. They must not claim landscape until E1 passes its block test gate.
+- Store Android settings use the same landscape-only Auto Rotation contract with the existing IL2CPP, ARM64, API 25+, and no-forced-permission baseline.
 - Package name and versioning are validated through Unity batchmode before Play Console upload.

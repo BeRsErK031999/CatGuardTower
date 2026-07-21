@@ -67,6 +67,8 @@ For the E3 multi-route regression, run `tools/android/run-emulator-route-qa.ps1`
 
 For E4 authoring changes, first run `E4ProjectSetup.Validate`, then reuse `tools/android/run-emulator-battlefield-qa.ps1` and `tools/android/run-emulator-route-qa.ps1`. Together they prove that all three player maps still render, pan, place towers, and complete through the data-only pipeline.
 
+For E5 unit-presentation changes, first run `E5ProjectSetup.Validate` and export the controlled showcase with `E5ProjectSetup.CaptureShowcaseEvidence`. Then reuse the battlefield and route runners for three-map/two-route combat and run `tools/android/run-emulator-level-qa.ps1` with the documented `e4-animation-baseline-complete` level-10 parameters for an exact performance and cleanup comparison.
+
 ## Store Materials
 
 Current drafts live under `docs/store/`:

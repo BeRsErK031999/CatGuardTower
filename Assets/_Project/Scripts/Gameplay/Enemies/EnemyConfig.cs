@@ -1,3 +1,4 @@
+using CatGuard.Gameplay.Presentation;
 using UnityEngine;
 
 namespace CatGuard.Gameplay.Enemies
@@ -19,6 +20,7 @@ namespace CatGuard.Gameplay.Enemies
         [SerializeField] private float visualScale = 0.42f;
         [SerializeField] private Color visualColor = new(1f, 0.3f, 0.22f);
         [SerializeField] private Sprite visualSprite;
+        [SerializeField] private UnitAnimationConfig animationProfile;
 
         public string EnemyId => string.IsNullOrWhiteSpace(enemyId) ? name : enemyId;
         public string DisplayName => string.IsNullOrWhiteSpace(displayName) ? EnemyId : displayName;
@@ -29,6 +31,7 @@ namespace CatGuard.Gameplay.Enemies
         public float VisualScale => Mathf.Max(0.1f, visualScale);
         public Color VisualColor => visualColor;
         public Sprite VisualSprite => visualSprite;
+        public UnitAnimationConfig AnimationProfile => animationProfile;
 
         public bool IsValid()
         {
@@ -60,6 +63,11 @@ namespace CatGuard.Gameplay.Enemies
             visualScale = scale;
             visualColor = color;
             visualSprite = sprite;
+        }
+
+        public void ConfigureAnimationProfile(UnitAnimationConfig profile)
+        {
+            animationProfile = profile;
         }
     }
 }

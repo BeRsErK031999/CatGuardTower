@@ -57,6 +57,7 @@ namespace CatGuard.Gameplay.Levels
         public int SelectedTowerIndex => selectedTowerIndex;
         public int TotalEnemies => expectedEnemyCount;
         public int ActiveEnemyCount => activeEnemies.Count;
+        public IReadOnlyList<BasicEnemy> ActiveEnemies => activeEnemies;
         public int TowerCount => towers.Count;
         public IReadOnlyDictionary<string, RouteBattleStats> RouteStats => routeStats;
         public string DevelopmentRouteFilter { get; private set; } = string.Empty;
@@ -265,6 +266,7 @@ namespace CatGuard.Gameplay.Levels
         public void HandleEnemyDefeated(BasicEnemy enemy)
         {
             var position = enemy == null ? Vector3.zero : enemy.transform.position;
+            var presentationDuration = enemy == null ? 0f : enemy.BeginDeathPresentation();
             if (activeEnemies.Remove(enemy))
             {
                 DefeatedEnemies++;
@@ -275,13 +277,14 @@ namespace CatGuard.Gameplay.Levels
             AnalyticsService.TrackEnemyDefeat(config, enemy);
             ProceduralAudioService.Play(ProceduralSoundId.EnemyDefeated);
             SimpleVfxFactory.Spawn(position, SimpleVfxStyle.EnemyDefeated, vfxLayer != null ? vfxLayer : runtimeRoot);
-            Destroy(enemy.gameObject);
+            SchedulePresentationCleanup(enemy, presentationDuration);
             EvaluateResult();
         }
 
         public void HandleEnemyReachedBase(BasicEnemy enemy, int damage)
         {
             var position = enemy?.Route == null ? (Vector3)Battlefield.PrimaryRoute.GoalAnchor : (Vector3)enemy.Route.GoalAnchor;
+            var presentationDuration = enemy == null ? 0f : enemy.BeginGoalAttackPresentation();
             if (activeEnemies.Remove(enemy))
             {
                 EscapedEnemies++;
@@ -293,8 +296,24 @@ namespace CatGuard.Gameplay.Levels
             Lives = Mathf.Max(0, Lives - Mathf.Max(1, damage));
             ProceduralAudioService.Play(ProceduralSoundId.BaseHit);
             SimpleVfxFactory.Spawn(position, SimpleVfxStyle.BaseHit, vfxLayer != null ? vfxLayer : runtimeRoot);
-            Destroy(enemy.gameObject);
+            SchedulePresentationCleanup(enemy, presentationDuration);
             EvaluateResult();
+        }
+
+        private void SchedulePresentationCleanup(BasicEnemy enemy, float delaySeconds)
+        {
+            if (enemy == null)
+            {
+                return;
+            }
+
+            if (delaySeconds <= 0f)
+            {
+                Destroy(enemy.gameObject);
+                return;
+            }
+
+            Destroy(enemy.gameObject, Mathf.Min(1.5f, delaySeconds));
         }
 
         public void HandleWaveCompleted()

@@ -21,3 +21,4 @@ MonoBehaviour:
   visualScale: 0.34
   visualColor: {r: 1, g: 0.34, b: 0.34, a: 1}
   visualSprite: {fileID: 21300000, guid: ff7a97ceff4d1f84aa4934f6ee6b66e6, type: 3}
+  animationProfile: {fileID: 11400000, guid: 5a0c56345363273428cd359645477e53, type: 2}

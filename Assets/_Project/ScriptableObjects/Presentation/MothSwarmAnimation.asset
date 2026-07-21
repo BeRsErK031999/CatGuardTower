@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a2f7eb498680e2c4d9a2a424a7b7f6ed, type: 3}
+  m_Name: MothSwarmAnimation
+  m_EditorClassIdentifier: Assembly-CSharp::CatGuard.Gameplay.Presentation.UnitAnimationConfig
+  profileId: moth_swarm_motion
+  sourceAssetNote: Temporary code-authored SwarmHover motion uses project sprite
+    'Assets/_Project/Art/Units/Enemies/moth_swarm.png', cropped reproducibly from
+    'docs/art/source/garden-enemy-sheet.png' by tools/art/import-unit-sprites.ps1.
+  licenseStatus: Project-owned temporary animation presentation. The reviewed master
+    sheet was created with built-in OpenAI image generation on 2026-07-20; prompt
+    provenance is recorded in docs/art/source/README.md. No paid or third-party game
+    asset is used.
+  temporaryMotionProfile: 1
+  defaultFacing: 1
+  symmetricForHorizontalFlip: 1
+  allowHorizontalFlip: 0
+  motionStyle: 3
+  specialCue: 3
+  referenceMoveSpeed: 1.55
+  walkFramesPerSecond: 12
+  bobAmplitude: 0.11
+  squashAmount: 0.11
+  swayDegrees: 7
+  spawnDuration: 0.34
+  hitDuration: 0.13
+  goalAttackDuration: 0.24
+  abilityDuration: 0.44
+  deathDuration: 0.5
+  animatorController: {fileID: 0}
+  frameSets: []

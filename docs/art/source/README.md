@@ -20,3 +20,9 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass `
 ```
 
 Do not replace the source sheets without rechecking role order, silhouette separation, alpha edges, and the resulting Android combat view.
+
+## E5 Temporary Enemy Motion
+
+E5 does not add another raster source. `UnitAnimationConfig` assets under `Assets/_Project/ScriptableObjects/Presentation/` apply distinct code-authored motion, state timing, direction, hit, ability, goal-attack, and death presentation to the five existing enemy sprites. Every profile stores the exact sprite/source-sheet path and the licensing statement above.
+
+The production multi-frame animation pack remains external backlog item `ANIM-ENEMY-001`. When it is delivered, add state/direction frame sets or an Animator controller to the existing profiles; preserve the current static-sprite fallback and presentation-only event boundary.

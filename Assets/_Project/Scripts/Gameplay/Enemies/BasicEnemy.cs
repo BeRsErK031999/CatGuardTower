@@ -1,5 +1,6 @@
 using CatGuard.Gameplay.Battlefield;
 using CatGuard.Gameplay.Levels;
+using CatGuard.Gameplay.Presentation;
 using CatGuard.Utils;
 using UnityEngine;
 
@@ -10,13 +11,15 @@ namespace CatGuard.Gameplay.Enemies
         private PrototypeLevelController levelController;
         private EnemyConfig config;
         private PathRouteDefinition route;
-        private SpriteRenderer spriteRenderer;
+        private UnitAnimationPresenter animationPresenter;
         private float maxHealth;
         private float currentHealth;
+        private float baseSpeed;
         private float speed;
         private int baseDamage;
         private int nextPathIndex;
         private bool completed;
+        private UnitStatusModifier statusModifier;
 
         public bool IsAlive => !completed && currentHealth > 0f;
         public float HealthPercent => maxHealth <= 0f ? 0f : Mathf.Clamp01(currentHealth / maxHealth);
@@ -28,6 +31,10 @@ namespace CatGuard.Gameplay.Enemies
         public string RouteId => route?.RouteId ?? string.Empty;
         public int SpawnOrder { get; private set; }
         public string EnemyId => config?.EnemyId ?? string.Empty;
+        public UnitAnimationPresenter AnimationPresenter => animationPresenter;
+        public UnitAnimationState PresentationState => animationPresenter == null ? UnitAnimationState.Idle : animationPresenter.CurrentState;
+        public UnitStatusModifier PresentationStatus => statusModifier;
+        public float ActualMoveSpeed => speed;
 
         public void Initialize(
             PrototypeLevelController owner,
@@ -43,7 +50,8 @@ namespace CatGuard.Gameplay.Enemies
             SpawnOrder = spawnOrder;
             maxHealth = config.Health * Mathf.Max(0.1f, healthMultiplier);
             currentHealth = maxHealth;
-            speed = config.Speed * Mathf.Max(0.1f, speedMultiplier);
+            baseSpeed = config.Speed;
+            ConfigureSpeedMultiplier(speedMultiplier);
             baseDamage = config.BaseDamage;
             nextPathIndex = 1;
             completed = false;
@@ -68,13 +76,56 @@ namespace CatGuard.Gameplay.Enemies
             {
                 completed = true;
                 levelController.HandleEnemyDefeated(this);
+                return;
             }
+
+            animationPresenter?.PlayHit();
+        }
+
+        public void ConfigureSpeedMultiplier(float speedMultiplier)
+        {
+            var multiplier = Mathf.Max(0.1f, speedMultiplier);
+            speed = Mathf.Max(0.1f, baseSpeed) * multiplier;
+            statusModifier &= ~(UnitStatusModifier.Slowed | UnitStatusModifier.Hastened);
+            if (multiplier < 0.95f)
+            {
+                statusModifier |= UnitStatusModifier.Slowed;
+            }
+            else if (multiplier > 1.05f)
+            {
+                statusModifier |= UnitStatusModifier.Hastened;
+            }
+
+            animationPresenter?.SetStatusModifier(statusModifier);
+        }
+
+        public void SetControlStatus(UnitStatusModifier modifier)
+        {
+            statusModifier = modifier;
+            animationPresenter?.SetStatusModifier(statusModifier);
+        }
+
+        public float BeginDeathPresentation()
+        {
+            return animationPresenter == null ? 0f : animationPresenter.PlayDeath();
+        }
+
+        public float BeginGoalAttackPresentation()
+        {
+            return animationPresenter == null ? 0f : animationPresenter.PlayGoalAttack();
         }
 
         private void Update()
         {
-            if (!IsAlive || levelController.State != PrototypeLevelState.Running)
+            if (!IsAlive)
             {
+                return;
+            }
+
+            if (levelController.State != PrototypeLevelState.Running
+                || (statusModifier & (UnitStatusModifier.Stunned | UnitStatusModifier.Frozen)) != 0)
+            {
+                animationPresenter?.SetMovement(Vector2.zero, 0f, false);
                 return;
             }
 
@@ -85,8 +136,11 @@ namespace CatGuard.Gameplay.Enemies
             }
 
             var target = (Vector3)route.Points[nextPathIndex];
+            var previousPosition = transform.position;
             transform.position = Vector3.MoveTowards(transform.position, target, speed * Time.deltaTime);
             NormalizedProgress = route.GetNormalizedProgress(nextPathIndex, transform.position);
+            var movement = transform.position - previousPosition;
+            animationPresenter?.SetMovement(movement, speed, movement.sqrMagnitude > 0.0000001f);
 
             if (Vector3.Distance(transform.position, target) <= 0.02f)
             {
@@ -101,35 +155,27 @@ namespace CatGuard.Gameplay.Enemies
 
         private void EnsureVisual()
         {
-            spriteRenderer = GetComponent<SpriteRenderer>();
-            if (spriteRenderer == null)
-            {
-                spriteRenderer = gameObject.AddComponent<SpriteRenderer>();
-            }
-
             var sprite = config.VisualSprite != null
                 ? config.VisualSprite
                 : PrototypeSpriteFactory.CircleSprite;
-            spriteRenderer.sprite = sprite;
-            spriteRenderer.sortingOrder = 20;
-
             var spriteSize = Mathf.Max(sprite.bounds.size.x, sprite.bounds.size.y);
             var visualScale = config.VisualScale / Mathf.Max(0.01f, spriteSize);
             transform.localScale = new Vector3(visualScale, visualScale, 1f);
+
+            animationPresenter = GetComponent<UnitAnimationPresenter>();
+            if (animationPresenter == null)
+            {
+                animationPresenter = gameObject.AddComponent<UnitAnimationPresenter>();
+            }
+
+            var fallbackColor = config.VisualSprite != null ? Color.white : config.VisualColor;
+            animationPresenter.Initialize(config.AnimationProfile, sprite, fallbackColor, speed, SpawnOrder);
+            animationPresenter.SetStatusModifier(statusModifier);
         }
 
         private void UpdateVisual()
         {
-            if (spriteRenderer == null)
-            {
-                return;
-            }
-
-            var healthyColor = config.VisualSprite != null ? Color.white : config.VisualColor;
-            var damagedColor = config.VisualSprite != null
-                ? new Color(0.58f, 0.22f, 0.22f)
-                : new Color(0.35f, 0.08f, 0.08f);
-            spriteRenderer.color = Color.Lerp(damagedColor, healthyColor, HealthPercent);
+            animationPresenter?.SetHealthPercent(HealthPercent);
         }
 
         private void ReachBase()

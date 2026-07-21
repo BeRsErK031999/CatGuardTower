@@ -13,3 +13,7 @@ Use it only after a real Unity project is created through Unity Hub or a verifie
 4. Add those scenes to Build Settings in the same order.
 
 The `.gitkeep` files only preserve empty folders in Git and can be removed when real assets are added.
+
+## Current Project State
+
+The scaffold has been realized as a Unity 6 project. E5 enemy presentation uses shared `UnitAnimationConfig` assets, the runtime `UnitAnimationPresenter`, and the editor-only controlled showcase described in `docs/planning/UNIT_ANIMATION_WORKFLOW.md`.

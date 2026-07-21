@@ -147,11 +147,13 @@ Status: `Not started`
 
 ID: `ANIM-ENEMY-001`
 
-Priority: `P0` for final E5
+Priority: `P0` for the final production-art/release pass
 
 Owner: 2D animator
 
 Status: `Not started`
+
+E5 technical integration status: complete with source-tracked code-authored temporary motion profiles. This production pack remains the approved multi-frame replacement and can be integrated without changing combat code.
 
 ### Initial enemy roster
 
@@ -596,7 +598,7 @@ Status: `Not started`
 | E2 Battlefield | 3 map concepts recommended | Yes, procedural/modular map art |
 | E3 Multi-route | No final external asset required | Yes |
 | E4 Authoring | No final external asset required | Yes |
-| E5 Animation | Enemy animation pack `P0` for final-quality acceptance | Static fallback technically allowed, but block remains visually incomplete |
+| E5 Animation | Enemy animation pack `P0` for final production-art acceptance | Source-tracked code-authored motion can pass the technical E5 gate; static-only movement remains visually incomplete |
 | E6 Tower upgrades | Upgrade evolution art `P0` for final-quality acceptance | Config-tinted/placeholder stages allowed temporarily |
 | E7 Ultimates | Ultimate VFX/audio `P0` for final-quality acceptance | Procedural VFX allowed temporarily |
 | E8 Hub | Hub environment/UI `P0` | Functional panel hub allowed temporarily |

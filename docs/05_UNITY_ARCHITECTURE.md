@@ -263,3 +263,14 @@ This phase still uses the existing prototype combat behavior; the new content is
 - Initial store version: `versionName` `0.1.0`, `versionCode` `1`.
 - Store Android settings use the same landscape-only Auto Rotation contract with the existing IL2CPP, ARM64, API 25+, and no-forced-permission baseline.
 - Package name and versioning are validated through Unity batchmode before Play Console upload.
+
+## E5 Unit Presentation
+
+- `UnitAnimationConfig` is the asset-level contract for semantic animation states, cardinal facing, optional sprite frames/Animator controller, motion timing, speed reference, and provenance.
+- `UnitAnimationPresenter` renders that contract through a shared child hierarchy and owns motion, flip, hit flash, shadow, health/status indicators, and y-based sorting.
+- `BasicEnemy` owns combat health and route movement and only reports presentation state. No Animator event can apply damage or complete a wave.
+- `PrototypeLevelController` removes terminal enemies from the active list before keeping their visual object for a bounded death or goal-attack pose.
+- Missing controllers, parameters, frames, directions, or complete profiles fall back to the configured static sprite without changing gameplay.
+- `UnitAnimationShowcase.unity` is editor-only and exercises all five enemies through the same runtime presenter.
+
+The current profiles use source-tracked code-authored temporary motion. Production sprite sheets from `ANIM-ENEMY-001` can be assigned later without changing the combat boundary.

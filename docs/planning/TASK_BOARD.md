@@ -329,7 +329,6 @@ Source of truth: `EXPANSION_ROADMAP.md`.
 
 ### Todo
 
-* [ ] E5 — Animated Enemies And Unit Presentation.
 * [ ] E6 — In-Battle Tower Upgrade Trees.
 * [ ] E7 — Guardian Ultimates And Map-Scale Abilities.
 * [ ] E8 — Home Hub Foundation.
@@ -352,6 +351,7 @@ Source of truth: `EXPANSION_ROADMAP.md`.
 * [x] E2 — Scalable Battlefield, Camera, And Larger Maps; full gate recorded in `E2_BATTLEFIELD_REPORT.md`.
 * [x] E3 — Multi-Route Enemy Path Engine; full gate recorded in `E3_MULTI_ROUTE_REPORT.md`.
 * [x] E4 — Map Authoring And Content Validation Pipeline; full gate recorded in `E4_MAP_AUTHORING_REPORT.md`.
+* [x] E5 — Animated Enemies And Unit Presentation; full gate recorded in `E5_UNIT_ANIMATION_REPORT.md`.
 * [x] Select `Bloons TD 6` as the primary systems benchmark and `Kingdom Rush` as the secondary presentation benchmark.
 * [x] Define the large-section test/commit/push workflow.
 * [x] Create the external production backlog.

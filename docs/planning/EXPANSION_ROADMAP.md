@@ -1135,6 +1135,6 @@ Ceilings здесь означают ожидаемую способность d
 
 ## 9. Next Action
 
-`E5 — Animated Enemies And Unit Presentation` завершён; фактический gate находится в [E5_UNIT_ANIMATION_REPORT.md](E5_UNIT_ANIMATION_REPORT.md).
+`E6 — In-Battle Tower Upgrade Trees` завершён; фактический gate находится в [E6_TOWER_UPGRADE_REPORT.md](E6_TOWER_UPGRADE_REPORT.md).
 
-Следующий допустимый implementation block: **`E6 — In-Battle Tower Upgrade Trees`**. Он должен выполняться отдельной самостоятельной задачей с собственным scope, external-art boundary и Block Test Gate; E5-delivery не включает реализацию E6.
+Следующий допустимый implementation block: **`E7 — Guardian Ultimates And Map-Scale Abilities`**. Он должен выполняться отдельной самостоятельной задачей с собственным scope, external-art boundary и Block Test Gate; E6-delivery не включает реализацию E7.

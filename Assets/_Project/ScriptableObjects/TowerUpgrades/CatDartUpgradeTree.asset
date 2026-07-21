@@ -1,0 +1,176 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbe642f414d751c4a816c11679244118, type: 3}
+  m_Name: CatDartUpgradeTree
+  m_EditorClassIdentifier: Assembly-CSharp::CatGuard.Gameplay.Towers.Upgrades.TowerUpgradeTreeConfig
+  towerFamilyId: cat_dart
+  baseSellRate: 0.7
+  temporaryPresentation: 1
+  presentationSourceNote: Code-authored Unity primitive markers and tier pips; temporary
+    E6 presentation pending ART-TOWER-UPGRADES-001.
+  presentationLicenseStatus: Original code-authored Unity primitives; no external
+    asset license.
+  branches:
+  - branchId: dart_rapid
+    nameLocalizationKey: battleUpgrade.branch.dart_rapid
+    prerequisiteBranchIds: []
+    mutuallyExclusiveBranchIds:
+    - dart_precision
+    markerShape: 1
+    branchColor: {r: 0.2, g: 0.9, b: 0.92, a: 1}
+    tiers:
+    - tier: 1
+      price: 35
+      damageMultiplier: 1
+      rangeMultiplier: 1
+      attackSpeedMultiplier: 1.25
+      splashRadiusBonus: 0
+      additionalTargets: 0
+      pierceTargets: 0
+      bossDamageMultiplier: 1
+      slowPercent: 0
+      slowDuration: 0
+      burnDamagePerSecond: 0
+      burnDuration: 0
+      behavior: 1
+      behaviorOverrideId: multishot
+      projectileOverrideId: multishot_projectile
+      presentationOverrideId: tier_1_multishot
+      activatedAbilityId: 
+      effectLocalizationKey: battleUpgrade.effect.dart_rapid_1
+      sellValueContribution: 24
+      presentationScaleMultiplier: 1.045
+      presentationColor: {r: 0.46, g: 0.8, b: 1, a: 1}
+      projectileColor: {r: 0.46, g: 0.8, b: 1, a: 1}
+    - tier: 2
+      price: 65
+      damageMultiplier: 1.1
+      rangeMultiplier: 1
+      attackSpeedMultiplier: 1
+      splashRadiusBonus: 0
+      additionalTargets: 1
+      pierceTargets: 0
+      bossDamageMultiplier: 1
+      slowPercent: 0
+      slowDuration: 0
+      burnDamagePerSecond: 0
+      burnDuration: 0
+      behavior: 1
+      behaviorOverrideId: multishot
+      projectileOverrideId: multishot_projectile
+      presentationOverrideId: tier_2_multishot
+      activatedAbilityId: 
+      effectLocalizationKey: battleUpgrade.effect.dart_rapid_2
+      sellValueContribution: 46
+      presentationScaleMultiplier: 1.09
+      presentationColor: {r: 0.46, g: 0.8, b: 1, a: 1}
+      projectileColor: {r: 0.46, g: 0.8, b: 1, a: 1}
+    - tier: 3
+      price: 110
+      damageMultiplier: 1
+      rangeMultiplier: 1
+      attackSpeedMultiplier: 1.35
+      splashRadiusBonus: 0
+      additionalTargets: 1
+      pierceTargets: 0
+      bossDamageMultiplier: 1
+      slowPercent: 0
+      slowDuration: 0
+      burnDamagePerSecond: 0
+      burnDuration: 0
+      behavior: 1
+      behaviorOverrideId: multishot
+      projectileOverrideId: multishot_projectile
+      presentationOverrideId: tier_3_multishot
+      activatedAbilityId: 
+      effectLocalizationKey: battleUpgrade.effect.dart_rapid_3
+      sellValueContribution: 77
+      presentationScaleMultiplier: 1.135
+      presentationColor: {r: 0.46, g: 0.8, b: 1, a: 1}
+      projectileColor: {r: 0.46, g: 0.8, b: 1, a: 1}
+  - branchId: dart_precision
+    nameLocalizationKey: battleUpgrade.branch.dart_precision
+    prerequisiteBranchIds: []
+    mutuallyExclusiveBranchIds:
+    - dart_rapid
+    markerShape: 0
+    branchColor: {r: 1, g: 0.72, b: 0.18, a: 1}
+    tiers:
+    - tier: 1
+      price: 40
+      damageMultiplier: 1.3
+      rangeMultiplier: 1.1
+      attackSpeedMultiplier: 1
+      splashRadiusBonus: 0
+      additionalTargets: 0
+      pierceTargets: 0
+      bossDamageMultiplier: 1
+      slowPercent: 0
+      slowDuration: 0
+      burnDamagePerSecond: 0
+      burnDuration: 0
+      behavior: 2
+      behaviorOverrideId: pierce
+      projectileOverrideId: pierce_projectile
+      presentationOverrideId: tier_1_pierce
+      activatedAbilityId: 
+      effectLocalizationKey: battleUpgrade.effect.dart_precision_1
+      sellValueContribution: 28
+      presentationScaleMultiplier: 1.045
+      presentationColor: {r: 1, g: 0.72, b: 0.22, a: 1}
+      projectileColor: {r: 1, g: 0.72, b: 0.22, a: 1}
+    - tier: 2
+      price: 70
+      damageMultiplier: 1
+      rangeMultiplier: 1
+      attackSpeedMultiplier: 1
+      splashRadiusBonus: 0
+      additionalTargets: 0
+      pierceTargets: 1
+      bossDamageMultiplier: 1
+      slowPercent: 0
+      slowDuration: 0
+      burnDamagePerSecond: 0
+      burnDuration: 0
+      behavior: 2
+      behaviorOverrideId: pierce
+      projectileOverrideId: pierce_projectile
+      presentationOverrideId: tier_2_pierce
+      activatedAbilityId: 
+      effectLocalizationKey: battleUpgrade.effect.dart_precision_2
+      sellValueContribution: 49
+      presentationScaleMultiplier: 1.09
+      presentationColor: {r: 1, g: 0.72, b: 0.22, a: 1}
+      projectileColor: {r: 1, g: 0.72, b: 0.22, a: 1}
+    - tier: 3
+      price: 120
+      damageMultiplier: 1.55
+      rangeMultiplier: 1
+      attackSpeedMultiplier: 1
+      splashRadiusBonus: 0
+      additionalTargets: 0
+      pierceTargets: 1
+      bossDamageMultiplier: 1
+      slowPercent: 0
+      slowDuration: 0
+      burnDamagePerSecond: 0
+      burnDuration: 0
+      behavior: 2
+      behaviorOverrideId: pierce
+      projectileOverrideId: pierce_projectile
+      presentationOverrideId: tier_3_pierce
+      activatedAbilityId: 
+      effectLocalizationKey: battleUpgrade.effect.dart_precision_3
+      sellValueContribution: 84
+      presentationScaleMultiplier: 1.135
+      presentationColor: {r: 1, g: 0.72, b: 0.22, a: 1}
+      projectileColor: {r: 1, g: 0.72, b: 0.22, a: 1}

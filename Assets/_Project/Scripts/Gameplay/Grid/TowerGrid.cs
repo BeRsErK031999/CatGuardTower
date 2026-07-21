@@ -81,6 +81,17 @@ namespace CatGuard.Gameplay.Grid
             return occupiedCells.Contains(cellIndex);
         }
 
+        public bool TryReleaseAtWorld(Vector2 worldPosition)
+        {
+            if (!TryGetCellIndex(worldPosition, out var cellIndex) || !occupiedCells.Remove(cellIndex))
+            {
+                return false;
+            }
+
+            UpdateCellVisual(cellIndex);
+            return true;
+        }
+
         public bool TryPlaceFromScreen(Vector2 screenPosition)
         {
             if (levelController == null || levelController.IsScreenPointOverHud(screenPosition))
@@ -99,7 +110,17 @@ namespace CatGuard.Gameplay.Grid
             }
 
             var world = mainCamera.ScreenToWorldPoint(new Vector3(screenPosition.x, screenPosition.y, 0f));
-            return TryPlaceAtWorld(world);
+            if (!TryPlaceAtWorld(world))
+            {
+                return false;
+            }
+
+            if (levelController.Towers.Count > 0)
+            {
+                levelController.SelectPlacedTower(levelController.Towers[levelController.Towers.Count - 1]);
+            }
+
+            return true;
         }
 
         private void CreateCells()
@@ -175,8 +196,13 @@ namespace CatGuard.Gameplay.Grid
                 return;
             }
 
-            visual.Border.color = new Color(0.1f, 0.42f, 0.37f, 0.72f);
-            visual.Fill.color = new Color(0.17f, 0.5f, 0.42f, 0.34f);
+            var occupied = occupiedCells.Contains(cellIndex);
+            visual.Border.color = occupied
+                ? new Color(0.1f, 0.42f, 0.37f, 0.72f)
+                : new Color(0.07f, 0.26f, 0.24f, 0.5f);
+            visual.Fill.color = occupied
+                ? new Color(0.17f, 0.5f, 0.42f, 0.34f)
+                : new Color(0.15f, 0.38f, 0.31f, 0.18f);
         }
     }
 }

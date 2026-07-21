@@ -36,5 +36,10 @@ namespace CatGuard.SDK.Analytics
         public const string RouteProgress = "route_progress";
         public const string EnemyId = "enemy_id";
         public const string SpawnOrder = "spawn_order";
+        public const string BranchId = "branch_id";
+        public const string Tier = "tier";
+        public const string SellValue = "sell_value";
+        public const string InvestedCost = "invested_cost";
+        public const string TargetPriority = "target_priority";
     }
 }

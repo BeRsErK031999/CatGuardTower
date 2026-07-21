@@ -221,6 +221,8 @@ Owner: concept artist + 2D production artist
 
 Status: `Not started`
 
+E6 technical integration status: implementation complete with source-tracked code-authored temporary marker shapes, tier pips, scale/tint evolution, range feedback, and presentation override hooks. The production art pack remains required and can replace these temporary visuals without changing battle transactions or behavior code.
+
 ### Roster
 
 - `cat_dart`;

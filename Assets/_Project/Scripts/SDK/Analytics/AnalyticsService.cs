@@ -3,6 +3,7 @@ using CatGuard.Gameplay.Battlefield;
 using CatGuard.Gameplay.Enemies;
 using CatGuard.Gameplay.Levels;
 using CatGuard.Gameplay.Towers;
+using CatGuard.Gameplay.Towers.Upgrades;
 using CatGuard.Meta.DailyRewards;
 using CatGuard.Meta.Progression;
 using CatGuard.Meta.Upgrades;
@@ -226,6 +227,43 @@ namespace CatGuard.SDK.Analytics
             };
         }
 
+        public static void TrackBattleTowerUpgrade(
+            LevelConfig level,
+            BasicTower tower,
+            TowerUpgradeBranchConfig branch,
+            TowerUpgradeTierConfig tier,
+            int remainingBattleFish)
+        {
+            var parameters = CreateBattleTowerParameters(level, tower);
+            parameters[AnalyticsParameterNames.BranchId] = branch?.BranchId ?? "unknown";
+            parameters[AnalyticsParameterNames.Tier] = tier?.Tier ?? 0;
+            parameters[AnalyticsParameterNames.CostFishCoins] = tier?.Price ?? 0;
+            parameters[AnalyticsParameterNames.RemainingFishCoins] = remainingBattleFish;
+            TrackEvent(AnalyticsEventNames.BattleTowerUpgrade, parameters);
+        }
+
+        public static void TrackBattleTowerSell(
+            LevelConfig level,
+            BasicTower tower,
+            int sellValue,
+            int remainingBattleFish)
+        {
+            var parameters = CreateBattleTowerParameters(level, tower);
+            parameters[AnalyticsParameterNames.SellValue] = sellValue;
+            parameters[AnalyticsParameterNames.RemainingFishCoins] = remainingBattleFish;
+            TrackEvent(AnalyticsEventNames.BattleTowerSell, parameters);
+        }
+
+        public static void TrackTowerTargetPriority(
+            LevelConfig level,
+            BasicTower tower,
+            TowerTargetPriority priority)
+        {
+            var parameters = CreateBattleTowerParameters(level, tower);
+            parameters[AnalyticsParameterNames.TargetPriority] = priority.ToString().ToLowerInvariant();
+            TrackEvent(AnalyticsEventNames.TowerTargetPriority, parameters);
+        }
+
         private static Dictionary<string, object> CreateEnemyRouteParameters(
             LevelConfig level,
             EnemyConfig enemy,
@@ -267,6 +305,16 @@ namespace CatGuard.SDK.Analytics
                 [AnalyticsParameterNames.UpgradeLevel] = nextLevel,
                 [AnalyticsParameterNames.CostFishCoins] = costFishCoins
             };
+        }
+
+        private static Dictionary<string, object> CreateBattleTowerParameters(LevelConfig level, BasicTower tower)
+        {
+            var parameters = CreateLevelParameters(level);
+            parameters[AnalyticsParameterNames.TowerId] = tower?.Config?.TowerId ?? "unknown";
+            parameters[AnalyticsParameterNames.BranchId] = tower?.SelectedBranchId ?? string.Empty;
+            parameters[AnalyticsParameterNames.Tier] = tower?.CurrentTier ?? 0;
+            parameters[AnalyticsParameterNames.InvestedCost] = tower?.InvestedUpgradeCost ?? 0;
+            return parameters;
         }
 
         private static string NormalizePlacementId(string placementId)

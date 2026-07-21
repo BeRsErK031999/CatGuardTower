@@ -1,0 +1,176 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbe642f414d751c4a816c11679244118, type: 3}
+  m_Name: BlanketBoomUpgradeTree
+  m_EditorClassIdentifier: Assembly-CSharp::CatGuard.Gameplay.Towers.Upgrades.TowerUpgradeTreeConfig
+  towerFamilyId: blanket_boom
+  baseSellRate: 0.7
+  temporaryPresentation: 1
+  presentationSourceNote: Code-authored Unity primitive markers and tier pips; temporary
+    E6 presentation pending ART-TOWER-UPGRADES-001.
+  presentationLicenseStatus: Original code-authored Unity primitives; no external
+    asset license.
+  branches:
+  - branchId: blanket_blast
+    nameLocalizationKey: battleUpgrade.branch.blanket_blast
+    prerequisiteBranchIds: []
+    mutuallyExclusiveBranchIds:
+    - blanket_burn
+    markerShape: 2
+    branchColor: {r: 1, g: 0.36, b: 0.72, a: 1}
+    tiers:
+    - tier: 1
+      price: 45
+      damageMultiplier: 1
+      rangeMultiplier: 1
+      attackSpeedMultiplier: 1
+      splashRadiusBonus: 0.32
+      additionalTargets: 0
+      pierceTargets: 0
+      bossDamageMultiplier: 1
+      slowPercent: 0
+      slowDuration: 0
+      burnDamagePerSecond: 0
+      burnDuration: 0
+      behavior: 7
+      behaviorOverrideId: heavyimpact
+      projectileOverrideId: heavyimpact_projectile
+      presentationOverrideId: tier_1_heavyimpact
+      activatedAbilityId: 
+      effectLocalizationKey: battleUpgrade.effect.blanket_blast_1
+      sellValueContribution: 32
+      presentationScaleMultiplier: 1.045
+      presentationColor: {r: 0.46, g: 0.8, b: 1, a: 1}
+      projectileColor: {r: 0.46, g: 0.8, b: 1, a: 1}
+    - tier: 2
+      price: 85
+      damageMultiplier: 1.45
+      rangeMultiplier: 1
+      attackSpeedMultiplier: 1
+      splashRadiusBonus: 0.35
+      additionalTargets: 0
+      pierceTargets: 0
+      bossDamageMultiplier: 1
+      slowPercent: 0
+      slowDuration: 0
+      burnDamagePerSecond: 0
+      burnDuration: 0
+      behavior: 7
+      behaviorOverrideId: heavyimpact
+      projectileOverrideId: heavyimpact_projectile
+      presentationOverrideId: tier_2_heavyimpact
+      activatedAbilityId: 
+      effectLocalizationKey: battleUpgrade.effect.blanket_blast_2
+      sellValueContribution: 60
+      presentationScaleMultiplier: 1.09
+      presentationColor: {r: 0.46, g: 0.8, b: 1, a: 1}
+      projectileColor: {r: 0.46, g: 0.8, b: 1, a: 1}
+    - tier: 3
+      price: 145
+      damageMultiplier: 1.6
+      rangeMultiplier: 1
+      attackSpeedMultiplier: 1
+      splashRadiusBonus: 0.55
+      additionalTargets: 0
+      pierceTargets: 0
+      bossDamageMultiplier: 1
+      slowPercent: 0
+      slowDuration: 0
+      burnDamagePerSecond: 0
+      burnDuration: 0
+      behavior: 7
+      behaviorOverrideId: heavyimpact
+      projectileOverrideId: heavyimpact_projectile
+      presentationOverrideId: tier_3_heavyimpact
+      activatedAbilityId: 
+      effectLocalizationKey: battleUpgrade.effect.blanket_blast_3
+      sellValueContribution: 102
+      presentationScaleMultiplier: 1.135
+      presentationColor: {r: 0.46, g: 0.8, b: 1, a: 1}
+      projectileColor: {r: 0.46, g: 0.8, b: 1, a: 1}
+  - branchId: blanket_burn
+    nameLocalizationKey: battleUpgrade.branch.blanket_burn
+    prerequisiteBranchIds: []
+    mutuallyExclusiveBranchIds:
+    - blanket_blast
+    markerShape: 1
+    branchColor: {r: 1, g: 0.54, b: 0.18, a: 1}
+    tiers:
+    - tier: 1
+      price: 40
+      damageMultiplier: 1
+      rangeMultiplier: 1
+      attackSpeedMultiplier: 1
+      splashRadiusBonus: 0
+      additionalTargets: 0
+      pierceTargets: 0
+      bossDamageMultiplier: 1
+      slowPercent: 0
+      slowDuration: 0
+      burnDamagePerSecond: 1.5
+      burnDuration: 2
+      behavior: 4
+      behaviorOverrideId: burnzone
+      projectileOverrideId: burnzone_projectile
+      presentationOverrideId: tier_1_burnzone
+      activatedAbilityId: 
+      effectLocalizationKey: battleUpgrade.effect.blanket_burn_1
+      sellValueContribution: 28
+      presentationScaleMultiplier: 1.045
+      presentationColor: {r: 1, g: 0.38, b: 0.16, a: 1}
+      projectileColor: {r: 1, g: 0.38, b: 0.16, a: 1}
+    - tier: 2
+      price: 80
+      damageMultiplier: 1
+      rangeMultiplier: 1.15
+      attackSpeedMultiplier: 1
+      splashRadiusBonus: 0
+      additionalTargets: 0
+      pierceTargets: 0
+      bossDamageMultiplier: 1
+      slowPercent: 0
+      slowDuration: 0
+      burnDamagePerSecond: 1
+      burnDuration: 3
+      behavior: 4
+      behaviorOverrideId: burnzone
+      projectileOverrideId: burnzone_projectile
+      presentationOverrideId: tier_2_burnzone
+      activatedAbilityId: 
+      effectLocalizationKey: battleUpgrade.effect.blanket_burn_2
+      sellValueContribution: 56
+      presentationScaleMultiplier: 1.09
+      presentationColor: {r: 1, g: 0.38, b: 0.16, a: 1}
+      projectileColor: {r: 1, g: 0.38, b: 0.16, a: 1}
+    - tier: 3
+      price: 135
+      damageMultiplier: 1
+      rangeMultiplier: 1
+      attackSpeedMultiplier: 1
+      splashRadiusBonus: 0.35
+      additionalTargets: 0
+      pierceTargets: 0
+      bossDamageMultiplier: 1
+      slowPercent: 0
+      slowDuration: 0
+      burnDamagePerSecond: 1.5
+      burnDuration: 4
+      behavior: 4
+      behaviorOverrideId: burnzone
+      projectileOverrideId: burnzone_projectile
+      presentationOverrideId: tier_3_burnzone
+      activatedAbilityId: 
+      effectLocalizationKey: battleUpgrade.effect.blanket_burn_3
+      sellValueContribution: 94
+      presentationScaleMultiplier: 1.135
+      presentationColor: {r: 1, g: 0.38, b: 0.16, a: 1}
+      projectileColor: {r: 1, g: 0.38, b: 0.16, a: 1}

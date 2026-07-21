@@ -3,6 +3,8 @@ using CatGuard.Core.Audio;
 using CatGuard.Core.Localization;
 using CatGuard.Core.SceneLoading;
 using CatGuard.Gameplay.Levels;
+using CatGuard.Gameplay.Towers;
+using CatGuard.Gameplay.Towers.Upgrades;
 using CatGuard.UI.Layout;
 using UnityEngine;
 
@@ -10,6 +12,13 @@ namespace CatGuard.UI.HUD
 {
     public sealed class PrototypeHud : MonoBehaviour
     {
+        private static readonly TowerTargetPriority[] TargetPriorities =
+        {
+            TowerTargetPriority.First,
+            TowerTargetPriority.Last,
+            TowerTargetPriority.Strong
+        };
+
         private const float HudMargin = 24f;
         private const float TopBarHeight = 82f;
         private const float BottomTrayHeight = 136f;
@@ -36,6 +45,8 @@ namespace CatGuard.UI.HUD
         private Texture2D accentHoverTexture;
         private Texture2D modalBackdropTexture;
         private string resultMessage = string.Empty;
+        private BasicTower sellConfirmationTower;
+        private float sellConfirmationUntil;
 
         public void Initialize(PrototypeLevelController controller)
         {
@@ -59,7 +70,8 @@ namespace CatGuard.UI.HUD
             }
 
             return GetTopBarRect(layout).Contains(logicalPosition)
-                || GetBottomTrayRect(layout).Contains(logicalPosition);
+                || GetBottomTrayRect(layout).Contains(logicalPosition)
+                || (levelController?.SelectedPlacedTower != null && GetTowerPanelRect(layout).Contains(logicalPosition));
         }
 
         public static Rect GetBattlefieldRect(LandscapeLayout.Context layout)
@@ -101,6 +113,10 @@ namespace CatGuard.UI.HUD
                 {
                     DrawWorldIndicators(layout);
                     DrawBottomHud(GetBottomTrayRect(layout));
+                    if (levelController.SelectedPlacedTower != null)
+                    {
+                        DrawTowerPanel(GetTowerPanelRect(layout));
+                    }
                 }
                 else if (levelController.State is PrototypeLevelState.Won or PrototypeLevelState.Lost)
                 {
@@ -248,6 +264,154 @@ namespace CatGuard.UI.HUD
                     instruction,
                     instructionStyle);
             }
+        }
+
+        private void DrawTowerPanel(Rect panelRect)
+        {
+            var tower = levelController.SelectedPlacedTower;
+            if (tower?.Config == null)
+            {
+                return;
+            }
+
+            GUI.Box(panelRect, GUIContent.none, strongPanelStyle);
+            const float inset = 16f;
+            var contentX = panelRect.x + inset;
+            var contentWidth = panelRect.width - inset * 2f;
+            var y = panelRect.y + 12f;
+
+            GUI.Label(
+                new Rect(contentX, y, contentWidth - 76f, 38f),
+                string.Format(LocalizationService.Text("battleUpgrade.title"), LocalizationService.TowerName(tower.Config)),
+                levelStyle);
+            if (GUI.Button(new Rect(panelRect.xMax - 62f, y, 46f, 38f), "×", compactButtonStyle))
+            {
+                levelController.ClearPlacedTowerSelection();
+                return;
+            }
+
+            y += 44f;
+            var stats = tower.RuntimeStats;
+            var statsText = string.Format(
+                LocalizationService.Text("battleUpgrade.stats"),
+                stats.Damage,
+                stats.Range,
+                stats.FireInterval,
+                stats.DamagePerSecond,
+                stats.SplashRadius);
+            GUI.Box(new Rect(contentX, y, contentWidth, 62f), GUIContent.none, panelStyle);
+            GUI.Label(new Rect(contentX + 8f, y + 4f, contentWidth - 16f, 54f), statsText, instructionStyle);
+            y += 70f;
+
+            GUI.Label(new Rect(contentX, y, contentWidth, 26f), LocalizationService.Text("battleUpgrade.priority"), statsStyle);
+            y += 28f;
+            DrawTargetPriorityButtons(tower, new Rect(contentX, y, contentWidth, 42f));
+            y += 50f;
+
+            var tree = tower.Config.BattleUpgradeTree;
+            if (tree == null)
+            {
+                GUI.Label(new Rect(contentX, y, contentWidth, 48f), LocalizationService.Text("battleUpgrade.unavailable"), instructionStyle);
+                return;
+            }
+
+            foreach (var branch in tree.Branches)
+            {
+                if (branch == null)
+                {
+                    continue;
+                }
+
+                var activeTier = string.Equals(tower.SelectedBranchId, branch.BranchId, System.StringComparison.Ordinal)
+                    ? tower.CurrentTier
+                    : 0;
+                var quote = tower.GetUpgradeQuote(branch.BranchId, levelController.BattleFish);
+                var branchRect = new Rect(contentX, y, contentWidth, 134f);
+                GUI.Box(branchRect, GUIContent.none, panelStyle);
+                GUI.Label(
+                    new Rect(branchRect.x + 10f, branchRect.y + 5f, branchRect.width - 20f, 28f),
+                    string.Format(
+                        LocalizationService.Text("battleUpgrade.branchTier"),
+                        LocalizationService.TowerUpgradeBranchName(branch),
+                        activeTier,
+                        branch.MaximumTier),
+                    statsStyle);
+
+                var effect = quote.NextTier == null
+                    ? LocalizationService.Text("battleUpgrade.maximum")
+                    : LocalizationService.TowerUpgradeEffect(quote.NextTier);
+                GUI.Label(
+                    new Rect(branchRect.x + 10f, branchRect.y + 35f, branchRect.width - 20f, 48f),
+                    effect,
+                    instructionStyle);
+
+                var buttonLabel = quote.NextTier == null
+                    ? LocalizationService.Text("battleUpgrade.maximum")
+                    : quote.CanPurchase
+                        ? string.Format(LocalizationService.Text("battleUpgrade.buy"), quote.Price)
+                        : GetAvailabilityText(quote.Availability, quote.Price);
+                GUI.enabled = quote.CanPurchase;
+                if (GUI.Button(
+                        new Rect(branchRect.x + 10f, branchRect.yMax - 46f, branchRect.width - 20f, 38f),
+                        buttonLabel,
+                        quote.CanPurchase ? selectedButtonStyle : compactButtonStyle))
+                {
+                    levelController.TryPurchaseSelectedTowerUpgrade(branch.BranchId);
+                }
+
+                GUI.enabled = true;
+                y += 142f;
+            }
+
+            var sellRect = new Rect(contentX, Mathf.Min(y + 4f, panelRect.yMax - 54f), contentWidth, 42f);
+            var confirmationActive = sellConfirmationTower == tower && Time.unscaledTime <= sellConfirmationUntil;
+            var sellLabel = confirmationActive
+                ? string.Format(LocalizationService.Text("battleUpgrade.sellConfirm"), tower.SellValue)
+                : string.Format(LocalizationService.Text("battleUpgrade.sell"), tower.SellValue);
+            if (GUI.Button(sellRect, sellLabel, confirmationActive ? selectedButtonStyle : buttonStyle))
+            {
+                if (confirmationActive)
+                {
+                    levelController.TrySellSelectedTower();
+                    sellConfirmationTower = null;
+                    sellConfirmationUntil = 0f;
+                }
+                else
+                {
+                    sellConfirmationTower = tower;
+                    sellConfirmationUntil = Time.unscaledTime + 3f;
+                }
+            }
+        }
+
+        private void DrawTargetPriorityButtons(BasicTower tower, Rect rowRect)
+        {
+            const float gap = 8f;
+            var width = (rowRect.width - gap * 2f) / 3f;
+            for (var index = 0; index < TargetPriorities.Length; index++)
+            {
+                var priority = TargetPriorities[index];
+                var rect = new Rect(rowRect.x + index * (width + gap), rowRect.y, width, rowRect.height);
+                if (GUI.Button(
+                        rect,
+                        LocalizationService.TowerTargetPriorityName(priority),
+                        tower.TargetPriority == priority ? selectedButtonStyle : compactButtonStyle))
+                {
+                    levelController.TrySetSelectedTowerPriority(priority);
+                }
+            }
+        }
+
+        private static string GetAvailabilityText(TowerUpgradeAvailability availability, int price)
+        {
+            return availability switch
+            {
+                TowerUpgradeAvailability.BranchLocked => LocalizationService.Text("battleUpgrade.branchLocked"),
+                TowerUpgradeAvailability.PrerequisiteMissing => LocalizationService.Text("battleUpgrade.prerequisite"),
+                TowerUpgradeAvailability.MaximumTier => LocalizationService.Text("battleUpgrade.maximum"),
+                TowerUpgradeAvailability.InsufficientFunds => string.Format(LocalizationService.Text("battleUpgrade.insufficient"), price),
+                _ => LocalizationService.Text("battleUpgrade.unavailable")
+            };
         }
 
         private void DrawResultOverlay(Rect surfaceRect, Rect safeRect)
@@ -442,6 +606,13 @@ namespace CatGuard.UI.HUD
                 layout.SafeRect.yMax - HudMargin - BottomTrayHeight,
                 Mathf.Max(0f, layout.SafeRect.width - (HudMargin * 2f)),
                 BottomTrayHeight);
+        }
+
+        private static Rect GetTowerPanelRect(LandscapeLayout.Context layout)
+        {
+            var battlefield = GetBattlefieldRect(layout);
+            var width = Mathf.Clamp(battlefield.width * 0.34f, 470f, 570f);
+            return new Rect(battlefield.xMax - width, battlefield.y, width, battlefield.height);
         }
 
         private void EnsureStyles()

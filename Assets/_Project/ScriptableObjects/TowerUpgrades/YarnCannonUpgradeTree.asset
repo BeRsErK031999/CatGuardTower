@@ -1,0 +1,176 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbe642f414d751c4a816c11679244118, type: 3}
+  m_Name: YarnCannonUpgradeTree
+  m_EditorClassIdentifier: Assembly-CSharp::CatGuard.Gameplay.Towers.Upgrades.TowerUpgradeTreeConfig
+  towerFamilyId: yarn_cannon
+  baseSellRate: 0.7
+  temporaryPresentation: 1
+  presentationSourceNote: Code-authored Unity primitive markers and tier pips; temporary
+    E6 presentation pending ART-TOWER-UPGRADES-001.
+  presentationLicenseStatus: Original code-authored Unity primitives; no external
+    asset license.
+  branches:
+  - branchId: yarn_impact
+    nameLocalizationKey: battleUpgrade.branch.yarn_impact
+    prerequisiteBranchIds: []
+    mutuallyExclusiveBranchIds:
+    - yarn_snare
+    markerShape: 2
+    branchColor: {r: 1, g: 0.56, b: 0.18, a: 1}
+    tiers:
+    - tier: 1
+      price: 40
+      damageMultiplier: 1.35
+      rangeMultiplier: 1
+      attackSpeedMultiplier: 1
+      splashRadiusBonus: 0.2
+      additionalTargets: 0
+      pierceTargets: 0
+      bossDamageMultiplier: 1
+      slowPercent: 0
+      slowDuration: 0
+      burnDamagePerSecond: 0
+      burnDuration: 0
+      behavior: 7
+      behaviorOverrideId: heavyimpact
+      projectileOverrideId: heavyimpact_projectile
+      presentationOverrideId: tier_1_heavyimpact
+      activatedAbilityId: 
+      effectLocalizationKey: battleUpgrade.effect.yarn_impact_1
+      sellValueContribution: 28
+      presentationScaleMultiplier: 1.045
+      presentationColor: {r: 0.46, g: 0.8, b: 1, a: 1}
+      projectileColor: {r: 0.46, g: 0.8, b: 1, a: 1}
+    - tier: 2
+      price: 75
+      damageMultiplier: 1.45
+      rangeMultiplier: 1
+      attackSpeedMultiplier: 1
+      splashRadiusBonus: 0.25
+      additionalTargets: 0
+      pierceTargets: 0
+      bossDamageMultiplier: 1
+      slowPercent: 0
+      slowDuration: 0
+      burnDamagePerSecond: 0
+      burnDuration: 0
+      behavior: 7
+      behaviorOverrideId: heavyimpact
+      projectileOverrideId: heavyimpact_projectile
+      presentationOverrideId: tier_2_heavyimpact
+      activatedAbilityId: 
+      effectLocalizationKey: battleUpgrade.effect.yarn_impact_2
+      sellValueContribution: 52
+      presentationScaleMultiplier: 1.09
+      presentationColor: {r: 0.46, g: 0.8, b: 1, a: 1}
+      projectileColor: {r: 0.46, g: 0.8, b: 1, a: 1}
+    - tier: 3
+      price: 125
+      damageMultiplier: 1
+      rangeMultiplier: 1
+      attackSpeedMultiplier: 1
+      splashRadiusBonus: 0
+      additionalTargets: 2
+      pierceTargets: 0
+      bossDamageMultiplier: 1
+      slowPercent: 0
+      slowDuration: 0
+      burnDamagePerSecond: 0
+      burnDuration: 0
+      behavior: 7
+      behaviorOverrideId: heavyimpact
+      projectileOverrideId: heavyimpact_projectile
+      presentationOverrideId: tier_3_heavyimpact
+      activatedAbilityId: 
+      effectLocalizationKey: battleUpgrade.effect.yarn_impact_3
+      sellValueContribution: 88
+      presentationScaleMultiplier: 1.135
+      presentationColor: {r: 0.46, g: 0.8, b: 1, a: 1}
+      projectileColor: {r: 0.46, g: 0.8, b: 1, a: 1}
+  - branchId: yarn_snare
+    nameLocalizationKey: battleUpgrade.branch.yarn_snare
+    prerequisiteBranchIds: []
+    mutuallyExclusiveBranchIds:
+    - yarn_impact
+    markerShape: 1
+    branchColor: {r: 0.3, g: 0.9, b: 0.58, a: 1}
+    tiers:
+    - tier: 1
+      price: 35
+      damageMultiplier: 1
+      rangeMultiplier: 1
+      attackSpeedMultiplier: 1
+      splashRadiusBonus: 0
+      additionalTargets: 0
+      pierceTargets: 0
+      bossDamageMultiplier: 1
+      slowPercent: 0.2
+      slowDuration: 1.5
+      burnDamagePerSecond: 0
+      burnDuration: 0
+      behavior: 8
+      behaviorOverrideId: slowsnare
+      projectileOverrideId: slowsnare_projectile
+      presentationOverrideId: tier_1_slowsnare
+      activatedAbilityId: 
+      effectLocalizationKey: battleUpgrade.effect.yarn_snare_1
+      sellValueContribution: 24
+      presentationScaleMultiplier: 1.045
+      presentationColor: {r: 0.22, g: 0.9, b: 0.64, a: 1}
+      projectileColor: {r: 0.22, g: 0.9, b: 0.64, a: 1}
+    - tier: 2
+      price: 70
+      damageMultiplier: 1
+      rangeMultiplier: 1.15
+      attackSpeedMultiplier: 1
+      splashRadiusBonus: 0
+      additionalTargets: 0
+      pierceTargets: 0
+      bossDamageMultiplier: 1
+      slowPercent: 0.35
+      slowDuration: 1.8
+      burnDamagePerSecond: 0
+      burnDuration: 0
+      behavior: 8
+      behaviorOverrideId: slowsnare
+      projectileOverrideId: slowsnare_projectile
+      presentationOverrideId: tier_2_slowsnare
+      activatedAbilityId: 
+      effectLocalizationKey: battleUpgrade.effect.yarn_snare_2
+      sellValueContribution: 49
+      presentationScaleMultiplier: 1.09
+      presentationColor: {r: 0.22, g: 0.9, b: 0.64, a: 1}
+      projectileColor: {r: 0.22, g: 0.9, b: 0.64, a: 1}
+    - tier: 3
+      price: 115
+      damageMultiplier: 1
+      rangeMultiplier: 1
+      attackSpeedMultiplier: 1
+      splashRadiusBonus: 0
+      additionalTargets: 1
+      pierceTargets: 0
+      bossDamageMultiplier: 1
+      slowPercent: 0.5
+      slowDuration: 2.2
+      burnDamagePerSecond: 0
+      burnDuration: 0
+      behavior: 8
+      behaviorOverrideId: slowsnare
+      projectileOverrideId: slowsnare_projectile
+      presentationOverrideId: tier_3_slowsnare
+      activatedAbilityId: 
+      effectLocalizationKey: battleUpgrade.effect.yarn_snare_3
+      sellValueContribution: 80
+      presentationScaleMultiplier: 1.135
+      presentationColor: {r: 0.22, g: 0.9, b: 0.64, a: 1}
+      projectileColor: {r: 0.22, g: 0.9, b: 0.64, a: 1}

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using CatGuard.Gameplay.Levels;
 using CatGuard.Gameplay.Towers;
+using CatGuard.Gameplay.Towers.Upgrades;
 using CatGuard.Meta.DailyRewards;
 using CatGuard.Meta.Upgrades;
 
@@ -50,6 +51,23 @@ namespace CatGuard.Core.Localization
         public static string UpgradeName(UpgradeConfig upgrade)
         {
             return upgrade == null ? Text("common.none") : TextOrFallback($"upgrade.{upgrade.UpgradeId}", upgrade.DisplayName);
+        }
+
+        public static string TowerUpgradeBranchName(TowerUpgradeBranchConfig branch)
+        {
+            return branch == null
+                ? Text("common.none")
+                : TextOrFallback(branch.NameLocalizationKey, branch.BranchId);
+        }
+
+        public static string TowerUpgradeEffect(TowerUpgradeTierConfig tier)
+        {
+            return tier == null ? Text("common.none") : TextOrFallback(tier.EffectLocalizationKey, tier.EffectLocalizationKey);
+        }
+
+        public static string TowerTargetPriorityName(TowerTargetPriority priority)
+        {
+            return Text($"battleUpgrade.priority.{priority.ToString().ToLowerInvariant()}");
         }
 
         public static string MissionName(DailyMissionConfig mission)
@@ -118,6 +136,21 @@ namespace CatGuard.Core.Localization
             ["hud.goalShort"] = "GOAL",
             ["hud.cameraPan"] = "Drag the battlefield to pan",
             ["hud.waveIncoming"] = "WAVE!",
+            ["battleUpgrade.title"] = "{0} upgrades",
+            ["battleUpgrade.stats"] = "DMG {0:0.0}  RNG {1:0.0}  RATE {2:0.00}s\nDPS {3:0.0}  AREA {4:0.0}",
+            ["battleUpgrade.priority"] = "Target priority",
+            ["battleUpgrade.priority.first"] = "First",
+            ["battleUpgrade.priority.last"] = "Last",
+            ["battleUpgrade.priority.strong"] = "Strong",
+            ["battleUpgrade.branchTier"] = "{0}  {1}/{2}",
+            ["battleUpgrade.buy"] = "Upgrade • {0} Fish",
+            ["battleUpgrade.insufficient"] = "Need {0} Fish",
+            ["battleUpgrade.branchLocked"] = "Other branch selected",
+            ["battleUpgrade.prerequisite"] = "Prerequisite locked",
+            ["battleUpgrade.maximum"] = "Maximum tier",
+            ["battleUpgrade.unavailable"] = "Upgrade unavailable",
+            ["battleUpgrade.sell"] = "Sell • +{0} Fish",
+            ["battleUpgrade.sellConfirm"] = "Confirm sale • +{0} Fish",
             ["result.victory"] = "Victory",
             ["result.defeat"] = "Defeat",
             ["result.reward"] = "+{0} Fish Coins",
@@ -147,6 +180,46 @@ namespace CatGuard.Core.Localization
             ["tower.bell_sniper"] = "Bell",
             ["tower.laser_pointer"] = "Laser",
             ["tower.blanket_boom"] = "Blanket",
+            ["battleUpgrade.branch.dart_rapid"] = "Rapid Volley",
+            ["battleUpgrade.branch.dart_precision"] = "Precision Pierce",
+            ["battleUpgrade.branch.yarn_impact"] = "Heavy Impact",
+            ["battleUpgrade.branch.yarn_snare"] = "Snare Support",
+            ["battleUpgrade.branch.bell_marksman"] = "Long-range Marksman",
+            ["battleUpgrade.branch.bell_resonance"] = "Resonance Field",
+            ["battleUpgrade.branch.laser_chain"] = "Chain Beam",
+            ["battleUpgrade.branch.laser_focus"] = "Boss Focus",
+            ["battleUpgrade.branch.blanket_blast"] = "Wide Blast",
+            ["battleUpgrade.branch.blanket_burn"] = "Burn Zone",
+            ["battleUpgrade.effect.dart_rapid_1"] = "+25% attack speed",
+            ["battleUpgrade.effect.dart_rapid_2"] = "Second dart, +10% damage",
+            ["battleUpgrade.effect.dart_rapid_3"] = "Third dart, +35% attack speed",
+            ["battleUpgrade.effect.dart_precision_1"] = "+30% damage and +10% range",
+            ["battleUpgrade.effect.dart_precision_2"] = "Pierces one extra target",
+            ["battleUpgrade.effect.dart_precision_3"] = "+55% damage, pierces again",
+            ["battleUpgrade.effect.yarn_impact_1"] = "+35% damage and wider impact",
+            ["battleUpgrade.effect.yarn_impact_2"] = "+45% damage, heavier splash",
+            ["battleUpgrade.effect.yarn_impact_3"] = "Hits two nearby targets",
+            ["battleUpgrade.effect.yarn_snare_1"] = "Slows by 20% for 1.5s",
+            ["battleUpgrade.effect.yarn_snare_2"] = "Slows by 35%, +15% range",
+            ["battleUpgrade.effect.yarn_snare_3"] = "Two targets, 50% slow",
+            ["battleUpgrade.effect.bell_marksman_1"] = "+20% range and +25% damage",
+            ["battleUpgrade.effect.bell_marksman_2"] = "+25% range and +40% damage",
+            ["battleUpgrade.effect.bell_marksman_3"] = "Double damage to heavy targets",
+            ["battleUpgrade.effect.bell_resonance_1"] = "Creates a small resonance area",
+            ["battleUpgrade.effect.bell_resonance_2"] = "Resonance slows by 20%",
+            ["battleUpgrade.effect.bell_resonance_3"] = "Large area and two echoes",
+            ["battleUpgrade.effect.laser_chain_1"] = "Beam chains to one target",
+            ["battleUpgrade.effect.laser_chain_2"] = "Chains twice, +15% damage",
+            ["battleUpgrade.effect.laser_chain_3"] = "Chains three times, +30% speed",
+            ["battleUpgrade.effect.laser_focus_1"] = "+35% heavy-target damage",
+            ["battleUpgrade.effect.laser_focus_2"] = "+55% damage and +15% range",
+            ["battleUpgrade.effect.laser_focus_3"] = "2.5x heavy-target damage",
+            ["battleUpgrade.effect.blanket_blast_1"] = "+30% blast radius",
+            ["battleUpgrade.effect.blanket_blast_2"] = "+45% damage and wider blast",
+            ["battleUpgrade.effect.blanket_blast_3"] = "Massive blast, +60% damage",
+            ["battleUpgrade.effect.blanket_burn_1"] = "Burns for 1.5 damage/sec",
+            ["battleUpgrade.effect.blanket_burn_2"] = "Longer burn and +15% range",
+            ["battleUpgrade.effect.blanket_burn_3"] = "4 damage/sec control zone",
             ["tutorial.level_01"] = "Tutorial: place defenders, then start the first wave.",
             ["upgrade.claw_training"] = "Claw Training",
             ["upgrade.whisker_focus"] = "Whisker Focus",
@@ -211,6 +284,21 @@ namespace CatGuard.Core.Localization
             ["hud.goalShort"] = "ЦЕЛЬ",
             ["hud.cameraPan"] = "Тяни поле для перемещения камеры",
             ["hud.waveIncoming"] = "ВОЛНА!",
+            ["battleUpgrade.title"] = "Улучшения: {0}",
+            ["battleUpgrade.stats"] = "УРОН {0:0.0}  РАД {1:0.0}  ТЕМП {2:0.00}с\nУВС {3:0.0}  ЗОНА {4:0.0}",
+            ["battleUpgrade.priority"] = "Приоритет цели",
+            ["battleUpgrade.priority.first"] = "Первая",
+            ["battleUpgrade.priority.last"] = "Последняя",
+            ["battleUpgrade.priority.strong"] = "Сильная",
+            ["battleUpgrade.branchTier"] = "{0}  {1}/{2}",
+            ["battleUpgrade.buy"] = "Улучшить • {0} рыб.",
+            ["battleUpgrade.insufficient"] = "Нужно {0} рыб.",
+            ["battleUpgrade.branchLocked"] = "Выбрана другая ветка",
+            ["battleUpgrade.prerequisite"] = "Нужен предыдущий уровень",
+            ["battleUpgrade.maximum"] = "Максимальный уровень",
+            ["battleUpgrade.unavailable"] = "Недоступно",
+            ["battleUpgrade.sell"] = "Продать • +{0} рыб.",
+            ["battleUpgrade.sellConfirm"] = "Подтвердить • +{0} рыб.",
             ["result.victory"] = "Победа",
             ["result.defeat"] = "Поражение",
             ["result.reward"] = "+{0} рыбок",
@@ -240,6 +328,46 @@ namespace CatGuard.Core.Localization
             ["tower.bell_sniper"] = "Колокольчик",
             ["tower.laser_pointer"] = "Лазер",
             ["tower.blanket_boom"] = "Плед",
+            ["battleUpgrade.branch.dart_rapid"] = "Шквал дротиков",
+            ["battleUpgrade.branch.dart_precision"] = "Точный прокол",
+            ["battleUpgrade.branch.yarn_impact"] = "Тяжёлый удар",
+            ["battleUpgrade.branch.yarn_snare"] = "Ловчая нить",
+            ["battleUpgrade.branch.bell_marksman"] = "Дальний звон",
+            ["battleUpgrade.branch.bell_resonance"] = "Поле резонанса",
+            ["battleUpgrade.branch.laser_chain"] = "Цепной луч",
+            ["battleUpgrade.branch.laser_focus"] = "Фокус по боссу",
+            ["battleUpgrade.branch.blanket_blast"] = "Широкий взрыв",
+            ["battleUpgrade.branch.blanket_burn"] = "Горящая зона",
+            ["battleUpgrade.effect.dart_rapid_1"] = "+25% к скорости атаки",
+            ["battleUpgrade.effect.dart_rapid_2"] = "Второй дротик, +10% урона",
+            ["battleUpgrade.effect.dart_rapid_3"] = "Третий дротик, +35% к темпу",
+            ["battleUpgrade.effect.dart_precision_1"] = "+30% урона и +10% радиуса",
+            ["battleUpgrade.effect.dart_precision_2"] = "Пробивает ещё одну цель",
+            ["battleUpgrade.effect.dart_precision_3"] = "+55% урона и ещё один пробой",
+            ["battleUpgrade.effect.yarn_impact_1"] = "+35% урона и шире удар",
+            ["battleUpgrade.effect.yarn_impact_2"] = "+45% урона и больше зона",
+            ["battleUpgrade.effect.yarn_impact_3"] = "Задевает две соседние цели",
+            ["battleUpgrade.effect.yarn_snare_1"] = "Замедляет на 20% на 1,5 с",
+            ["battleUpgrade.effect.yarn_snare_2"] = "Замедляет на 35%, +15% радиуса",
+            ["battleUpgrade.effect.yarn_snare_3"] = "Две цели, замедление 50%",
+            ["battleUpgrade.effect.bell_marksman_1"] = "+20% радиуса и +25% урона",
+            ["battleUpgrade.effect.bell_marksman_2"] = "+25% радиуса и +40% урона",
+            ["battleUpgrade.effect.bell_marksman_3"] = "Двойной урон тяжёлым целям",
+            ["battleUpgrade.effect.bell_resonance_1"] = "Создаёт малую зону резонанса",
+            ["battleUpgrade.effect.bell_resonance_2"] = "Резонанс замедляет на 20%",
+            ["battleUpgrade.effect.bell_resonance_3"] = "Большая зона и два эха",
+            ["battleUpgrade.effect.laser_chain_1"] = "Луч переходит на одну цель",
+            ["battleUpgrade.effect.laser_chain_2"] = "Две цепи, +15% урона",
+            ["battleUpgrade.effect.laser_chain_3"] = "Три цепи, +30% к темпу",
+            ["battleUpgrade.effect.laser_focus_1"] = "+35% по тяжёлым целям",
+            ["battleUpgrade.effect.laser_focus_2"] = "+55% урона и +15% радиуса",
+            ["battleUpgrade.effect.laser_focus_3"] = "Урон по тяжёлым целям x2,5",
+            ["battleUpgrade.effect.blanket_blast_1"] = "+30% к радиусу взрыва",
+            ["battleUpgrade.effect.blanket_blast_2"] = "+45% урона и шире взрыв",
+            ["battleUpgrade.effect.blanket_blast_3"] = "Огромный взрыв, +60% урона",
+            ["battleUpgrade.effect.blanket_burn_1"] = "Горение: 1,5 урона/с",
+            ["battleUpgrade.effect.blanket_burn_2"] = "Дольше горит и +15% радиуса",
+            ["battleUpgrade.effect.blanket_burn_3"] = "Зона контроля: 4 урона/с",
             ["tutorial.level_01"] = "Обучение: расставь защитников и начни первую волну.",
             ["upgrade.claw_training"] = "Тренировка когтей",
             ["upgrade.whisker_focus"] = "Фокус усов",

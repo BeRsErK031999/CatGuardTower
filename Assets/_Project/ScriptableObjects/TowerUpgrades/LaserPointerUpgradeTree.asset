@@ -1,0 +1,176 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbe642f414d751c4a816c11679244118, type: 3}
+  m_Name: LaserPointerUpgradeTree
+  m_EditorClassIdentifier: Assembly-CSharp::CatGuard.Gameplay.Towers.Upgrades.TowerUpgradeTreeConfig
+  towerFamilyId: laser_pointer
+  baseSellRate: 0.7
+  temporaryPresentation: 1
+  presentationSourceNote: Code-authored Unity primitive markers and tier pips; temporary
+    E6 presentation pending ART-TOWER-UPGRADES-001.
+  presentationLicenseStatus: Original code-authored Unity primitives; no external
+    asset license.
+  branches:
+  - branchId: laser_chain
+    nameLocalizationKey: battleUpgrade.branch.laser_chain
+    prerequisiteBranchIds: []
+    mutuallyExclusiveBranchIds:
+    - laser_focus
+    markerShape: 1
+    branchColor: {r: 0.18, g: 1, b: 0.68, a: 1}
+    tiers:
+    - tier: 1
+      price: 45
+      damageMultiplier: 1
+      rangeMultiplier: 1
+      attackSpeedMultiplier: 1
+      splashRadiusBonus: 0
+      additionalTargets: 1
+      pierceTargets: 0
+      bossDamageMultiplier: 1
+      slowPercent: 0
+      slowDuration: 0
+      burnDamagePerSecond: 0
+      burnDuration: 0
+      behavior: 5
+      behaviorOverrideId: chainbeam
+      projectileOverrideId: chainbeam_projectile
+      presentationOverrideId: tier_1_chainbeam
+      activatedAbilityId: 
+      effectLocalizationKey: battleUpgrade.effect.laser_chain_1
+      sellValueContribution: 32
+      presentationScaleMultiplier: 1.045
+      presentationColor: {r: 0.2, g: 1, b: 0.7, a: 1}
+      projectileColor: {r: 0.2, g: 1, b: 0.7, a: 1}
+    - tier: 2
+      price: 85
+      damageMultiplier: 1.15
+      rangeMultiplier: 1
+      attackSpeedMultiplier: 1
+      splashRadiusBonus: 0
+      additionalTargets: 1
+      pierceTargets: 0
+      bossDamageMultiplier: 1
+      slowPercent: 0
+      slowDuration: 0
+      burnDamagePerSecond: 0
+      burnDuration: 0
+      behavior: 5
+      behaviorOverrideId: chainbeam
+      projectileOverrideId: chainbeam_projectile
+      presentationOverrideId: tier_2_chainbeam
+      activatedAbilityId: 
+      effectLocalizationKey: battleUpgrade.effect.laser_chain_2
+      sellValueContribution: 60
+      presentationScaleMultiplier: 1.09
+      presentationColor: {r: 0.2, g: 1, b: 0.7, a: 1}
+      projectileColor: {r: 0.2, g: 1, b: 0.7, a: 1}
+    - tier: 3
+      price: 140
+      damageMultiplier: 1
+      rangeMultiplier: 1
+      attackSpeedMultiplier: 1.3
+      splashRadiusBonus: 0
+      additionalTargets: 1
+      pierceTargets: 0
+      bossDamageMultiplier: 1
+      slowPercent: 0
+      slowDuration: 0
+      burnDamagePerSecond: 0
+      burnDuration: 0
+      behavior: 5
+      behaviorOverrideId: chainbeam
+      projectileOverrideId: chainbeam_projectile
+      presentationOverrideId: tier_3_chainbeam
+      activatedAbilityId: 
+      effectLocalizationKey: battleUpgrade.effect.laser_chain_3
+      sellValueContribution: 98
+      presentationScaleMultiplier: 1.135
+      presentationColor: {r: 0.2, g: 1, b: 0.7, a: 1}
+      projectileColor: {r: 0.2, g: 1, b: 0.7, a: 1}
+  - branchId: laser_focus
+    nameLocalizationKey: battleUpgrade.branch.laser_focus
+    prerequisiteBranchIds: []
+    mutuallyExclusiveBranchIds:
+    - laser_chain
+    markerShape: 0
+    branchColor: {r: 1, g: 0.28, b: 0.36, a: 1}
+    tiers:
+    - tier: 1
+      price: 40
+      damageMultiplier: 1
+      rangeMultiplier: 1
+      attackSpeedMultiplier: 1
+      splashRadiusBonus: 0
+      additionalTargets: 0
+      pierceTargets: 0
+      bossDamageMultiplier: 1.35
+      slowPercent: 0
+      slowDuration: 0
+      burnDamagePerSecond: 0
+      burnDuration: 0
+      behavior: 6
+      behaviorOverrideId: bossfocus
+      projectileOverrideId: bossfocus_projectile
+      presentationOverrideId: tier_1_bossfocus
+      activatedAbilityId: 
+      effectLocalizationKey: battleUpgrade.effect.laser_focus_1
+      sellValueContribution: 28
+      presentationScaleMultiplier: 1.045
+      presentationColor: {r: 1, g: 0.72, b: 0.22, a: 1}
+      projectileColor: {r: 1, g: 0.72, b: 0.22, a: 1}
+    - tier: 2
+      price: 80
+      damageMultiplier: 1.55
+      rangeMultiplier: 1.15
+      attackSpeedMultiplier: 1
+      splashRadiusBonus: 0
+      additionalTargets: 0
+      pierceTargets: 0
+      bossDamageMultiplier: 1
+      slowPercent: 0
+      slowDuration: 0
+      burnDamagePerSecond: 0
+      burnDuration: 0
+      behavior: 6
+      behaviorOverrideId: bossfocus
+      projectileOverrideId: bossfocus_projectile
+      presentationOverrideId: tier_2_bossfocus
+      activatedAbilityId: 
+      effectLocalizationKey: battleUpgrade.effect.laser_focus_2
+      sellValueContribution: 56
+      presentationScaleMultiplier: 1.09
+      presentationColor: {r: 1, g: 0.72, b: 0.22, a: 1}
+      projectileColor: {r: 1, g: 0.72, b: 0.22, a: 1}
+    - tier: 3
+      price: 135
+      damageMultiplier: 1
+      rangeMultiplier: 1
+      attackSpeedMultiplier: 1
+      splashRadiusBonus: 0
+      additionalTargets: 0
+      pierceTargets: 0
+      bossDamageMultiplier: 1.85
+      slowPercent: 0
+      slowDuration: 0
+      burnDamagePerSecond: 0
+      burnDuration: 0
+      behavior: 6
+      behaviorOverrideId: bossfocus
+      projectileOverrideId: bossfocus_projectile
+      presentationOverrideId: tier_3_bossfocus
+      activatedAbilityId: 
+      effectLocalizationKey: battleUpgrade.effect.laser_focus_3
+      sellValueContribution: 94
+      presentationScaleMultiplier: 1.135
+      presentationColor: {r: 1, g: 0.72, b: 0.22, a: 1}
+      projectileColor: {r: 1, g: 0.72, b: 0.22, a: 1}

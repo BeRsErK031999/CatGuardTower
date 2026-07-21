@@ -16,6 +16,12 @@ namespace CatGuard.Gameplay.Enemies
         private float currentHealth;
         private float baseSpeed;
         private float speed;
+        private float waveSpeedMultiplier = 1f;
+        private float combatSlowMultiplier = 1f;
+        private float combatSlowUntil;
+        private float burnDamagePerSecond;
+        private float burnUntil;
+        private UnitStatusModifier controlStatus;
         private int baseDamage;
         private int nextPathIndex;
         private bool completed;
@@ -35,6 +41,7 @@ namespace CatGuard.Gameplay.Enemies
         public UnitAnimationState PresentationState => animationPresenter == null ? UnitAnimationState.Idle : animationPresenter.CurrentState;
         public UnitStatusModifier PresentationStatus => statusModifier;
         public float ActualMoveSpeed => speed;
+        public bool IsHeavyTarget => maxHealth >= 8f || baseDamage >= 3;
 
         public void Initialize(
             PrototypeLevelController owner,
@@ -84,25 +91,37 @@ namespace CatGuard.Gameplay.Enemies
 
         public void ConfigureSpeedMultiplier(float speedMultiplier)
         {
-            var multiplier = Mathf.Max(0.1f, speedMultiplier);
-            speed = Mathf.Max(0.1f, baseSpeed) * multiplier;
-            statusModifier &= ~(UnitStatusModifier.Slowed | UnitStatusModifier.Hastened);
-            if (multiplier < 0.95f)
-            {
-                statusModifier |= UnitStatusModifier.Slowed;
-            }
-            else if (multiplier > 1.05f)
-            {
-                statusModifier |= UnitStatusModifier.Hastened;
-            }
-
-            animationPresenter?.SetStatusModifier(statusModifier);
+            waveSpeedMultiplier = Mathf.Max(0.1f, speedMultiplier);
+            RefreshMovementStatus();
         }
 
         public void SetControlStatus(UnitStatusModifier modifier)
         {
-            statusModifier = modifier;
-            animationPresenter?.SetStatusModifier(statusModifier);
+            controlStatus = modifier & ~(UnitStatusModifier.Slowed | UnitStatusModifier.Hastened);
+            RefreshMovementStatus();
+        }
+
+        public void ApplyTemporarySlow(float slowPercent, float durationSeconds)
+        {
+            if (!IsAlive || slowPercent <= 0f || durationSeconds <= 0f)
+            {
+                return;
+            }
+
+            combatSlowMultiplier = Mathf.Min(combatSlowMultiplier, 1f - Mathf.Clamp(slowPercent, 0f, 0.85f));
+            combatSlowUntil = Mathf.Max(combatSlowUntil, Time.time + durationSeconds);
+            RefreshMovementStatus();
+        }
+
+        public void ApplyBurn(float damagePerSecond, float durationSeconds)
+        {
+            if (!IsAlive || damagePerSecond <= 0f || durationSeconds <= 0f)
+            {
+                return;
+            }
+
+            burnDamagePerSecond = Mathf.Max(burnDamagePerSecond, damagePerSecond);
+            burnUntil = Mathf.Max(burnUntil, Time.time + durationSeconds);
         }
 
         public float BeginDeathPresentation()
@@ -117,6 +136,12 @@ namespace CatGuard.Gameplay.Enemies
 
         private void Update()
         {
+            if (!IsAlive)
+            {
+                return;
+            }
+
+            UpdateCombatEffects();
             if (!IsAlive)
             {
                 return;
@@ -151,6 +176,48 @@ namespace CatGuard.Gameplay.Enemies
                     ReachBase();
                 }
             }
+        }
+
+        private void UpdateCombatEffects()
+        {
+            if (combatSlowUntil > 0f && Time.time >= combatSlowUntil)
+            {
+                combatSlowUntil = 0f;
+                combatSlowMultiplier = 1f;
+                RefreshMovementStatus();
+            }
+
+            if (burnUntil <= 0f)
+            {
+                return;
+            }
+
+            if (Time.time >= burnUntil)
+            {
+                burnUntil = 0f;
+                burnDamagePerSecond = 0f;
+                return;
+            }
+
+            ApplyDamage(burnDamagePerSecond * Time.deltaTime);
+        }
+
+        private void RefreshMovementStatus()
+        {
+            var effectiveSlow = combatSlowUntil > Time.time ? combatSlowMultiplier : 1f;
+            speed = Mathf.Max(0.1f, baseSpeed) * waveSpeedMultiplier * effectiveSlow;
+            statusModifier = controlStatus;
+            var effectiveMultiplier = waveSpeedMultiplier * effectiveSlow;
+            if (effectiveMultiplier < 0.95f)
+            {
+                statusModifier |= UnitStatusModifier.Slowed;
+            }
+            else if (effectiveMultiplier > 1.05f)
+            {
+                statusModifier |= UnitStatusModifier.Hastened;
+            }
+
+            animationPresenter?.SetStatusModifier(statusModifier);
         }
 
         private void EnsureVisual()

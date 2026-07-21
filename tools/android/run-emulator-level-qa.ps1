@@ -17,6 +17,11 @@
     [string]$ScenarioId = "",
     [string]$RouteIdFilter = "",
     [int]$StartingLives = 0,
+    [int]$StartingBattleFish = 0,
+    [string[]]$UpgradeBranchIds = @(),
+    [int]$UpgradeTargetTier = 0,
+    [string]$TargetPriority = "",
+    [switch]$SellAfterUpgrade,
     [string]$ApkPath = "Builds\Android\CatGuardTowerDefense-emulator.apk",
     [string]$PackageName = "com.catguard.towerdefense.qa",
     [string]$DeviceSerial = "",
@@ -27,7 +32,8 @@
     [double]$MaximumP95FrameTimeMs = 50,
     [switch]$SkipInstall,
     [switch]$RequireVictory,
-    [switch]$RequirePerformance
+    [switch]$RequirePerformance,
+    [switch]$RequireBattleUpgrades
 )
 
 Set-StrictMode -Version Latest
@@ -247,6 +253,11 @@ $externalFilesPath = "/sdcard/Android/data/$PackageName/files"
     towerIds = $TowerIds
     routeIdFilter = $RouteIdFilter
     startingLives = $StartingLives
+    startingBattleFish = $StartingBattleFish
+    upgradeBranchIds = $UpgradeBranchIds
+    upgradeTargetTier = $UpgradeTargetTier
+    targetPriority = $TargetPriority
+    sellAfterUpgrade = [bool]$SellAfterUpgrade
 } | ConvertTo-Json -Depth 3 | Set-Content -LiteralPath $commandPath -Encoding UTF8
 
 Invoke-TargetAdb -Arguments @("shell", "am", "force-stop", $PackageName) -AllowFailure | Out-Null
@@ -352,7 +363,11 @@ $failed = $scenarioResult.state -eq "error" `
     -or $fatalLines.Count -gt 0 `
     -or -not $landscapeConfirmed `
     -or ($RequireVictory -and $scenarioResult.state -ne "won") `
-    -or ($RequirePerformance -and -not $performancePassed)
+    -or ($RequirePerformance -and -not $performancePassed) `
+    -or ($RequireBattleUpgrades -and (
+        $scenarioResult.purchasedBattleUpgrades -lt [Math]::Max(1, $UpgradeTargetTier) `
+        -or -not $scenarioResult.battleUpgradesExcludedFromSave `
+        -or -not $scenarioResult.analyticsPayloadValid))
 if ($failed) {
     exit 1
 }

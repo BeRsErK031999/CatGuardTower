@@ -5,6 +5,7 @@ using CatGuard.Gameplay.CameraControl;
 using CatGuard.Gameplay.Enemies;
 using CatGuard.Gameplay.Grid;
 using CatGuard.Gameplay.Towers;
+using CatGuard.Gameplay.Towers.Upgrades;
 using CatGuard.Gameplay.Waves;
 using CatGuard.Meta.Progression;
 using CatGuard.QA;
@@ -27,6 +28,7 @@ namespace CatGuard.Gameplay.Levels
 
         private readonly List<BasicEnemy> activeEnemies = new();
         private readonly List<BasicEnemy> attackTargets = new();
+        private readonly List<BasicEnemy> attackCandidates = new();
         private readonly List<BasicTower> towers = new();
         private readonly Dictionary<string, RouteBattleStats> routeStats = new(System.StringComparer.Ordinal);
         private readonly Dictionary<string, float> incomingRouteWarnings = new(System.StringComparer.Ordinal);
@@ -59,6 +61,8 @@ namespace CatGuard.Gameplay.Levels
         public int ActiveEnemyCount => activeEnemies.Count;
         public IReadOnlyList<BasicEnemy> ActiveEnemies => activeEnemies;
         public int TowerCount => towers.Count;
+        public IReadOnlyList<BasicTower> Towers => towers;
+        public BasicTower SelectedPlacedTower { get; private set; }
         public IReadOnlyDictionary<string, RouteBattleStats> RouteStats => routeStats;
         public string DevelopmentRouteFilter { get; private set; } = string.Empty;
         public TowerConfig SelectedTowerConfig => GetTowerConfig(selectedTowerIndex);
@@ -130,6 +134,7 @@ namespace CatGuard.Gameplay.Levels
             }
 
             State = PrototypeLevelState.Running;
+            ClearPlacedTowerSelection();
             waveSpawner.Begin();
             return true;
         }
@@ -169,39 +174,227 @@ namespace CatGuard.Gameplay.Levels
             return selected;
         }
 
-        public void ApplyTowerAttack(BasicEnemy primaryTarget, float damage, float splashRadius)
+        public void ApplyTowerAttack(BasicTower source, BasicEnemy primaryTarget, TowerRuntimeStats stats)
         {
-            if (primaryTarget == null || !primaryTarget.IsAlive)
+            if (source == null || primaryTarget == null || !primaryTarget.IsAlive)
             {
                 return;
             }
 
-            if (splashRadius <= 0f)
-            {
-                primaryTarget.ApplyDamage(damage);
-                return;
-            }
-
-            var center = primaryTarget.transform.position;
-            var splashRadiusSquared = splashRadius * splashRadius;
             attackTargets.Clear();
-
-            foreach (var enemy in activeEnemies)
+            attackTargets.Add(primaryTarget);
+            if (stats.SplashRadius > 0f)
             {
-                if (enemy != null
-                    && enemy.IsAlive
-                    && (enemy.transform.position - center).sqrMagnitude <= splashRadiusSquared)
+                var center = primaryTarget.transform.position;
+                var splashRadiusSquared = stats.SplashRadius * stats.SplashRadius;
+                foreach (var enemy in activeEnemies)
                 {
-                    attackTargets.Add(enemy);
+                    if (enemy != null
+                        && enemy.IsAlive
+                        && (enemy.transform.position - center).sqrMagnitude <= splashRadiusSquared
+                        && !attackTargets.Contains(enemy))
+                    {
+                        attackTargets.Add(enemy);
+                    }
                 }
             }
 
-            foreach (var enemy in attackTargets)
+            if (stats.PierceTargets > 0)
             {
+                var origin = (Vector2)source.transform.position;
+                var targetPosition = (Vector2)primaryTarget.transform.position;
+                foreach (var enemy in activeEnemies)
+                {
+                    if (enemy == null || !enemy.IsAlive || attackTargets.Contains(enemy))
+                    {
+                        continue;
+                    }
+
+                    var distanceToLine = DistanceToSegment(enemy.transform.position, origin, targetPosition);
+                    var distanceFromTower = ((Vector2)enemy.transform.position - origin).sqrMagnitude;
+                    if (distanceToLine <= 0.3f && distanceFromTower <= stats.Range * stats.Range)
+                    {
+                        attackTargets.Add(enemy);
+                        if (attackTargets.Count >= stats.PierceTargets + 1)
+                        {
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (stats.AdditionalTargets > 0)
+            {
+                attackCandidates.Clear();
+                foreach (var enemy in activeEnemies)
+                {
+                    if (enemy != null
+                        && enemy.IsAlive
+                        && !attackTargets.Contains(enemy)
+                        && (enemy.transform.position - source.transform.position).sqrMagnitude <= stats.Range * stats.Range)
+                    {
+                        attackCandidates.Add(enemy);
+                    }
+                }
+
+                attackSortOrigin = primaryTarget.transform.position;
+                attackCandidates.Sort(CompareAttackCandidates);
+                for (var index = 0; index < attackCandidates.Count && index < stats.AdditionalTargets; index++)
+                {
+                    attackTargets.Add(attackCandidates[index]);
+                }
+
+                attackCandidates.Clear();
+            }
+
+            for (var index = 0; index < attackTargets.Count; index++)
+            {
+                var enemy = attackTargets[index];
+                if (enemy == null || !enemy.IsAlive)
+                {
+                    continue;
+                }
+
+                var damage = stats.Damage;
+                if (enemy.IsHeavyTarget)
+                {
+                    damage *= stats.BossDamageMultiplier;
+                }
+
+                if (stats.Behavior == TowerUpgradeBehavior.ChainBeam && index > 0)
+                {
+                    damage *= Mathf.Pow(0.82f, index);
+                }
+
                 enemy.ApplyDamage(damage);
+                if (enemy.IsAlive && stats.SlowPercent > 0f)
+                {
+                    enemy.ApplyTemporarySlow(stats.SlowPercent, stats.SlowDuration);
+                }
+
+                if (enemy.IsAlive && stats.BurnDamagePerSecond > 0f)
+                {
+                    enemy.ApplyBurn(stats.BurnDamagePerSecond, stats.BurnDuration);
+                }
             }
 
             attackTargets.Clear();
+        }
+
+        public bool TrySelectTowerFromScreen(Vector2 screenPosition)
+        {
+            var camera = Camera.main;
+            if (camera == null)
+            {
+                return false;
+            }
+
+            var world = camera.ScreenToWorldPoint(new Vector3(screenPosition.x, screenPosition.y, 0f));
+            BasicTower nearest = null;
+            var nearestDistance = float.MaxValue;
+            foreach (var tower in towers)
+            {
+                if (tower == null)
+                {
+                    continue;
+                }
+
+                var distance = (tower.transform.position - world).sqrMagnitude;
+                if (distance <= tower.SelectionRadius * tower.SelectionRadius && distance < nearestDistance)
+                {
+                    nearest = tower;
+                    nearestDistance = distance;
+                }
+            }
+
+            if (nearest == null)
+            {
+                return false;
+            }
+
+            SelectPlacedTower(nearest);
+            return true;
+        }
+
+        public void SelectPlacedTower(BasicTower tower)
+        {
+            if (SelectedPlacedTower == tower)
+            {
+                return;
+            }
+
+            SelectedPlacedTower?.SetSelected(false);
+            SelectedPlacedTower = tower;
+            SelectedPlacedTower?.SetSelected(true);
+        }
+
+        public void ClearPlacedTowerSelection()
+        {
+            SelectedPlacedTower?.SetSelected(false);
+            SelectedPlacedTower = null;
+        }
+
+        public TowerUpgradeAvailability TryPurchaseSelectedTowerUpgrade(string branchId)
+        {
+            var tower = SelectedPlacedTower;
+            if (tower == null)
+            {
+                return TowerUpgradeAvailability.MissingTree;
+            }
+
+            var quote = tower.GetUpgradeQuote(branchId, BattleFish);
+            if (!quote.CanPurchase)
+            {
+                return quote.Availability;
+            }
+
+            BattleFish -= quote.Price;
+            if (!tower.CommitUpgrade(quote))
+            {
+                BattleFish += quote.Price;
+                return TowerUpgradeAvailability.PrerequisiteMissing;
+            }
+
+            AnalyticsService.TrackBattleTowerUpgrade(config, tower, quote.Branch, quote.NextTier, BattleFish);
+            ProceduralAudioService.Play(ProceduralSoundId.MenuClick);
+            SimpleVfxFactory.Spawn(tower.transform.position, SimpleVfxStyle.TowerPlaced, vfxLayer != null ? vfxLayer : runtimeRoot);
+            return TowerUpgradeAvailability.Available;
+        }
+
+        public bool TrySetSelectedTowerPriority(TowerTargetPriority priority)
+        {
+            var tower = SelectedPlacedTower;
+            if (tower == null || tower.TargetPriority == priority)
+            {
+                return false;
+            }
+
+            tower.SetTargetPriority(priority);
+            AnalyticsService.TrackTowerTargetPriority(config, tower, priority);
+            return true;
+        }
+
+        public bool TrySellSelectedTower()
+        {
+            var tower = SelectedPlacedTower;
+            if (tower == null || !towers.Contains(tower))
+            {
+                return false;
+            }
+
+            var sellValue = tower.SellValue;
+            if (towerGrid == null || !towerGrid.TryReleaseAtWorld(tower.transform.position))
+            {
+                return false;
+            }
+
+            BattleFish += sellValue;
+            towers.Remove(tower);
+            AnalyticsService.TrackBattleTowerSell(config, tower, sellValue, BattleFish);
+            ClearPlacedTowerSelection();
+            SimpleVfxFactory.Spawn(tower.transform.position, SimpleVfxStyle.TowerPlaced, vfxLayer != null ? vfxLayer : runtimeRoot);
+            Destroy(tower.gameObject);
+            return true;
         }
 
         public bool TryCreateTower(Vector2 worldPosition)
@@ -339,7 +532,7 @@ namespace CatGuard.Gameplay.Levels
                 && expiresAt >= Time.unscaledTime;
         }
 
-        public bool ConfigureDevelopmentScenario(string routeFilter, int startingLives)
+        public bool ConfigureDevelopmentScenario(string routeFilter, int startingLives, int startingBattleFish = 0)
         {
             if (State != PrototypeLevelState.Preparing)
             {
@@ -362,6 +555,11 @@ namespace CatGuard.Gameplay.Levels
             if (startingLives > 0)
             {
                 Lives = startingLives;
+            }
+
+            if (startingBattleFish > 0)
+            {
+                BattleFish = startingBattleFish;
             }
 
             return true;
@@ -458,6 +656,7 @@ namespace CatGuard.Gameplay.Levels
             expectedEnemyCount = config.WaveConfig.TotalEnemyCount;
             BattleFish = config.StartingBattleFish;
             selectedTowerIndex = 0;
+            SelectedPlacedTower = null;
             waveCompleted = false;
             resultApplied = false;
             victoryRewardDoubled = false;
@@ -483,6 +682,28 @@ namespace CatGuard.Gameplay.Levels
             AnalyticsService.TrackLevelStart(config, Lives);
 
             DevelopmentQaService.TryAttach(this, towerGrid);
+        }
+
+        private static float DistanceToSegment(Vector2 point, Vector2 start, Vector2 end)
+        {
+            var segment = end - start;
+            if (segment.sqrMagnitude <= 0.0001f)
+            {
+                return Vector2.Distance(point, start);
+            }
+
+            var amount = Mathf.Clamp01(Vector2.Dot(point - start, segment) / segment.sqrMagnitude);
+            return Vector2.Distance(point, start + segment * amount);
+        }
+
+        private Vector3 attackSortOrigin;
+
+        private int CompareAttackCandidates(BasicEnemy left, BasicEnemy right)
+        {
+            var leftDistance = (left.transform.position - attackSortOrigin).sqrMagnitude;
+            var rightDistance = (right.transform.position - attackSortOrigin).sqrMagnitude;
+            var distanceComparison = leftDistance.CompareTo(rightDistance);
+            return distanceComparison != 0 ? distanceComparison : left.SpawnOrder.CompareTo(right.SpawnOrder);
         }
 
         private void EvaluateResult()

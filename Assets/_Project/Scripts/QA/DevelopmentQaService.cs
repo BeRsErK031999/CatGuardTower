@@ -5,7 +5,9 @@ using CatGuard.Gameplay.Battlefield;
 using CatGuard.Core.SceneLoading;
 using CatGuard.Gameplay.Grid;
 using CatGuard.Gameplay.Levels;
+using CatGuard.Gameplay.Towers;
 using CatGuard.Meta.Progression;
+using CatGuard.SDK.Analytics;
 using UnityEngine;
 
 namespace CatGuard.QA
@@ -186,6 +188,11 @@ namespace CatGuard.QA
         public bool manualInput;
         public string routeIdFilter;
         public int startingLives;
+        public int startingBattleFish;
+        public string[] upgradeBranchIds = Array.Empty<string>();
+        public int upgradeTargetTier;
+        public string targetPriority;
+        public bool sellAfterUpgrade;
     }
 
     [Serializable]
@@ -253,6 +260,12 @@ namespace CatGuard.QA
         public string[] configuredRouteIds = Array.Empty<string>();
         public DevelopmentQaRouteResult[] routes = Array.Empty<DevelopmentQaRouteResult>();
         public string error;
+        public int purchasedBattleUpgrades;
+        public int soldTowers;
+        public string[] selectedUpgradeBranches = Array.Empty<string>();
+        public string[] selectedTargetPriorities = Array.Empty<string>();
+        public bool battleUpgradesExcludedFromSave;
+        public bool analyticsPayloadValid;
     }
 
     public sealed class DevelopmentQaScenarioRunner : MonoBehaviour
@@ -282,6 +295,11 @@ namespace CatGuard.QA
         private float startedAt;
         private float nextSnapshotAt;
         private bool completed;
+        private int purchasedBattleUpgrades;
+        private int soldTowers;
+        private bool sellCompleted;
+        private string permanentUpgradeFingerprint;
+        private int analyticsEventStartIndex;
 
         public void Initialize(
             PrototypeLevelController levelController,
@@ -292,8 +310,13 @@ namespace CatGuard.QA
             towerGrid = grid;
             command = qaCommand;
             startedAt = Time.unscaledTime;
+            permanentUpgradeFingerprint = GetPermanentUpgradeFingerprint();
+            analyticsEventStartIndex = (AnalyticsService.Current as FakeAnalyticsService)?.Events.Count ?? 0;
 
-            if (!controller.ConfigureDevelopmentScenario(command.routeIdFilter, command.startingLives))
+            if (!controller.ConfigureDevelopmentScenario(
+                    command.routeIdFilter,
+                    command.startingLives,
+                    command.startingBattleFish))
             {
                 completed = true;
                 DevelopmentQaService.Complete(new DevelopmentQaResult
@@ -315,6 +338,7 @@ namespace CatGuard.QA
             }
 
             PlaceAffordableTowers();
+            TrySellRequestedTower();
             controller.TryStartWave();
         }
 
@@ -338,6 +362,7 @@ namespace CatGuard.QA
             if (controller.State == PrototypeLevelState.Running)
             {
                 PlaceAffordableTowers();
+                TrySellRequestedTower();
             }
 
             if (controller.State is PrototypeLevelState.Won or PrototypeLevelState.Lost)
@@ -361,6 +386,12 @@ namespace CatGuard.QA
                     routeIdFilter = command.routeIdFilter ?? string.Empty,
                     configuredRouteIds = GetConfiguredRouteIds(),
                     routes = GetRouteResults(),
+                    purchasedBattleUpgrades = purchasedBattleUpgrades,
+                    soldTowers = soldTowers,
+                    selectedUpgradeBranches = GetSelectedUpgradeBranches(),
+                    selectedTargetPriorities = GetSelectedTargetPriorities(),
+                    battleUpgradesExcludedFromSave = permanentUpgradeFingerprint == GetPermanentUpgradeFingerprint(),
+                    analyticsPayloadValid = HasValidBattleUpgradeAnalytics(),
                     error = string.Empty
                 });
             }
@@ -391,8 +422,155 @@ namespace CatGuard.QA
                     continue;
                 }
 
+                ConfigurePlacedTower(nextTowerIndex);
                 nextTowerIndex++;
             }
+        }
+
+        private void ConfigurePlacedTower(int requestIndex)
+        {
+            if (controller.Towers.Count == 0)
+            {
+                return;
+            }
+
+            var tower = controller.Towers[controller.Towers.Count - 1];
+            var branches = command.upgradeBranchIds ?? Array.Empty<string>();
+            var hasRequestedBranch = requestIndex >= 0
+                && requestIndex < branches.Length
+                && !string.IsNullOrWhiteSpace(branches[requestIndex]);
+            var hasRequestedPriority = Enum.TryParse(command.targetPriority, true, out TowerTargetPriority priority);
+            if (hasRequestedBranch || hasRequestedPriority)
+            {
+                controller.SelectPlacedTower(tower);
+            }
+
+            if (hasRequestedPriority)
+            {
+                controller.TrySetSelectedTowerPriority(priority);
+            }
+
+            if (!hasRequestedBranch)
+            {
+                return;
+            }
+
+            var targetTier = Mathf.Max(0, command.upgradeTargetTier);
+            while (tower.CurrentTier < targetTier)
+            {
+                var beforeTier = tower.CurrentTier;
+                var result = controller.TryPurchaseSelectedTowerUpgrade(branches[requestIndex]);
+                if (result != CatGuard.Gameplay.Towers.Upgrades.TowerUpgradeAvailability.Available
+                    || tower.CurrentTier <= beforeTier)
+                {
+                    break;
+                }
+
+                purchasedBattleUpgrades++;
+            }
+        }
+
+        private void TrySellRequestedTower()
+        {
+            if (!command.sellAfterUpgrade || sellCompleted || controller.Towers.Count < 2)
+            {
+                return;
+            }
+
+            var tower = controller.Towers[0];
+            if (tower == null || tower.CurrentTier < Mathf.Max(1, command.upgradeTargetTier))
+            {
+                return;
+            }
+
+            controller.SelectPlacedTower(tower);
+            if (controller.TrySellSelectedTower())
+            {
+                soldTowers++;
+                sellCompleted = true;
+            }
+        }
+
+        private string[] GetSelectedUpgradeBranches()
+        {
+            var result = new List<string>();
+            foreach (var tower in controller.Towers)
+            {
+                if (tower != null && !string.IsNullOrWhiteSpace(tower.SelectedBranchId))
+                {
+                    result.Add(tower.SelectedBranchId);
+                }
+            }
+
+            return result.ToArray();
+        }
+
+        private string[] GetSelectedTargetPriorities()
+        {
+            var result = new List<string>();
+            foreach (var tower in controller.Towers)
+            {
+                if (tower != null)
+                {
+                    result.Add(tower.TargetPriority.ToString().ToLowerInvariant());
+                }
+            }
+
+            return result.ToArray();
+        }
+
+        private bool HasValidBattleUpgradeAnalytics()
+        {
+            if (purchasedBattleUpgrades <= 0)
+            {
+                return command.upgradeTargetTier <= 0;
+            }
+
+            if (AnalyticsService.Current is not FakeAnalyticsService fake)
+            {
+                return true;
+            }
+
+            var validUpgrades = 0;
+            for (var index = analyticsEventStartIndex; index < fake.Events.Count; index++)
+            {
+                var eventRecord = fake.Events[index];
+                if (eventRecord.Name != AnalyticsEventNames.BattleTowerUpgrade)
+                {
+                    continue;
+                }
+
+                if (eventRecord.Parameters.ContainsKey(AnalyticsParameterNames.TowerId)
+                    && eventRecord.Parameters.ContainsKey(AnalyticsParameterNames.BranchId)
+                    && eventRecord.Parameters.ContainsKey(AnalyticsParameterNames.Tier)
+                    && eventRecord.Parameters.ContainsKey(AnalyticsParameterNames.CostFishCoins))
+                {
+                    validUpgrades++;
+                }
+            }
+
+            return validUpgrades == purchasedBattleUpgrades;
+        }
+
+        private static string GetPermanentUpgradeFingerprint()
+        {
+            var save = ProgressionService.EnsureSave();
+            if (save?.upgrades == null || save.upgrades.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            var values = new List<string>();
+            foreach (var upgrade in save.upgrades)
+            {
+                if (upgrade != null)
+                {
+                    values.Add($"{upgrade.upgradeId}:{upgrade.level}");
+                }
+            }
+
+            values.Sort(StringComparer.Ordinal);
+            return string.Join("|", values);
         }
 
         private int GetPlacementCellIndex(int orderIndex)

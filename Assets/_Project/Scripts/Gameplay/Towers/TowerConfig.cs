@@ -1,3 +1,4 @@
+using CatGuard.Gameplay.Towers.Upgrades;
 using UnityEngine;
 
 namespace CatGuard.Gameplay.Towers
@@ -27,6 +28,7 @@ namespace CatGuard.Gameplay.Towers
         [SerializeField] private Color visualColor = new(0.24f, 0.78f, 0.96f);
         [SerializeField] private Sprite visualSprite;
         [SerializeField] private TowerTargetPriority targetPriority = TowerTargetPriority.First;
+        [SerializeField] private TowerUpgradeTreeConfig battleUpgradeTree;
 
         [Header("Economy")]
         [Min(1)]
@@ -42,6 +44,7 @@ namespace CatGuard.Gameplay.Towers
         public Color VisualColor => visualColor;
         public Sprite VisualSprite => visualSprite;
         public TowerTargetPriority TargetPriority => targetPriority;
+        public TowerUpgradeTreeConfig BattleUpgradeTree => battleUpgradeTree;
         public int BuildCost => Mathf.Max(1, buildCost);
 
         public bool IsValid()
@@ -52,7 +55,8 @@ namespace CatGuard.Gameplay.Towers
                 && FireInterval > 0f
                 && splashRadius >= 0f
                 && VisualScale > 0f
-                && BuildCost > 0;
+                && BuildCost > 0
+                && (battleUpgradeTree == null || battleUpgradeTree.TowerFamilyId == TowerId);
         }
 
         public void Configure(
@@ -84,6 +88,11 @@ namespace CatGuard.Gameplay.Towers
         public void ConfigureTargetPriority(TowerTargetPriority priority)
         {
             targetPriority = priority;
+        }
+
+        public void ConfigureBattleUpgradeTree(TowerUpgradeTreeConfig upgradeTree)
+        {
+            battleUpgradeTree = upgradeTree;
         }
     }
 }

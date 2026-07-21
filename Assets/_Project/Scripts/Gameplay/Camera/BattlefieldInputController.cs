@@ -133,7 +133,10 @@ namespace CatGuard.Gameplay.CameraControl
                 && !pointerDragged
                 && !levelController.IsScreenPointOverHud(screenPosition))
             {
-                towerGrid.TryPlaceFromScreen(screenPosition);
+                if (!levelController.TrySelectTowerFromScreen(screenPosition))
+                {
+                    towerGrid.TryPlaceFromScreen(screenPosition);
+                }
             }
 
             pointerActive = false;

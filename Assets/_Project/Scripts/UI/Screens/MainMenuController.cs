@@ -627,14 +627,18 @@ namespace CatGuard.UI.Screens
             var freeWidth = Mathf.Clamp(rect.width * 0.24f, 300f, 430f);
             const float languageWidth = 120f;
             const float soundWidth = 190f;
+            const float shakeWidth = 180f;
+            const float flashWidth = 190f;
             const float resetWidth = 170f;
-            var totalWidth = freeWidth + languageWidth + soundWidth + resetWidth + (spacing * 3f);
+            var totalWidth = freeWidth + languageWidth + soundWidth + shakeWidth + flashWidth + resetWidth + (spacing * 5f);
             var x = rect.center.x - (totalWidth * 0.5f);
             var y = rect.y + 10f;
             var freeCoinsRect = new Rect(x, y, freeWidth, 52f);
             var languageRect = new Rect(freeCoinsRect.xMax + spacing, y, languageWidth, 52f);
             var soundRect = new Rect(languageRect.xMax + spacing, y, soundWidth, 52f);
-            var resetRect = new Rect(soundRect.xMax + spacing, y, resetWidth, 52f);
+            var shakeRect = new Rect(soundRect.xMax + spacing, y, shakeWidth, 52f);
+            var flashRect = new Rect(shakeRect.xMax + spacing, y, flashWidth, 52f);
+            var resetRect = new Rect(flashRect.xMax + spacing, y, resetWidth, 52f);
             var freeCoinsLabel = string.Format(
                 LocalizationService.Text("ads.freeCoins"),
                 ProgressionService.FreeCoinsRewardFishCoins);
@@ -670,6 +674,26 @@ namespace CatGuard.UI.Screens
             {
                 ProceduralAudioService.Play(ProceduralSoundId.MenuClick);
                 ProgressionService.ToggleAudioMuted();
+            }
+
+            var shakeValueKey = ProgressionService.CameraShakeLevel switch
+            {
+                0 => "settings.shakeOff",
+                1 => "settings.shakeLow",
+                _ => "settings.shakeFull"
+            };
+            var shakeLabel = $"{LocalizationService.Text("settings.cameraShake")}\n{LocalizationService.Text(shakeValueKey)}";
+            if (GUI.Button(shakeRect, shakeLabel, compactButtonStyle))
+            {
+                ProceduralAudioService.Play(ProceduralSoundId.MenuClick);
+                ProgressionService.CycleCameraShakeIntensity();
+            }
+
+            var flashLabel = $"{LocalizationService.Text("settings.reducedFlash")}\n{LocalizationService.Text(ProgressionService.ReducedFlash ? "common.on" : "common.off")}";
+            if (GUI.Button(flashRect, flashLabel, compactButtonStyle))
+            {
+                ProceduralAudioService.Play(ProceduralSoundId.MenuClick);
+                ProgressionService.ToggleReducedFlash();
             }
 
             var resetLabel = LocalizationService.Text(resetConfirmationArmed ? "common.confirm" : "settings.reset");

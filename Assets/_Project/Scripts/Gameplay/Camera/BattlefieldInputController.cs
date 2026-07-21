@@ -103,6 +103,13 @@ namespace CatGuard.Gameplay.CameraControl
                 return;
             }
 
+            if (levelController.GuardianUltimates?.IsTargeting == true)
+            {
+                levelController.UpdateUltimateTargetFromScreen(screenPosition);
+                pointerPrevious = screenPosition;
+                return;
+            }
+
             var layout = LandscapeLayout.Calculate();
             var startLogical = layout.ScreenToLogical(pointerStart);
             var currentLogical = layout.ScreenToLogical(screenPosition);
@@ -133,7 +140,11 @@ namespace CatGuard.Gameplay.CameraControl
                 && !pointerDragged
                 && !levelController.IsScreenPointOverHud(screenPosition))
             {
-                if (!levelController.TrySelectTowerFromScreen(screenPosition))
+                if (levelController.GuardianUltimates?.IsTargeting == true)
+                {
+                    levelController.UpdateUltimateTargetFromScreen(screenPosition);
+                }
+                else if (!levelController.TrySelectTowerFromScreen(screenPosition))
                 {
                     towerGrid.TryPlaceFromScreen(screenPosition);
                 }

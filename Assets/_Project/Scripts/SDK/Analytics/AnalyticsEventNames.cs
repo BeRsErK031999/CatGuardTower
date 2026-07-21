@@ -20,5 +20,8 @@ namespace CatGuard.SDK.Analytics
         public const string RewardedAdCompleted = "rewarded_ad_completed";
         public const string ShopOpen = "shop_open";
         public const string UpgradePurchase = "upgrade_purchase";
+        public const string UltimateReady = "ultimate_ready";
+        public const string UltimateUse = "ultimate_use";
+        public const string UltimateResult = "ultimate_result";
     }
 }

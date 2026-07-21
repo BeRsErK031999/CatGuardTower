@@ -22,3 +22,7 @@ MonoBehaviour:
   visualColor: {r: 0.42, g: 0.8, b: 0.35, a: 1}
   visualSprite: {fileID: 21300000, guid: 1efd2e116210d2f4b86fabe9f8e71aef, type: 3}
   animationProfile: {fileID: 11400000, guid: acde79e3f7858484493da5efcf0de386, type: 2}
+  ultimateDamageMultiplier: 0.82
+  ultimateSlowDurationMultiplier: 0.72
+  ultimateStunDurationMultiplier: 0.65
+  ultimateControlImmune: 0

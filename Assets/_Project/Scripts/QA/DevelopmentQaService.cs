@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using CatGuard.Gameplay.Battlefield;
 using CatGuard.Core.SceneLoading;
 using CatGuard.Gameplay.Grid;
 using CatGuard.Gameplay.Levels;
 using CatGuard.Gameplay.Towers;
+using CatGuard.Gameplay.Ultimates;
 using CatGuard.Meta.Progression;
 using CatGuard.SDK.Analytics;
 using UnityEngine;
@@ -193,6 +195,8 @@ namespace CatGuard.QA
         public int upgradeTargetTier;
         public string targetPriority;
         public bool sellAfterUpgrade;
+        public string[] ultimateIds = Array.Empty<string>();
+        public bool exerciseUltimateTargeting;
     }
 
     [Serializable]
@@ -266,6 +270,16 @@ namespace CatGuard.QA
         public string[] selectedTargetPriorities = Array.Empty<string>();
         public bool battleUpgradesExcludedFromSave;
         public bool analyticsPayloadValid;
+        public int ultimateReadyEvents;
+        public int ultimateUses;
+        public int ultimateResults;
+        public int ultimateTargetCancels;
+        public int ultimateInvalidTargets;
+        public int ultimateHits;
+        public float ultimateDamage;
+        public int wardBlocks;
+        public int pooledUltimateVfxCreated;
+        public bool ultimateBattleStateExcludedFromSave;
     }
 
     public sealed class DevelopmentQaScenarioRunner : MonoBehaviour
@@ -300,6 +314,9 @@ namespace CatGuard.QA
         private bool sellCompleted;
         private string permanentUpgradeFingerprint;
         private int analyticsEventStartIndex;
+        private int nextUltimateIndex;
+        private float nextUltimateAt;
+        private bool targetingGateExercised;
 
         public void Initialize(
             PrototypeLevelController levelController,
@@ -312,6 +329,7 @@ namespace CatGuard.QA
             startedAt = Time.unscaledTime;
             permanentUpgradeFingerprint = GetPermanentUpgradeFingerprint();
             analyticsEventStartIndex = (AnalyticsService.Current as FakeAnalyticsService)?.Events.Count ?? 0;
+            nextUltimateAt = Time.unscaledTime + 1f;
 
             if (!controller.ConfigureDevelopmentScenario(
                     command.routeIdFilter,
@@ -363,6 +381,7 @@ namespace CatGuard.QA
             {
                 PlaceAffordableTowers();
                 TrySellRequestedTower();
+                TryUseRequestedUltimate();
             }
 
             if (controller.State is PrototypeLevelState.Won or PrototypeLevelState.Lost)
@@ -391,7 +410,19 @@ namespace CatGuard.QA
                     selectedUpgradeBranches = GetSelectedUpgradeBranches(),
                     selectedTargetPriorities = GetSelectedTargetPriorities(),
                     battleUpgradesExcludedFromSave = permanentUpgradeFingerprint == GetPermanentUpgradeFingerprint(),
-                    analyticsPayloadValid = HasValidBattleUpgradeAnalytics(),
+                    ultimateReadyEvents = controller.GuardianUltimates?.ReadyEventCount ?? 0,
+                    ultimateUses = controller.GuardianUltimates?.UseEventCount ?? 0,
+                    ultimateResults = controller.GuardianUltimates?.ResultEventCount ?? 0,
+                    ultimateTargetCancels = controller.GuardianUltimates?.CancelCount ?? 0,
+                    ultimateInvalidTargets = controller.GuardianUltimates?.InvalidTargetCount ?? 0,
+                    ultimateHits = controller.GuardianUltimates?.UltimateHitCount ?? 0,
+                    ultimateDamage = controller.GuardianUltimates?.UltimateDamageDealt ?? 0f,
+                    wardBlocks = controller.GuardianUltimates?.WardBlocks ?? 0,
+                    pooledUltimateVfxCreated = controller.GuardianUltimates?.PooledVfxCreated ?? 0,
+                    ultimateBattleStateExcludedFromSave = !typeof(CatGuard.Core.Save.GameSaveData)
+                        .GetFields()
+                        .Any(field => field.Name.Contains("ultimateCharge", StringComparison.OrdinalIgnoreCase)),
+                    analyticsPayloadValid = HasValidBattleUpgradeAnalytics() && HasValidUltimateAnalytics(),
                     error = string.Empty
                 });
             }
@@ -491,6 +522,57 @@ namespace CatGuard.QA
             }
         }
 
+        private void TryUseRequestedUltimate()
+        {
+            var requested = command.ultimateIds ?? Array.Empty<string>();
+            var ultimates = controller.GuardianUltimates;
+            if (ultimates == null || nextUltimateIndex >= requested.Length || Time.unscaledTime < nextUltimateAt)
+            {
+                return;
+            }
+
+            var ultimateId = requested[nextUltimateIndex];
+            if (ultimateId == GuardianUltimateController.YarnMeteorId && controller.ActiveEnemies.Count == 0)
+            {
+                nextUltimateAt = Time.unscaledTime + 0.1f;
+                return;
+            }
+
+            ultimates.GrantReady(ultimateId);
+            if (command.exerciseUltimateTargeting
+                && !targetingGateExercised
+                && ultimateId == GuardianUltimateController.YarnMeteorId)
+            {
+                targetingGateExercised = true;
+                if (controller.TryActivateUltimate(ultimateId))
+                {
+                    controller.TryConfirmUltimateTarget();
+                    controller.CancelUltimateTargeting();
+                }
+            }
+
+            var used = controller.TryActivateUltimate(ultimateId);
+            if (used && ultimateId == GuardianUltimateController.YarnMeteorId)
+            {
+                var world = controller.ActiveEnemies.Count > 0 && controller.ActiveEnemies[0] != null
+                    ? (Vector2)controller.ActiveEnemies[0].transform.position
+                    : controller.Battlefield.WorldBounds.center;
+                var screen = Camera.main == null ? Vector3.zero : Camera.main.WorldToScreenPoint(world);
+                controller.UpdateUltimateTargetFromScreen(screen);
+                used = controller.TryConfirmUltimateTarget();
+            }
+
+            if (used)
+            {
+                nextUltimateIndex++;
+                nextUltimateAt = Time.unscaledTime + 2.2f;
+            }
+            else
+            {
+                nextUltimateAt = Time.unscaledTime + 0.25f;
+            }
+        }
+
         private string[] GetSelectedUpgradeBranches()
         {
             var result = new List<string>();
@@ -550,6 +632,39 @@ namespace CatGuard.QA
             }
 
             return validUpgrades == purchasedBattleUpgrades;
+        }
+
+        private bool HasValidUltimateAnalytics()
+        {
+            var requested = command.ultimateIds ?? Array.Empty<string>();
+            if (requested.Length == 0)
+            {
+                return true;
+            }
+
+            if (AnalyticsService.Current is not FakeAnalyticsService fake)
+            {
+                return true;
+            }
+
+            var ready = 0;
+            var uses = 0;
+            var results = 0;
+            for (var index = analyticsEventStartIndex; index < fake.Events.Count; index++)
+            {
+                var record = fake.Events[index];
+                if (!record.Parameters.ContainsKey(AnalyticsParameterNames.UltimateId)
+                    || !record.Parameters.ContainsKey(AnalyticsParameterNames.UltimateTargetingMode))
+                {
+                    continue;
+                }
+
+                ready += record.Name == AnalyticsEventNames.UltimateReady ? 1 : 0;
+                uses += record.Name == AnalyticsEventNames.UltimateUse ? 1 : 0;
+                results += record.Name == AnalyticsEventNames.UltimateResult ? 1 : 0;
+            }
+
+            return ready >= requested.Length && uses >= requested.Length && results >= requested.Length;
         }
 
         private static string GetPermanentUpgradeFingerprint()

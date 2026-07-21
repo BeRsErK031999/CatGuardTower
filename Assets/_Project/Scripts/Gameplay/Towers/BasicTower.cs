@@ -21,6 +21,7 @@ namespace CatGuard.Gameplay.Towers
         private float fireTimer;
         private float permanentDamageMultiplier = 1f;
         private float permanentRangeMultiplier = 1f;
+        private float ultimateAttackSpeedMultiplier = 1f;
         private SpriteRenderer spriteRenderer;
         private Transform rangePreview;
         private Transform upgradeMarker;
@@ -170,6 +171,11 @@ namespace CatGuard.Gameplay.Towers
             }
         }
 
+        public void SetUltimateAttackSpeedMultiplier(float multiplier)
+        {
+            ultimateAttackSpeedMultiplier = Mathf.Max(0.1f, multiplier);
+        }
+
         private void Update()
         {
             if (levelController == null || levelController.State != PrototypeLevelState.Running)
@@ -193,7 +199,7 @@ namespace CatGuard.Gameplay.Towers
             levelController.ApplyTowerAttack(this, target, runtimeStats);
             ProceduralAudioService.Play(ProceduralSoundId.TowerShot);
             SimpleVfxFactory.Spawn(targetPosition, SimpleVfxStyle.TowerShot);
-            fireTimer = runtimeStats.FireInterval;
+            fireTimer = runtimeStats.FireInterval / ultimateAttackSpeedMultiplier;
         }
 
         private void RecalculateRuntimeStats()

@@ -22,6 +22,8 @@
     [int]$UpgradeTargetTier = 0,
     [string]$TargetPriority = "",
     [switch]$SellAfterUpgrade,
+    [string[]]$UltimateIds = @(),
+    [switch]$ExerciseUltimateTargeting,
     [string]$ApkPath = "Builds\Android\CatGuardTowerDefense-emulator.apk",
     [string]$PackageName = "com.catguard.towerdefense.qa",
     [string]$DeviceSerial = "",
@@ -33,7 +35,9 @@
     [switch]$SkipInstall,
     [switch]$RequireVictory,
     [switch]$RequirePerformance,
-    [switch]$RequireBattleUpgrades
+    [switch]$RequireBattleUpgrades,
+    [switch]$RequireUltimates,
+    [switch]$RequireWardBlock
 )
 
 Set-StrictMode -Version Latest
@@ -258,6 +262,8 @@ $externalFilesPath = "/sdcard/Android/data/$PackageName/files"
     upgradeTargetTier = $UpgradeTargetTier
     targetPriority = $TargetPriority
     sellAfterUpgrade = [bool]$SellAfterUpgrade
+    ultimateIds = $UltimateIds
+    exerciseUltimateTargeting = [bool]$ExerciseUltimateTargeting
 } | ConvertTo-Json -Depth 3 | Set-Content -LiteralPath $commandPath -Encoding UTF8
 
 Invoke-TargetAdb -Arguments @("shell", "am", "force-stop", $PackageName) -AllowFailure | Out-Null
@@ -367,7 +373,21 @@ $failed = $scenarioResult.state -eq "error" `
     -or ($RequireBattleUpgrades -and (
         $scenarioResult.purchasedBattleUpgrades -lt [Math]::Max(1, $UpgradeTargetTier) `
         -or -not $scenarioResult.battleUpgradesExcludedFromSave `
-        -or -not $scenarioResult.analyticsPayloadValid))
+        -or -not $scenarioResult.analyticsPayloadValid)) `
+    -or ($RequireUltimates -and (
+        $scenarioResult.ultimateReadyEvents -lt $UltimateIds.Count `
+        -or $scenarioResult.ultimateUses -lt $UltimateIds.Count `
+        -or $scenarioResult.ultimateResults -lt $UltimateIds.Count `
+        -or -not $scenarioResult.ultimateBattleStateExcludedFromSave `
+        -or $scenarioResult.pooledUltimateVfxCreated -gt 18 `
+        -or -not $scenarioResult.analyticsPayloadValid `
+        -or ($UltimateIds -contains "yarn_meteor_shower" -and (
+            $scenarioResult.ultimateHits -lt 1 `
+            -or $scenarioResult.ultimateDamage -le 0)) `
+        -or ($ExerciseUltimateTargeting -and (
+            $scenarioResult.ultimateTargetCancels -lt 1 `
+            -or $scenarioResult.ultimateInvalidTargets -lt 1)))) `
+    -or ($RequireWardBlock -and $scenarioResult.wardBlocks -lt 1)
 if ($failed) {
     exit 1
 }

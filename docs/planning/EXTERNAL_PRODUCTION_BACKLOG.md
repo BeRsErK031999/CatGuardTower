@@ -262,6 +262,8 @@ Owner: concept/VFX artist
 
 Status: `Not started`
 
+Technical placeholder status: E7 ships a source-tracked code-authored pooled primitive presentation and procedural cast sound with reduced-flash support. These placeholders are explicitly temporary and do not change this external-production status.
+
 ### Required concepts
 
 - guardian cat/loadout portrait;

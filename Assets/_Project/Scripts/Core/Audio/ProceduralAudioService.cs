@@ -57,6 +57,7 @@ namespace CatGuard.Core.Audio
                 ProceduralSoundId.TowerShot => CreateTone("TowerShot", 880f, 0.05f, 0.16f),
                 ProceduralSoundId.EnemyDefeated => CreateTone("EnemyDefeated", 360f, 0.12f, 0.22f),
                 ProceduralSoundId.BaseHit => CreateTone("BaseHit", 150f, 0.16f, 0.28f),
+                ProceduralSoundId.UltimateCast => CreateArpeggio("UltimateCast", new[] { 392f, 523.25f, 783.99f }, 0.28f, 0.2f),
                 ProceduralSoundId.Victory => CreateArpeggio("Victory", new[] { 523.25f, 659.25f, 783.99f }, 0.36f, 0.22f),
                 ProceduralSoundId.Defeat => CreateArpeggio("Defeat", new[] { 349.23f, 293.66f, 220f }, 0.42f, 0.22f),
                 _ => null

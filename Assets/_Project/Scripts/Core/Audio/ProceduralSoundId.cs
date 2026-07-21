@@ -7,6 +7,7 @@ namespace CatGuard.Core.Audio
         TowerShot,
         EnemyDefeated,
         BaseHit,
+        UltimateCast,
         Victory,
         Defeat
     }

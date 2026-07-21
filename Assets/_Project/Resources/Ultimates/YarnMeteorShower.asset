@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d4e28d9cfcbae5d4285417abf240b963, type: 3}
+  m_Name: YarnMeteorShower
+  m_EditorClassIdentifier: Assembly-CSharp::CatGuard.Gameplay.Ultimates.UltimateConfig
+  ultimateId: yarn_meteor_shower
+  nameLocalizationKey: ultimate.name.yarn_meteor_shower
+  descriptionLocalizationKey: ultimate.description.yarn_meteor_shower
+  chargeRequired: 80
+  cooldownSeconds: 12
+  damageChargeFactor: 0.24
+  killCharge: 5
+  waveCharge: 15
+  targetingMode: 0
+  effects:
+  - effectType: 0
+    magnitude: 4.5
+    duration: 0
+    radius: 1.35
+    count: 5
+    interval: 0.32
+  - effectType: 1
+    magnitude: 1
+    duration: 0.65
+    radius: 1.35
+    count: 1
+    interval: 0
+  presentationProfile: meteor_amber_area
+  presentationColor: {r: 1, g: 0.55, b: 0.16, a: 0.72}
+  temporaryPresentation: 1
+  presentationSourceNote: Code-authored pooled Unity primitive presentation; temporary
+    E7 visuals pending ART-ULTIMATE-001.
+  presentationLicenseStatus: Original code-authored Unity primitives; no external
+    asset license.

@@ -34,6 +34,9 @@ namespace CatGuard.Meta.Progression
             && dailyMissionCatalog.IsValid();
         public static bool IsAudioMuted => EnsureSave().audioMuted;
         public static string LanguageCode => LocalizationService.NormalizeLanguageCode(EnsureSave().languageCode);
+        public static int CameraShakeLevel => Math.Clamp(EnsureSave().cameraShakeIntensity, 0, 2);
+        public static float CameraShakeIntensity => CameraShakeLevel * 0.5f;
+        public static bool ReducedFlash => EnsureSave().reducedFlash;
         public static bool IsDailyRewardDoubleAvailable => rewardedAdService != null
             && rewardedAdService.IsRewardedAdAvailable(RewardedAdPlacementIds.DailyRewardDouble);
         public static int FreeCoinsRewardFishCoins => FreeCoinsRewardAmount;
@@ -124,6 +127,20 @@ namespace CatGuard.Meta.Progression
         public static void ToggleLanguage()
         {
             SetLanguage(LocalizationService.NextLanguageCode());
+        }
+
+        public static void CycleCameraShakeIntensity()
+        {
+            var data = EnsureSave();
+            data.cameraShakeIntensity = (CameraShakeLevel + 1) % 3;
+            Save();
+        }
+
+        public static void ToggleReducedFlash()
+        {
+            var data = EnsureSave();
+            data.reducedFlash = !data.reducedFlash;
+            Save();
         }
 
         public static bool IsLevelUnlocked(LevelConfig level)
@@ -459,6 +476,7 @@ namespace CatGuard.Meta.Progression
             }
 
             data.languageCode = LocalizationService.NormalizeLanguageCode(data.languageCode);
+            data.cameraShakeIntensity = Math.Clamp(data.cameraShakeIntensity, 0, 2);
             NormalizeDailyRewardState(data);
             EnsureDailyMissionsForToday(data);
         }

@@ -41,5 +41,11 @@ namespace CatGuard.SDK.Analytics
         public const string SellValue = "sell_value";
         public const string InvestedCost = "invested_cost";
         public const string TargetPriority = "target_priority";
+        public const string UltimateId = "ultimate_id";
+        public const string UltimateTargetingMode = "ultimate_targeting_mode";
+        public const string UltimateResult = "ultimate_result";
+        public const string HitCount = "hit_count";
+        public const string DamageDealt = "damage_dealt";
+        public const string WardBlocks = "ward_blocks";
     }
 }

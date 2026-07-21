@@ -4,6 +4,7 @@ using CatGuard.Gameplay.Enemies;
 using CatGuard.Gameplay.Levels;
 using CatGuard.Gameplay.Towers;
 using CatGuard.Gameplay.Towers.Upgrades;
+using CatGuard.Gameplay.Ultimates;
 using CatGuard.Meta.DailyRewards;
 using CatGuard.Meta.Progression;
 using CatGuard.Meta.Upgrades;
@@ -193,6 +194,35 @@ namespace CatGuard.SDK.Analytics
             TrackEvent(AnalyticsEventNames.UpgradePurchase, parameters);
         }
 
+        public static void TrackUltimateReady(LevelConfig level, UltimateConfig ultimate)
+        {
+            TrackEvent(AnalyticsEventNames.UltimateReady, CreateUltimateParameters(level, ultimate));
+        }
+
+        public static void TrackUltimateUse(LevelConfig level, UltimateConfig ultimate, Vector2 target)
+        {
+            var parameters = CreateUltimateParameters(level, ultimate);
+            parameters[AnalyticsParameterNames.PositionX] = target.x;
+            parameters[AnalyticsParameterNames.PositionY] = target.y;
+            TrackEvent(AnalyticsEventNames.UltimateUse, parameters);
+        }
+
+        public static void TrackUltimateResult(
+            LevelConfig level,
+            UltimateConfig ultimate,
+            string result,
+            int hitCount,
+            float damageDealt,
+            int wardBlocks)
+        {
+            var parameters = CreateUltimateParameters(level, ultimate);
+            parameters[AnalyticsParameterNames.UltimateResult] = string.IsNullOrWhiteSpace(result) ? "unknown" : result;
+            parameters[AnalyticsParameterNames.HitCount] = Mathf.Max(0, hitCount);
+            parameters[AnalyticsParameterNames.DamageDealt] = Mathf.Max(0f, damageDealt);
+            parameters[AnalyticsParameterNames.WardBlocks] = Mathf.Max(0, wardBlocks);
+            TrackEvent(AnalyticsEventNames.UltimateResult, parameters);
+        }
+
         private static IAnalyticsService CreateDefaultImplementation()
         {
 #if CATGUARD_FIREBASE_ANALYTICS
@@ -314,6 +344,16 @@ namespace CatGuard.SDK.Analytics
             parameters[AnalyticsParameterNames.BranchId] = tower?.SelectedBranchId ?? string.Empty;
             parameters[AnalyticsParameterNames.Tier] = tower?.CurrentTier ?? 0;
             parameters[AnalyticsParameterNames.InvestedCost] = tower?.InvestedUpgradeCost ?? 0;
+            return parameters;
+        }
+
+        private static Dictionary<string, object> CreateUltimateParameters(LevelConfig level, UltimateConfig ultimate)
+        {
+            var parameters = CreateLevelParameters(level);
+            parameters[AnalyticsParameterNames.UltimateId] = ultimate?.UltimateId ?? "unknown";
+            parameters[AnalyticsParameterNames.UltimateTargetingMode] = ultimate == null
+                ? "unknown"
+                : ultimate.TargetingMode.ToString().ToLowerInvariant();
             return parameters;
         }
 

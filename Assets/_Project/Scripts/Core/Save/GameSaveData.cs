@@ -18,6 +18,8 @@ namespace CatGuard.Core.Save
         public bool audioMuted;
         public string languageCode = "ru";
         public string lastFreeCoinsRewardDateKey;
+        public int cameraShakeIntensity = 2;
+        public bool reducedFlash;
 
         public static GameSaveData CreateDefault(string firstLevelId)
         {

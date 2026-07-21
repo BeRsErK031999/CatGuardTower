@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d4e28d9cfcbae5d4285417abf240b963, type: 3}
+  m_Name: CatnipMoon
+  m_EditorClassIdentifier: Assembly-CSharp::CatGuard.Gameplay.Ultimates.UltimateConfig
+  ultimateId: catnip_moon
+  nameLocalizationKey: ultimate.name.catnip_moon
+  descriptionLocalizationKey: ultimate.description.catnip_moon
+  chargeRequired: 95
+  cooldownSeconds: 18
+  damageChargeFactor: 0.17
+  killCharge: 4
+  waveCharge: 18
+  targetingMode: 1
+  effects:
+  - effectType: 2
+    magnitude: 0.42
+    duration: 8
+    radius: 0
+    count: 1
+    interval: 0
+  - effectType: 3
+    magnitude: 1.35
+    duration: 8
+    radius: 0
+    count: 1
+    interval: 0
+  presentationProfile: moon_mint_global
+  presentationColor: {r: 0.38, g: 0.96, b: 0.68, a: 0.38}
+  temporaryPresentation: 1
+  presentationSourceNote: Code-authored pooled Unity primitive presentation; temporary
+    E7 visuals pending ART-ULTIMATE-001.
+  presentationLicenseStatus: Original code-authored Unity primitives; no external
+    asset license.

@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d4e28d9cfcbae5d4285417abf240b963, type: 3}
+  m_Name: NineLivesWard
+  m_EditorClassIdentifier: Assembly-CSharp::CatGuard.Gameplay.Ultimates.UltimateConfig
+  ultimateId: nine_lives_ward
+  nameLocalizationKey: ultimate.name.nine_lives_ward
+  descriptionLocalizationKey: ultimate.description.nine_lives_ward
+  chargeRequired: 75
+  cooldownSeconds: 20
+  damageChargeFactor: 0.2
+  killCharge: 4.5
+  waveCharge: 16
+  targetingMode: 2
+  effects:
+  - effectType: 4
+    magnitude: 1
+    duration: 0
+    radius: 0
+    count: 1
+    interval: 0
+  - effectType: 5
+    magnitude: 3
+    duration: 18
+    radius: 0
+    count: 1
+    interval: 0
+  presentationProfile: ward_cyan_goal
+  presentationColor: {r: 0.22, g: 0.78, b: 1, a: 0.62}
+  temporaryPresentation: 1
+  presentationSourceNote: Code-authored pooled Unity primitive presentation; temporary
+    E7 visuals pending ART-ULTIMATE-001.
+  presentationLicenseStatus: Original code-authored Unity primitives; no external
+    asset license.

@@ -22,6 +22,15 @@ namespace CatGuard.Gameplay.Enemies
         [SerializeField] private Sprite visualSprite;
         [SerializeField] private UnitAnimationConfig animationProfile;
 
+        [Header("Guardian Ultimate Resistance")]
+        [Range(0f, 2f)]
+        [SerializeField] private float ultimateDamageMultiplier = 1f;
+        [Range(0f, 1f)]
+        [SerializeField] private float ultimateSlowDurationMultiplier = 1f;
+        [Range(0f, 1f)]
+        [SerializeField] private float ultimateStunDurationMultiplier = 1f;
+        [SerializeField] private bool ultimateControlImmune;
+
         public string EnemyId => string.IsNullOrWhiteSpace(enemyId) ? name : enemyId;
         public string DisplayName => string.IsNullOrWhiteSpace(displayName) ? EnemyId : displayName;
         public float Health => Mathf.Max(1f, health);
@@ -32,6 +41,10 @@ namespace CatGuard.Gameplay.Enemies
         public Color VisualColor => visualColor;
         public Sprite VisualSprite => visualSprite;
         public UnitAnimationConfig AnimationProfile => animationProfile;
+        public float UltimateDamageMultiplier => Mathf.Clamp(ultimateDamageMultiplier, 0f, 2f);
+        public float UltimateSlowDurationMultiplier => ultimateControlImmune ? 0f : Mathf.Clamp01(ultimateSlowDurationMultiplier);
+        public float UltimateStunDurationMultiplier => ultimateControlImmune ? 0f : Mathf.Clamp01(ultimateStunDurationMultiplier);
+        public bool UltimateControlImmune => ultimateControlImmune;
 
         public bool IsValid()
         {
@@ -68,6 +81,18 @@ namespace CatGuard.Gameplay.Enemies
         public void ConfigureAnimationProfile(UnitAnimationConfig profile)
         {
             animationProfile = profile;
+        }
+
+        public void ConfigureUltimateResistance(
+            float damageMultiplier,
+            float slowDurationMultiplier,
+            float stunDurationMultiplier,
+            bool controlImmune)
+        {
+            ultimateDamageMultiplier = Mathf.Clamp(damageMultiplier, 0f, 2f);
+            ultimateSlowDurationMultiplier = Mathf.Clamp01(slowDurationMultiplier);
+            ultimateStunDurationMultiplier = Mathf.Clamp01(stunDurationMultiplier);
+            ultimateControlImmune = controlImmune;
         }
     }
 }

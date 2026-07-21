@@ -1,6 +1,7 @@
 using CatGuard.Gameplay.Battlefield;
 using CatGuard.UI.HUD;
 using CatGuard.UI.Layout;
+using CatGuard.Meta.Progression;
 using UnityEngine;
 
 namespace CatGuard.Gameplay.CameraControl
@@ -12,6 +13,9 @@ namespace CatGuard.Gameplay.CameraControl
         private int lastScreenWidth;
         private int lastScreenHeight;
         private Rect lastSafeArea;
+        private Vector3 baseCameraPosition;
+        private float shakeEndsAt;
+        private float shakeAmplitude;
 
         public Vector2 FocusPoint { get; private set; }
         public Rect FocusLimits { get; private set; }
@@ -58,17 +62,33 @@ namespace CatGuard.Gameplay.CameraControl
             return moved;
         }
 
-        private void LateUpdate()
+        public void RequestShake(float amplitude, float durationSeconds)
         {
-            if (battlefield == null
-                || (lastScreenWidth == Screen.width
-                    && lastScreenHeight == Screen.height
-                    && lastSafeArea == Screen.safeArea))
+            var adjustedAmplitude = Mathf.Max(0f, amplitude) * ProgressionService.CameraShakeIntensity;
+            if (adjustedAmplitude <= 0f || durationSeconds <= 0f)
             {
                 return;
             }
 
-            RefreshViewport(false);
+            shakeAmplitude = Mathf.Max(shakeAmplitude, adjustedAmplitude);
+            shakeEndsAt = Mathf.Max(shakeEndsAt, Time.unscaledTime + durationSeconds);
+        }
+
+        private void LateUpdate()
+        {
+            if (battlefield == null)
+            {
+                return;
+            }
+
+            if (lastScreenWidth != Screen.width
+                || lastScreenHeight != Screen.height
+                || lastSafeArea != Screen.safeArea)
+            {
+                RefreshViewport(false);
+            }
+
+            ApplyShakeOffset();
         }
 
         private void RefreshViewport(bool resetFocus)
@@ -153,7 +173,30 @@ namespace CatGuard.Gameplay.CameraControl
             var cameraCenter = new Vector2(
                 FocusPoint.x - ((logicalOffset.x / layout.SurfaceRect.width) * visibleWidth),
                 FocusPoint.y + ((logicalOffset.y / layout.SurfaceRect.height) * visibleHeight));
-            mainCamera.transform.position = new Vector3(cameraCenter.x, cameraCenter.y, -10f);
+            baseCameraPosition = new Vector3(cameraCenter.x, cameraCenter.y, -10f);
+            ApplyShakeOffset();
+        }
+
+        private void ApplyShakeOffset()
+        {
+            if (mainCamera == null)
+            {
+                return;
+            }
+
+            if (Time.unscaledTime >= shakeEndsAt || shakeAmplitude <= 0f)
+            {
+                shakeAmplitude = 0f;
+                mainCamera.transform.position = baseCameraPosition;
+                return;
+            }
+
+            var remaining = Mathf.Clamp01((shakeEndsAt - Time.unscaledTime) / 0.35f);
+            var phase = Time.unscaledTime * 52f;
+            var offset = new Vector3(Mathf.Sin(phase), Mathf.Cos(phase * 1.31f), 0f)
+                * shakeAmplitude
+                * remaining;
+            mainCamera.transform.position = baseCameraPosition + offset;
         }
 
         private void CacheViewportState()

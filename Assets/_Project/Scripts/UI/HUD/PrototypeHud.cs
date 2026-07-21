@@ -5,6 +5,7 @@ using CatGuard.Core.SceneLoading;
 using CatGuard.Gameplay.Levels;
 using CatGuard.Gameplay.Towers;
 using CatGuard.Gameplay.Towers.Upgrades;
+using CatGuard.Gameplay.Ultimates;
 using CatGuard.UI.Layout;
 using UnityEngine;
 
@@ -22,6 +23,7 @@ namespace CatGuard.UI.HUD
         private const float HudMargin = 24f;
         private const float TopBarHeight = 82f;
         private const float BottomTrayHeight = 136f;
+        private const float UltimateBarHeight = 82f;
         private const float BattlefieldGap = 16f;
 
         private PrototypeLevelController levelController;
@@ -70,6 +72,7 @@ namespace CatGuard.UI.HUD
             }
 
             return GetTopBarRect(layout).Contains(logicalPosition)
+                || GetUltimateBarRect(layout).Contains(logicalPosition)
                 || GetBottomTrayRect(layout).Contains(logicalPosition)
                 || (levelController?.SelectedPlacedTower != null && GetTowerPanelRect(layout).Contains(logicalPosition));
         }
@@ -77,13 +80,13 @@ namespace CatGuard.UI.HUD
         public static Rect GetBattlefieldRect(LandscapeLayout.Context layout)
         {
             var topBar = GetTopBarRect(layout);
-            var bottomTray = GetBottomTrayRect(layout);
+            var ultimateBar = GetUltimateBarRect(layout);
             var safeRect = layout.SafeRect;
             return new Rect(
                 safeRect.x + HudMargin,
                 topBar.yMax + BattlefieldGap,
                 Mathf.Max(0f, safeRect.width - (HudMargin * 2f)),
-                Mathf.Max(0f, bottomTray.y - topBar.yMax - (BattlefieldGap * 2f)));
+                Mathf.Max(0f, ultimateBar.y - topBar.yMax - (BattlefieldGap * 2f)));
         }
 
         private void OnDestroy()
@@ -112,6 +115,7 @@ namespace CatGuard.UI.HUD
                 if (levelController.State is PrototypeLevelState.Preparing or PrototypeLevelState.Running)
                 {
                     DrawWorldIndicators(layout);
+                    DrawUltimateBar(GetUltimateBarRect(layout));
                     DrawBottomHud(GetBottomTrayRect(layout));
                     if (levelController.SelectedPlacedTower != null)
                     {
@@ -263,6 +267,72 @@ namespace CatGuard.UI.HUD
                     new Rect(actionRect.x + 12f, actionRect.y + 8f, actionRect.width - 24f, actionRect.height - 16f),
                     instruction,
                     instructionStyle);
+            }
+        }
+
+        private void DrawUltimateBar(Rect panelRect)
+        {
+            var ultimates = levelController.GuardianUltimates;
+            if (ultimates == null || ultimates.States.Count == 0)
+            {
+                return;
+            }
+
+            GUI.Box(panelRect, GUIContent.none, strongPanelStyle);
+            const float inset = 12f;
+            const float gap = 10f;
+            var actionWidth = ultimates.IsTargeting ? 330f : 190f;
+            var buttonAreaWidth = panelRect.width - actionWidth - inset * 2f - gap;
+            var buttonWidth = (buttonAreaWidth - gap * (ultimates.States.Count - 1)) / ultimates.States.Count;
+            var buttonHeight = panelRect.height - inset * 2f;
+
+            for (var index = 0; index < ultimates.States.Count; index++)
+            {
+                var state = ultimates.States[index];
+                var config = state.Config;
+                var rect = new Rect(panelRect.x + inset + index * (buttonWidth + gap), panelRect.y + inset, buttonWidth, buttonHeight);
+                var status = state.CooldownRemaining > 0f
+                    ? string.Format(LocalizationService.Text("ultimate.cooldown"), Mathf.CeilToInt(state.CooldownRemaining))
+                    : state.IsReady
+                        ? LocalizationService.Text("ultimate.ready")
+                        : $"{Mathf.RoundToInt(state.ChargePercent * 100f)}%";
+                var label = $"{LocalizationService.Text(config.NameLocalizationKey)}  •  {status}";
+                var previousColor = GUI.backgroundColor;
+                GUI.backgroundColor = Color.Lerp(Color.white, config.PresentationColor, state.IsReady ? 0.7f : 0.22f);
+                GUI.enabled = levelController.State == PrototypeLevelState.Running && state.IsReady;
+                if (GUI.Button(
+                        rect,
+                        label,
+                        ultimates.TargetingUltimateId == config.UltimateId ? selectedButtonStyle : compactButtonStyle))
+                {
+                    ProceduralAudioService.Play(ProceduralSoundId.MenuClick);
+                    levelController.TryActivateUltimate(config.UltimateId);
+                }
+
+                GUI.backgroundColor = previousColor;
+            }
+
+            GUI.enabled = true;
+            var actionRect = new Rect(panelRect.xMax - actionWidth - inset, panelRect.y + inset, actionWidth, buttonHeight);
+            if (!ultimates.IsTargeting)
+            {
+                GUI.Label(actionRect, LocalizationService.Text("ultimate.chargeHint"), instructionStyle);
+                return;
+            }
+
+            var cancelWidth = 112f;
+            var confirmRect = new Rect(actionRect.x, actionRect.y, actionRect.width - cancelWidth - gap, actionRect.height);
+            var cancelRect = new Rect(confirmRect.xMax + gap, actionRect.y, cancelWidth, actionRect.height);
+            GUI.enabled = ultimates.HasValidTarget;
+            if (GUI.Button(confirmRect, LocalizationService.Text("ultimate.confirm"), selectedButtonStyle))
+            {
+                levelController.TryConfirmUltimateTarget();
+            }
+
+            GUI.enabled = true;
+            if (GUI.Button(cancelRect, LocalizationService.Text("common.cancel"), compactButtonStyle))
+            {
+                levelController.CancelUltimateTargeting();
             }
         }
 
@@ -606,6 +676,16 @@ namespace CatGuard.UI.HUD
                 layout.SafeRect.yMax - HudMargin - BottomTrayHeight,
                 Mathf.Max(0f, layout.SafeRect.width - (HudMargin * 2f)),
                 BottomTrayHeight);
+        }
+
+        private static Rect GetUltimateBarRect(LandscapeLayout.Context layout)
+        {
+            var bottom = GetBottomTrayRect(layout);
+            return new Rect(
+                bottom.x,
+                bottom.y - UltimateBarHeight - 12f,
+                bottom.width,
+                UltimateBarHeight);
         }
 
         private static Rect GetTowerPanelRect(LandscapeLayout.Context layout)

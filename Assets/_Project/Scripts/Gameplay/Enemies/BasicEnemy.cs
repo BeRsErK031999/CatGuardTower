@@ -19,8 +19,11 @@ namespace CatGuard.Gameplay.Enemies
         private float waveSpeedMultiplier = 1f;
         private float combatSlowMultiplier = 1f;
         private float combatSlowUntil;
+        private float ultimateSlowMultiplier = 1f;
+        private float ultimateSlowUntil;
         private float burnDamagePerSecond;
         private float burnUntil;
+        private float ultimateStunUntil;
         private UnitStatusModifier controlStatus;
         private int baseDamage;
         private int nextPathIndex;
@@ -69,24 +72,64 @@ namespace CatGuard.Gameplay.Enemies
             UpdateVisual();
         }
 
-        public void ApplyDamage(float amount)
+        public float ApplyDamage(float amount, bool generatesUltimateCharge = true)
         {
             if (!IsAlive)
             {
-                return;
+                return 0f;
             }
 
+            var previousHealth = currentHealth;
             currentHealth = Mathf.Max(0f, currentHealth - Mathf.Max(0f, amount));
+            var dealt = previousHealth - currentHealth;
+            if (generatesUltimateCharge && dealt > 0f)
+            {
+                levelController.RecordPlayerDamage(dealt);
+            }
+
             UpdateVisual();
 
             if (currentHealth <= 0f)
             {
                 completed = true;
                 levelController.HandleEnemyDefeated(this);
-                return;
+                return dealt;
             }
 
             animationPresenter?.PlayHit();
+            return dealt;
+        }
+
+        public float ApplyUltimateDamage(float amount)
+        {
+            return ApplyDamage(Mathf.Max(0f, amount) * (config?.UltimateDamageMultiplier ?? 1f), false);
+        }
+
+        public void ApplyUltimateSlow(float slowPercent, float durationSeconds)
+        {
+            var durationMultiplier = config?.UltimateSlowDurationMultiplier ?? 1f;
+            var adjustedDuration = durationSeconds * durationMultiplier;
+            if (!IsAlive || slowPercent <= 0f || adjustedDuration <= 0f)
+            {
+                return;
+            }
+
+            ultimateSlowMultiplier = Mathf.Min(ultimateSlowMultiplier, 1f - Mathf.Clamp(slowPercent, 0f, 0.85f));
+            ultimateSlowUntil = Mathf.Max(ultimateSlowUntil, Time.time + adjustedDuration);
+            RefreshMovementStatus();
+        }
+
+        public void ApplyUltimateStun(float durationSeconds)
+        {
+            var durationMultiplier = config?.UltimateStunDurationMultiplier ?? 1f;
+            var adjustedDuration = durationSeconds * durationMultiplier;
+            if (!IsAlive || adjustedDuration <= 0f)
+            {
+                return;
+            }
+
+            ultimateStunUntil = Mathf.Max(ultimateStunUntil, Time.time + adjustedDuration);
+            RefreshMovementStatus();
         }
 
         public void ConfigureSpeedMultiplier(float speedMultiplier)
@@ -187,6 +230,19 @@ namespace CatGuard.Gameplay.Enemies
                 RefreshMovementStatus();
             }
 
+            if (ultimateSlowUntil > 0f && Time.time >= ultimateSlowUntil)
+            {
+                ultimateSlowUntil = 0f;
+                ultimateSlowMultiplier = 1f;
+                RefreshMovementStatus();
+            }
+
+            if (ultimateStunUntil > 0f && Time.time >= ultimateStunUntil)
+            {
+                ultimateStunUntil = 0f;
+                RefreshMovementStatus();
+            }
+
             if (burnUntil <= 0f)
             {
                 return;
@@ -204,9 +260,15 @@ namespace CatGuard.Gameplay.Enemies
 
         private void RefreshMovementStatus()
         {
-            var effectiveSlow = combatSlowUntil > Time.time ? combatSlowMultiplier : 1f;
+            var combatSlow = combatSlowUntil > Time.time ? combatSlowMultiplier : 1f;
+            var ultimateSlow = ultimateSlowUntil > Time.time ? ultimateSlowMultiplier : 1f;
+            var effectiveSlow = Mathf.Min(combatSlow, ultimateSlow);
             speed = Mathf.Max(0.1f, baseSpeed) * waveSpeedMultiplier * effectiveSlow;
             statusModifier = controlStatus;
+            if (ultimateStunUntil > Time.time)
+            {
+                statusModifier |= UnitStatusModifier.Stunned;
+            }
             var effectiveMultiplier = waveSpeedMultiplier * effectiveSlow;
             if (effectiveMultiplier < 0.95f)
             {

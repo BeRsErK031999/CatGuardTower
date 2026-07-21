@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 710c12060b2a4524e9b76b5b9e7556b2, type: 3}
+  m_Name: UltimateCatalog
+  m_EditorClassIdentifier: Assembly-CSharp::CatGuard.Gameplay.Ultimates.UltimateCatalogConfig
+  ultimates:
+  - {fileID: 11400000, guid: b457cdea39100f243b3ae13dfc62b73e, type: 2}
+  - {fileID: 11400000, guid: de17ab9b0577a8f449b6722481f632b2, type: 2}
+  - {fileID: 11400000, guid: 7ae271304fadfb7469b6a91d67a579cc, type: 2}

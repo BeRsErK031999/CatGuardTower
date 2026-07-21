@@ -31,6 +31,68 @@ MonoBehaviour:
     height: 9
   initialCameraFocus: {x: 0, y: -0.1}
   scrollableViewHeight: 8.2
+  routes:
+  - routeId: west_branch
+    displayName: West Roof Branch
+    points:
+    - {x: -7.2, y: 2.8}
+    - {x: -5.3, y: -0.1}
+    - {x: -2.1, y: -0.6}
+    - {x: 0.2, y: 1.55}
+    - {x: 3.25, y: 0.35}
+    - {x: 5.1, y: -1.25}
+    - {x: 7.15, y: -2.75}
+    spawnAnchor: {x: -7.2, y: 2.8}
+    goalAnchor: {x: 7.15, y: -2.75}
+    visualStyleId: roof_west
+    visualWidth: 0.44
+    routeWeight: 1
+    tags:
+    - ground
+    - fork
+    spawnDelayOffset: 0
+    validationMetadata: Shared spawn and goal; lower western branch.
+  - routeId: moon_branch
+    displayName: Moon Roof Branch
+    points:
+    - {x: -7.2, y: 2.8}
+    - {x: -5.3, y: -0.1}
+    - {x: -2.2, y: 1.9}
+    - {x: 1, y: 2.45}
+    - {x: 3.55, y: 1.05}
+    - {x: 5.1, y: -1.25}
+    - {x: 7.15, y: -2.75}
+    spawnAnchor: {x: -7.2, y: 2.8}
+    goalAnchor: {x: 7.15, y: -2.75}
+    visualStyleId: roof_moon
+    visualWidth: 0.44
+    routeWeight: 1
+    tags:
+    - ground
+    - fork
+    spawnDelayOffset: 0
+    validationMetadata: Shared spawn and goal; upper moon branch.
+  - routeId: chimney_boss
+    displayName: Chimney Boss Route
+    points:
+    - {x: -7.2, y: 2.8}
+    - {x: -5.3, y: -0.1}
+    - {x: -2.4, y: -1.35}
+    - {x: 0, y: -1.75}
+    - {x: 3.2, y: -1.7}
+    - {x: 5.1, y: -1.25}
+    - {x: 7.15, y: -2.75}
+    spawnAnchor: {x: -7.2, y: 2.8}
+    goalAnchor: {x: 7.15, y: -2.75}
+    visualStyleId: chimney_boss
+    visualWidth: 0.58
+    routeWeight: 0.4
+    tags:
+    - ground
+    - boss
+    - fork
+    spawnDelayOffset: 0.3
+    validationMetadata: Boss-only central chimney branch.
   pathPoints:
   - {x: -7.2, y: 2.8}
   - {x: -5.3, y: -0.1}

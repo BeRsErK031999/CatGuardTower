@@ -29,6 +29,8 @@ The current goal is to expand the working Android MVP into a landscape, multi-ro
 - The post-MVP expansion direction was accepted on 2026-07-21: landscape auto-rotation, larger maps, multiple enemy routes, animated units, in-battle tower upgrades, map-scale ultimates, a home hub, quests, progression, and achievements.
 - `docs/planning/EXPANSION_ROADMAP.md` is the source of truth for that expansion.
 - Expansion section E1 implements the landscape-only runtime boundary, adaptive MainMenu/HUD, safe-area-aware battlefield framing, and Android orientation validation. Its block gate evidence is recorded in `docs/planning/E1_LANDSCAPE_REPORT.md`.
+- Expansion section E2 adds data-driven battlefield bounds, fixed/scrollable cameras, safe placement, and larger maps. Its block gate evidence is recorded in `docs/planning/E2_BATTLEFIELD_REPORT.md`.
+- Expansion section E3 adds explicit multi-route battlefields and waves, normalized cross-route targeting, route presentation/analytics, legacy `main` migration, and deterministic Android route QA. Its block gate evidence is recorded in `docs/planning/E3_MULTI_ROUTE_REPORT.md`.
 
 ## Recommended Reading Order
 
@@ -44,4 +46,4 @@ The current goal is to expand the working Android MVP into a landscape, multi-ro
 
 ## Next Safe Step
 
-E2 is complete and its full gate is recorded in `docs/planning/E2_BATTLEFIELD_REPORT.md`. The next safe implementation block is E3 multi-route gameplay, which must be delivered as a separate task with its own scope and Block Test Gate.
+E3 is complete. The next safe implementation block is E4, the map-authoring and content-validation pipeline. Keep E4 isolated and pass its own block gate before beginning E5.

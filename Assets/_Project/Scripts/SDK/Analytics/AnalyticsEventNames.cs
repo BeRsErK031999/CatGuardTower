@@ -6,6 +6,9 @@ namespace CatGuard.SDK.Analytics
         public const string LevelStart = "level_start";
         public const string LevelComplete = "level_complete";
         public const string LevelFail = "level_fail";
+        public const string EnemySpawn = "enemy_spawn";
+        public const string EnemyDefeat = "enemy_defeat";
+        public const string EnemyEscape = "enemy_escape";
         public const string TowerPlace = "tower_place";
         public const string TowerUpgrade = "tower_upgrade";
         public const string DailyRewardClaim = "daily_reward_claim";

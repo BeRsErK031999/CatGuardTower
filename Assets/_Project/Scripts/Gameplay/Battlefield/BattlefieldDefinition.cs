@@ -7,6 +7,7 @@ namespace CatGuard.Gameplay.Battlefield
     public sealed class BattlefieldDefinition
     {
         private readonly Vector2[] buildCellCenters;
+        private readonly Dictionary<string, PathRouteDefinition> routesById = new(StringComparer.Ordinal);
 
         internal BattlefieldDefinition(
             string id,
@@ -18,15 +19,13 @@ namespace CatGuard.Gameplay.Battlefield
             Rect mapCameraBounds,
             Vector2 cameraFocus,
             float viewHeight,
-            Vector2[] route,
-            float routeVisualWidth,
-            Vector2 spawnAnchor,
-            Vector2 goalAnchor,
+            PathRouteDefinition[] routeDefinitions,
             float cellSize,
             BattlefieldZone[] buildZones,
             BattlefieldZone[] noBuildZones,
             BattlefieldDecorationAnchor[] decorations,
-            bool legacy)
+            bool legacyBattlefield,
+            bool legacyRoute)
         {
             BattlefieldId = id ?? string.Empty;
             DisplayName = title ?? string.Empty;
@@ -37,15 +36,22 @@ namespace CatGuard.Gameplay.Battlefield
             CameraBounds = mapCameraBounds;
             InitialCameraFocus = cameraFocus;
             ScrollableViewHeight = viewHeight;
-            PathPoints = route ?? Array.Empty<Vector2>();
-            PathVisualWidth = routeVisualWidth;
-            SpawnPresentationAnchor = spawnAnchor;
-            GoalPresentationAnchor = goalAnchor;
+            Routes = routeDefinitions ?? Array.Empty<PathRouteDefinition>();
             PlacementCellSize = cellSize;
             PlacementZones = buildZones ?? Array.Empty<BattlefieldZone>();
             BlockedZones = noBuildZones ?? Array.Empty<BattlefieldZone>();
             DecorationAnchors = decorations ?? Array.Empty<BattlefieldDecorationAnchor>();
-            IsLegacy = legacy;
+            IsLegacy = legacyBattlefield;
+            UsesLegacyRoute = legacyRoute;
+
+            foreach (var route in Routes)
+            {
+                if (route != null && !routesById.ContainsKey(route.RouteId))
+                {
+                    routesById.Add(route.RouteId, route);
+                }
+            }
+
             buildCellCenters = CreateBuildCellCenters();
         }
 
@@ -58,15 +64,18 @@ namespace CatGuard.Gameplay.Battlefield
         public Rect CameraBounds { get; }
         public Vector2 InitialCameraFocus { get; }
         public float ScrollableViewHeight { get; }
-        public Vector2[] PathPoints { get; }
-        public float PathVisualWidth { get; }
-        public Vector2 SpawnPresentationAnchor { get; }
-        public Vector2 GoalPresentationAnchor { get; }
+        public PathRouteDefinition[] Routes { get; }
+        public PathRouteDefinition PrimaryRoute => Routes.Length == 0 ? null : Routes[0];
+        public Vector2[] PathPoints => PrimaryRoute?.Points ?? Array.Empty<Vector2>();
+        public float PathVisualWidth => PrimaryRoute?.VisualWidth ?? 0.5f;
+        public Vector2 SpawnPresentationAnchor => PrimaryRoute?.SpawnAnchor ?? WorldBounds.center;
+        public Vector2 GoalPresentationAnchor => PrimaryRoute?.GoalAnchor ?? WorldBounds.center;
         public float PlacementCellSize { get; }
         public BattlefieldZone[] PlacementZones { get; }
         public BattlefieldZone[] BlockedZones { get; }
         public BattlefieldDecorationAnchor[] DecorationAnchors { get; }
         public bool IsLegacy { get; }
+        public bool UsesLegacyRoute { get; }
         public IReadOnlyList<Vector2> BuildCellCenters => buildCellCenters;
         public bool CanPan => CameraMode == BattlefieldCameraMode.ScrollableLarge;
 
@@ -75,6 +84,38 @@ namespace CatGuard.Gameplay.Battlefield
             if (config == null)
             {
                 return null;
+            }
+
+            var routeConfigs = config.RouteConfigs;
+            var usesLegacyRoute = routeConfigs.Length == 0;
+            PathRouteDefinition[] routeDefinitions;
+            if (usesLegacyRoute)
+            {
+                routeDefinitions = config.PathPoints.Length < 2
+                    ? Array.Empty<PathRouteDefinition>()
+                    : new[]
+                    {
+                        new PathRouteDefinition(
+                            "main",
+                            "Main Route",
+                            config.PathPoints,
+                            config.SpawnPresentationAnchor,
+                            config.GoalPresentationAnchor,
+                            "main",
+                            config.PathVisualWidth,
+                            1f,
+                            new[] { "ground", "legacy" },
+                            0f,
+                            "Runtime migration from legacy battlefield pathPoints.")
+                    };
+            }
+            else
+            {
+                routeDefinitions = new PathRouteDefinition[routeConfigs.Length];
+                for (var index = 0; index < routeConfigs.Length; index++)
+                {
+                    routeDefinitions[index] = routeConfigs[index]?.CreateDefinition();
+                }
             }
 
             return new BattlefieldDefinition(
@@ -87,15 +128,19 @@ namespace CatGuard.Gameplay.Battlefield
                 config.CameraBounds,
                 config.InitialCameraFocus,
                 config.ScrollableViewHeight,
-                config.PathPoints,
-                config.PathVisualWidth,
-                config.SpawnPresentationAnchor,
-                config.GoalPresentationAnchor,
+                routeDefinitions,
                 config.PlacementCellSize,
                 config.PlacementZones,
                 config.BlockedZones,
                 config.DecorationAnchors,
-                false);
+                false,
+                usesLegacyRoute);
+        }
+
+        public bool TryGetRoute(string routeId, out PathRouteDefinition route)
+        {
+            route = null;
+            return !string.IsNullOrWhiteSpace(routeId) && routesById.TryGetValue(routeId, out route);
         }
 
         public bool IsValid(out string error)
@@ -122,25 +167,48 @@ namespace CatGuard.Gameplay.Battlefield
                 return false;
             }
 
-            if (PathPoints.Length < 2 || PathVisualWidth <= 0f)
+            if (Routes.Length == 0)
             {
-                error = "Battlefield route requires at least two points and a positive visual width.";
+                error = "Battlefield requires at least one route.";
                 return false;
             }
 
-            foreach (var point in PathPoints)
+            var routeIds = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var route in Routes)
             {
-                if (!Contains(WorldBounds, point))
+                if (route == null
+                    || string.IsNullOrWhiteSpace(route.RouteId)
+                    || string.IsNullOrWhiteSpace(route.DisplayName)
+                    || string.IsNullOrWhiteSpace(route.VisualStyleId)
+                    || route.Points.Length < 2
+                    || route.TotalLength <= 0.0001f
+                    || route.VisualWidth <= 0f
+                    || route.RouteWeight <= 0f)
                 {
-                    error = "Battlefield route points must stay inside world bounds.";
+                    error = "Every route requires identity, presentation, at least two distinct points, and positive width/weight.";
                     return false;
                 }
-            }
 
-            if (!Contains(WorldBounds, SpawnPresentationAnchor) || !Contains(WorldBounds, GoalPresentationAnchor))
-            {
-                error = "Battlefield spawn and goal presentation anchors must stay inside world bounds.";
-                return false;
+                if (!routeIds.Add(route.RouteId))
+                {
+                    error = $"Battlefield route id '{route.RouteId}' is duplicated.";
+                    return false;
+                }
+
+                foreach (var point in route.Points)
+                {
+                    if (!Contains(WorldBounds, point))
+                    {
+                        error = $"Route '{route.RouteId}' contains a point outside world bounds.";
+                        return false;
+                    }
+                }
+
+                if (!Contains(WorldBounds, route.SpawnAnchor) || !Contains(WorldBounds, route.GoalAnchor))
+                {
+                    error = $"Route '{route.RouteId}' endpoints must stay inside world bounds.";
+                    return false;
+                }
             }
 
             if (PlacementCellSize <= 0f || PlacementZones.Length == 0 || buildCellCenters.Length < 4)

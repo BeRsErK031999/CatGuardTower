@@ -31,6 +31,26 @@ MonoBehaviour:
     height: 9
   initialCameraFocus: {x: 0, y: 0}
   scrollableViewHeight: 8.4
+  routes:
+  - routeId: main
+    displayName: Garden Main
+    points:
+    - {x: -6.25, y: 2.45}
+    - {x: -3.8, y: 1.55}
+    - {x: -0.7, y: 2.05}
+    - {x: 2.35, y: 0.75}
+    - {x: 1.1, y: -1.25}
+    - {x: 6.15, y: -2.45}
+    spawnAnchor: {x: -6.25, y: 2.45}
+    goalAnchor: {x: 6.15, y: -2.45}
+    visualStyleId: garden_main
+    visualWidth: 0.48
+    routeWeight: 1
+    tags:
+    - ground
+    - control
+    spawnDelayOffset: 0
+    validationMetadata: E3 single-route regression control.
   pathPoints:
   - {x: -6.25, y: 2.45}
   - {x: -3.8, y: 1.55}

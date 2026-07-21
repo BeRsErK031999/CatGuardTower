@@ -300,6 +300,8 @@ Status: completed by this documentation task.
 
 Размер: `XL`
 
+Статус: завершено; полный Block Test Gate пройден и зафиксирован в [E3_MULTI_ROUTE_REPORT.md](E3_MULTI_ROUTE_REPORT.md).
+
 Главный результат: карта поддерживает несколько одновременных путей, и волны явно решают, по какому маршруту идёт каждый spawn.
 
 ### New data contract
@@ -1131,6 +1133,6 @@ Ceilings здесь означают ожидаемую способность d
 
 ## 9. Next Action
 
-`E2 — Scalable Battlefield, Camera, And Larger Maps` завершён; фактический gate находится в [E2_BATTLEFIELD_REPORT.md](E2_BATTLEFIELD_REPORT.md).
+`E3 — Multi-Route Enemy Path Engine` завершён; фактический gate находится в [E3_MULTI_ROUTE_REPORT.md](E3_MULTI_ROUTE_REPORT.md).
 
-Следующий допустимый implementation block: **`E3 — Multi-Route Engine And Split-Attack Gameplay`**. Он должен выполняться отдельной самостоятельной задачей с собственным scope и Block Test Gate; E2-delivery не включает реализацию E3.
+Следующий допустимый implementation block: **`E4 — Map Authoring And Content Validation Pipeline`**. Он должен выполняться отдельной самостоятельной задачей с собственным scope и Block Test Gate; E3-delivery не включает реализацию E4.

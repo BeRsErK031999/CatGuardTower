@@ -41,6 +41,17 @@ The previous `_project_scaffold/` contents have been moved into `Assets/_Project
 - Runtime map presentation is organized into `Background`, `Terrain`, `Route`, `PropsBelowUnits`, `UnitsAndProjectiles`, `PropsAboveUnits`, `VFX`, and `WorldIndicators` layers. Missing final art falls back to the existing self-made texture and procedural shapes without changing combat.
 - `E2ProjectSetup` creates and validates `Garden Gate Wide`, `Old Well Crossing`, and `Rooftop Moonline`. `tools/android/run-emulator-battlefield-qa.ps1` exercises the manual camera/placement boundary on Android.
 
+## E3 Multi-Route Engine
+
+- `PathRouteConfig` is the serialized route contract: stable id, display name, ordered points, spawn/goal anchors, style, width, weight, tags, spawn offset, and validation metadata. `PathRouteDefinition` caches total route length for normalized progress.
+- `BattlefieldDefinition` owns a validated route collection and exact-id lookup. Persisted E2 maps are migrated to explicit route arrays; an old `pathPoints` payload or legacy `LevelConfig` is exposed as deterministic route `main` without reintroducing a single-path runtime dependency.
+- Each `WaveEnemyGroup` stores either one explicit route id or an ordered round-robin list. `PrototypeWaveSpawner` can run groups sequentially or concurrently, resolves every spawn deterministically, and emits a warning for the chosen route endpoint.
+- `BasicEnemy` retains its assigned `PathRouteDefinition` for its lifetime and reports normalized progress independent of path length. Visual route crossings do not change that reference.
+- `BasicTower` uses configured `First`, `Last`, or `Strong` priority. `EnemyTargeting` compares all in-range enemies across lanes using normalized progress/health with deterministic ties.
+- Route-specific spawn, defeat, and escape events include route data through `AnalyticsService`; VFX and defeat state use the actual route goal.
+- `E3ProjectSetup` validates the single-route control, independent Old Well lanes, Rooftop shared-spawn/shared-goal fork, boss-only routes, wave references, targeting, analytics, and runtime source boundaries.
+- `tools/android/run-emulator-route-qa.ps1` aggregates victory, route-filtered defeat, simultaneous-spawn, restart/save, screenshot, and fatal-log evidence.
+
 ## Initial Scenes
 
 - `Boot`: initial bootstrap scene with a 2D camera and `GameBootstrap`.
@@ -61,17 +72,17 @@ The `.unity` scene files were created through Unity Editor batchmode, not as han
 - `PrototypeLevelController` owns level state, lives, spawned enemies, active enemies, tower creation, and win/lose evaluation.
 - Phase 2 originally used a temporary prototype tuning asset; Phase 3 replaced it with `LevelConfig`, `WaveConfig`, `TowerConfig`, and `EnemyConfig`.
 - `TowerGrid` lets the player tap grid cells to place the selected tower type.
-- `BasicTower` targets the nearest enemy inside range and applies direct damage.
-- `BasicEnemy` follows the configured path and damages the base if it reaches the end.
+- `BasicTower` targets an in-range enemy through its configured deterministic priority and applies direct damage.
+- `BasicEnemy` follows its assigned route and damages that route's goal if it reaches the end.
 - `PrototypeWaveSpawner` runs one wave.
 - `PrototypeHud` displays lives, enemy progress, tower count, tower selection, instructions, and result buttons.
 
 ## Phase 3 Config-Driven Core
 
-- `LevelConfig` stores base lives, grid settings, path points, available towers, and the active wave.
+- `LevelConfig` stores base lives, available towers, the active wave, and a battlefield reference; old grid/path data remains compatibility-only.
 - `TowerConfig` stores tower id, display name, range, damage, fire interval, visual scale, and visual color.
 - `EnemyConfig` stores enemy id, display name, health, speed, base damage, visual scale, and visual color.
-- `WaveConfig` stores ordered enemy groups with enemy config references, counts, spawn intervals, and group delays.
+- `WaveConfig` stores enemy groups with enemy config references, counts, spawn timing, route selection, and sequential/concurrent scheduling.
 - `Level01Config.asset` references three tower configs: `CatDartTower`, `YarnCannonTower`, and `BellSniperTower`.
 - `FirstCoreWave.asset` references three enemy configs: `MouseScoutEnemy`, `RatBruiserEnemy`, and `BeetleGuardEnemy`.
 

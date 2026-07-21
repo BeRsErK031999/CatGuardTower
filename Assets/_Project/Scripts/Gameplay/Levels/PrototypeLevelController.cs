@@ -28,6 +28,8 @@ namespace CatGuard.Gameplay.Levels
         private readonly List<BasicEnemy> activeEnemies = new();
         private readonly List<BasicEnemy> attackTargets = new();
         private readonly List<BasicTower> towers = new();
+        private readonly Dictionary<string, RouteBattleStats> routeStats = new(System.StringComparer.Ordinal);
+        private readonly Dictionary<string, float> incomingRouteWarnings = new(System.StringComparer.Ordinal);
         private int selectedTowerIndex;
         private bool waveCompleted;
         private bool resultApplied;
@@ -39,6 +41,8 @@ namespace CatGuard.Gameplay.Levels
         private BattlefieldInputController battlefieldInputController;
         private Transform unitsLayer;
         private Transform vfxLayer;
+        private int expectedEnemyCount;
+        private Vector2 lastGoalPosition;
 
         public PrototypeLevelState State { get; private set; } = PrototypeLevelState.NotStarted;
         public int Lives { get; private set; }
@@ -51,9 +55,11 @@ namespace CatGuard.Gameplay.Levels
         public BattlefieldCameraController BattlefieldCamera => battlefieldCameraController;
         public BattlefieldInputController BattlefieldInput => battlefieldInputController;
         public int SelectedTowerIndex => selectedTowerIndex;
-        public int TotalEnemies => config?.WaveConfig == null ? 0 : config.WaveConfig.TotalEnemyCount;
+        public int TotalEnemies => expectedEnemyCount;
         public int ActiveEnemyCount => activeEnemies.Count;
         public int TowerCount => towers.Count;
+        public IReadOnlyDictionary<string, RouteBattleStats> RouteStats => routeStats;
+        public string DevelopmentRouteFilter { get; private set; } = string.Empty;
         public TowerConfig SelectedTowerConfig => GetTowerConfig(selectedTowerIndex);
         public bool CanPlaceTowers => State is PrototypeLevelState.Preparing or PrototypeLevelState.Running;
         public bool CanStartWave => State == PrototypeLevelState.Preparing && waveSpawner != null;
@@ -127,10 +133,11 @@ namespace CatGuard.Gameplay.Levels
             return true;
         }
 
-        public BasicEnemy FindNearestEnemy(Vector3 origin, float range)
+        public BasicEnemy FindTargetEnemy(Vector3 origin, float range, TowerTargetPriority priority)
         {
-            BasicEnemy nearest = null;
-            var nearestDistance = range * range;
+            BasicEnemy selected = null;
+            EnemyTargetingMetrics selectedMetrics = default;
+            var maximumDistance = range * range;
 
             foreach (var enemy in activeEnemies)
             {
@@ -140,16 +147,25 @@ namespace CatGuard.Gameplay.Levels
                 }
 
                 var distance = (enemy.transform.position - origin).sqrMagnitude;
-                if (distance > nearestDistance)
+                if (distance > maximumDistance)
                 {
                     continue;
                 }
 
-                nearest = enemy;
-                nearestDistance = distance;
+                var metrics = new EnemyTargetingMetrics(
+                    enemy.RouteId,
+                    enemy.NormalizedProgress,
+                    enemy.MaxHealth,
+                    distance,
+                    enemy.SpawnOrder);
+                if (selected == null || EnemyTargeting.IsBetter(priority, metrics, selectedMetrics))
+                {
+                    selected = enemy;
+                    selectedMetrics = metrics;
+                }
             }
 
-            return nearest;
+            return selected;
         }
 
         public void ApplyTowerAttack(BasicEnemy primaryTarget, float damage, float splashRadius)
@@ -218,27 +234,32 @@ namespace CatGuard.Gameplay.Levels
 
         public void SpawnEnemy(
             EnemyConfig enemyConfig,
+            PathRouteDefinition route,
             float healthMultiplier = 1f,
             float speedMultiplier = 1f)
         {
-            if (State != PrototypeLevelState.Running || enemyConfig == null)
+            if (State != PrototypeLevelState.Running || enemyConfig == null || route == null)
             {
                 return;
             }
 
-            var enemyObject = new GameObject($"{enemyConfig.DisplayName}_{SpawnedEnemies + 1:00}");
+            var spawnOrder = SpawnedEnemies + 1;
+            var enemyObject = new GameObject($"{enemyConfig.DisplayName}_{route.RouteId}_{spawnOrder:00}");
             enemyObject.transform.SetParent(unitsLayer != null ? unitsLayer : runtimeRoot, false);
 
             var enemy = enemyObject.AddComponent<BasicEnemy>();
             enemy.Initialize(
                 this,
-                Battlefield.PathPoints,
+                route,
                 enemyConfig,
+                spawnOrder,
                 healthMultiplier,
                 speedMultiplier);
 
             activeEnemies.Add(enemy);
             SpawnedEnemies++;
+            GetRouteStats(route.RouteId).RecordSpawn(Time.unscaledTime);
+            AnalyticsService.TrackEnemySpawn(config, enemyConfig, route, spawnOrder);
         }
 
         public void HandleEnemyDefeated(BasicEnemy enemy)
@@ -248,8 +269,10 @@ namespace CatGuard.Gameplay.Levels
             {
                 DefeatedEnemies++;
                 BattleFish += enemy.BattleFishReward;
+                GetRouteStats(enemy.RouteId).RecordDefeat();
             }
 
+            AnalyticsService.TrackEnemyDefeat(config, enemy);
             ProceduralAudioService.Play(ProceduralSoundId.EnemyDefeated);
             SimpleVfxFactory.Spawn(position, SimpleVfxStyle.EnemyDefeated, vfxLayer != null ? vfxLayer : runtimeRoot);
             Destroy(enemy.gameObject);
@@ -258,12 +281,15 @@ namespace CatGuard.Gameplay.Levels
 
         public void HandleEnemyReachedBase(BasicEnemy enemy, int damage)
         {
-            var position = enemy == null ? (Vector3)Battlefield.GoalPresentationAnchor : enemy.transform.position;
+            var position = enemy?.Route == null ? (Vector3)Battlefield.PrimaryRoute.GoalAnchor : (Vector3)enemy.Route.GoalAnchor;
             if (activeEnemies.Remove(enemy))
             {
                 EscapedEnemies++;
+                GetRouteStats(enemy.RouteId).RecordEscape();
             }
 
+            lastGoalPosition = position;
+            AnalyticsService.TrackEnemyEscape(config, enemy);
             Lives = Mathf.Max(0, Lives - Mathf.Max(1, damage));
             ProceduralAudioService.Play(ProceduralSoundId.BaseHit);
             SimpleVfxFactory.Spawn(position, SimpleVfxStyle.BaseHit, vfxLayer != null ? vfxLayer : runtimeRoot);
@@ -275,6 +301,51 @@ namespace CatGuard.Gameplay.Levels
         {
             waveCompleted = true;
             EvaluateResult();
+        }
+
+        public void RegisterIncomingRoute(string routeId, float durationSeconds)
+        {
+            if (string.IsNullOrWhiteSpace(routeId) || !Battlefield.TryGetRoute(routeId, out _))
+            {
+                return;
+            }
+
+            incomingRouteWarnings[routeId] = Time.unscaledTime + Mathf.Max(0.1f, durationSeconds);
+        }
+
+        public bool IsRouteWarningActive(string routeId)
+        {
+            return !string.IsNullOrWhiteSpace(routeId)
+                && incomingRouteWarnings.TryGetValue(routeId, out var expiresAt)
+                && expiresAt >= Time.unscaledTime;
+        }
+
+        public bool ConfigureDevelopmentScenario(string routeFilter, int startingLives)
+        {
+            if (State != PrototypeLevelState.Preparing)
+            {
+                return false;
+            }
+
+            DevelopmentRouteFilter = routeFilter ?? string.Empty;
+            if (!string.IsNullOrWhiteSpace(DevelopmentRouteFilter)
+                && !Battlefield.TryGetRoute(DevelopmentRouteFilter, out _))
+            {
+                return false;
+            }
+
+            expectedEnemyCount = config.WaveConfig.GetExpectedEnemyCount(DevelopmentRouteFilter);
+            if (expectedEnemyCount <= 0)
+            {
+                return false;
+            }
+
+            if (startingLives > 0)
+            {
+                Lives = startingLives;
+            }
+
+            return true;
         }
 
         public bool TryClaimVictoryDoubleReward()
@@ -321,7 +392,7 @@ namespace CatGuard.Gameplay.Levels
             Lives = Mathf.Max(1, Mathf.CeilToInt((config.BaseLives + ProgressionService.GetBaseLivesBonus()) * 0.5f));
             State = PrototypeLevelState.Running;
             ProceduralAudioService.Play(ProceduralSoundId.Victory);
-            SimpleVfxFactory.Spawn(Battlefield.GoalPresentationAnchor, SimpleVfxStyle.Victory, vfxLayer != null ? vfxLayer : runtimeRoot);
+            SimpleVfxFactory.Spawn(lastGoalPosition, SimpleVfxStyle.Victory, vfxLayer != null ? vfxLayer : runtimeRoot);
             return true;
         }
 
@@ -349,6 +420,13 @@ namespace CatGuard.Gameplay.Levels
                 return;
             }
 
+            if (!config.WaveConfig.IsValid(Battlefield, out var waveRouteError))
+            {
+                Debug.LogError($"Level {config.LevelId} has invalid wave routes: {waveRouteError}");
+                enabled = false;
+                return;
+            }
+
             ClearRuntimeObjects();
             BuildMapView();
             EnsureBattlefieldControllers();
@@ -358,6 +436,7 @@ namespace CatGuard.Gameplay.Levels
             DefeatedEnemies = 0;
             EscapedEnemies = 0;
             SpawnedEnemies = 0;
+            expectedEnemyCount = config.WaveConfig.TotalEnemyCount;
             BattleFish = config.StartingBattleFish;
             selectedTowerIndex = 0;
             waveCompleted = false;
@@ -365,6 +444,17 @@ namespace CatGuard.Gameplay.Levels
             victoryRewardDoubled = false;
             reviveUsed = false;
             CompletionResult = null;
+            DevelopmentRouteFilter = string.Empty;
+            lastGoalPosition = Battlefield.PrimaryRoute.GoalAnchor;
+            routeStats.Clear();
+            incomingRouteWarnings.Clear();
+            foreach (var route in Battlefield.Routes)
+            {
+                if (route != null)
+                {
+                    routeStats[route.RouteId] = new RouteBattleStats(route.RouteId);
+                }
+            }
             State = PrototypeLevelState.Preparing;
 
             towerGrid.Initialize(this, Battlefield);
@@ -389,7 +479,7 @@ namespace CatGuard.Gameplay.Levels
                 resultApplied = true;
                 AnalyticsService.TrackLevelFail(config, DefeatedEnemies, EscapedEnemies, TowerCount, "base_lost");
                 ProceduralAudioService.Play(ProceduralSoundId.Defeat);
-                SimpleVfxFactory.Spawn(Battlefield.GoalPresentationAnchor, SimpleVfxStyle.Defeat, vfxLayer != null ? vfxLayer : runtimeRoot);
+                SimpleVfxFactory.Spawn(lastGoalPosition, SimpleVfxStyle.Defeat, vfxLayer != null ? vfxLayer : runtimeRoot);
                 return;
             }
 
@@ -441,19 +531,7 @@ namespace CatGuard.Gameplay.Levels
             CreateTerrain(terrainLayer);
             CreateBlockedZoneVisuals(terrainLayer);
             CreateDecorations(propsBelowLayer, propsAboveLayer);
-            CreatePathLine(routeLayer);
-            CreateMarker(
-                "Spawn",
-                Battlefield.SpawnPresentationAnchor,
-                new Color(0.035f, 0.16f, 0.14f, 0.88f),
-                new Color(0.3f, 0.82f, 0.48f, 0.9f),
-                indicatorsLayer);
-            CreateMarker(
-                "Base",
-                Battlefield.GoalPresentationAnchor,
-                new Color(0.24f, 0.11f, 0.035f, 0.88f),
-                new Color(0.94f, 0.61f, 0.18f, 0.92f),
-                indicatorsLayer);
+            CreateRouteVisuals(routeLayer, indicatorsLayer);
         }
 
         private void EnsureBattlefieldControllers()
@@ -613,31 +691,58 @@ namespace CatGuard.Gameplay.Levels
             }
         }
 
-        private void CreatePathLine(Transform parent)
+        private void CreateRouteVisuals(Transform routeParent, Transform indicatorsParent)
         {
             gameplayPathMaterial = new Material(Shader.Find("Sprites/Default"))
             {
                 name = "GameplayPathMaterial"
             };
 
-            CreatePathStroke(
-                "EnemyPathBorder",
-                Battlefield.PathVisualWidth * 1.35f,
-                4,
-                new Color(0.2f, 0.105f, 0.04f, 0.8f),
-                new Color(0.25f, 0.13f, 0.05f, 0.82f),
-                parent);
-            CreatePathStroke(
-                "EnemyPath",
-                Battlefield.PathVisualWidth,
-                5,
-                new Color(0.78f, 0.64f, 0.38f, 0.92f),
-                new Color(0.74f, 0.48f, 0.22f, 0.94f),
-                parent);
+            var markerKeys = new HashSet<Vector3Int>();
+            for (var index = 0; index < Battlefield.Routes.Length; index++)
+            {
+                var route = Battlefield.Routes[index];
+                var (startColor, endColor) = GetRouteColors(route.VisualStyleId, index);
+                CreatePathStroke(
+                    $"Route_{route.RouteId}_Border",
+                    route,
+                    route.VisualWidth * 1.35f,
+                    4 + (index * 2),
+                    new Color(0.12f, 0.08f, 0.05f, 0.78f),
+                    new Color(0.18f, 0.09f, 0.04f, 0.82f),
+                    routeParent);
+                CreatePathStroke(
+                    $"Route_{route.RouteId}",
+                    route,
+                    route.VisualWidth,
+                    5 + (index * 2),
+                    startColor,
+                    endColor,
+                    routeParent);
+                CreateRouteDirectionMarkers(route, endColor, 6 + (index * 2), routeParent);
+
+                CreateRouteMarkerOnce(
+                    markerKeys,
+                    $"Spawn_{route.RouteId}",
+                    route.SpawnAnchor,
+                    0,
+                    new Color(0.035f, 0.16f, 0.14f, 0.88f),
+                    startColor,
+                    indicatorsParent);
+                CreateRouteMarkerOnce(
+                    markerKeys,
+                    $"Goal_{route.RouteId}",
+                    route.GoalAnchor,
+                    1,
+                    new Color(0.24f, 0.11f, 0.035f, 0.88f),
+                    endColor,
+                    indicatorsParent);
+            }
         }
 
         private void CreatePathStroke(
             string objectName,
+            PathRouteDefinition route,
             float width,
             int sortingOrder,
             Color startColor,
@@ -648,7 +753,7 @@ namespace CatGuard.Gameplay.Levels
             pathObject.transform.SetParent(parent, false);
 
             var line = pathObject.AddComponent<LineRenderer>();
-            line.positionCount = Battlefield.PathPoints.Length;
+            line.positionCount = route.Points.Length;
             line.useWorldSpace = true;
             line.startWidth = width;
             line.endWidth = width;
@@ -659,9 +764,81 @@ namespace CatGuard.Gameplay.Levels
             line.startColor = startColor;
             line.endColor = endColor;
 
-            for (var index = 0; index < Battlefield.PathPoints.Length; index++)
+            for (var index = 0; index < route.Points.Length; index++)
             {
-                line.SetPosition(index, Battlefield.PathPoints[index]);
+                line.SetPosition(index, route.Points[index]);
+            }
+        }
+
+        private static void CreateRouteDirectionMarkers(
+            PathRouteDefinition route,
+            Color color,
+            int sortingOrder,
+            Transform parent)
+        {
+            for (var index = 1; index < route.Points.Length; index++)
+            {
+                var start = route.Points[index - 1];
+                var end = route.Points[index];
+                var direction = end - start;
+                if (direction.sqrMagnitude <= 0.0001f)
+                {
+                    continue;
+                }
+
+                var marker = new GameObject($"Direction_{route.RouteId}_{index:00}");
+                marker.transform.SetParent(parent, false);
+                marker.transform.position = Vector2.Lerp(start, end, 0.58f);
+                marker.transform.rotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg);
+                marker.transform.localScale = new Vector3(0.34f, 0.24f, 1f);
+
+                var renderer = marker.AddComponent<SpriteRenderer>();
+                renderer.sprite = PrototypeSpriteFactory.ArrowSprite;
+                renderer.color = new Color(color.r, color.g, color.b, 0.86f);
+                renderer.sortingOrder = sortingOrder;
+            }
+        }
+
+        private static (Color Start, Color End) GetRouteColors(string styleId, int index)
+        {
+            var normalized = (styleId ?? string.Empty).ToLowerInvariant();
+            if (normalized.Contains("north") || normalized.Contains("moon"))
+            {
+                return (new Color(0.42f, 0.78f, 0.86f, 0.9f), new Color(0.25f, 0.62f, 0.78f, 0.94f));
+            }
+
+            if (normalized.Contains("south") || normalized.Contains("west"))
+            {
+                return (new Color(0.86f, 0.68f, 0.36f, 0.92f), new Color(0.82f, 0.46f, 0.22f, 0.95f));
+            }
+
+            if (normalized.Contains("boss") || normalized.Contains("chimney"))
+            {
+                return (new Color(0.72f, 0.4f, 0.72f, 0.92f), new Color(0.52f, 0.24f, 0.58f, 0.96f));
+            }
+
+            var tint = Mathf.Repeat(index * 0.13f, 0.32f);
+            return (
+                new Color(0.78f - tint, 0.64f + (tint * 0.25f), 0.38f + tint, 0.92f),
+                new Color(0.74f - tint, 0.48f + (tint * 0.2f), 0.22f + tint, 0.94f));
+        }
+
+        private static void CreateRouteMarkerOnce(
+            ISet<Vector3Int> markerKeys,
+            string markerName,
+            Vector2 position,
+            int markerType,
+            Color borderColor,
+            Color fillColor,
+            Transform parent)
+        {
+            var key = new Vector3Int(
+                Mathf.RoundToInt(position.x * 100f),
+                Mathf.RoundToInt(position.y * 100f),
+                markerType);
+            if (markerKeys.Add(key))
+            {
+                CreateMarker(markerName, position, borderColor, fillColor, parent);
             }
         }
 
@@ -673,6 +850,18 @@ namespace CatGuard.Gameplay.Levels
             }
 
             return config.AvailableTowers[towerIndex];
+        }
+
+        private RouteBattleStats GetRouteStats(string routeId)
+        {
+            var normalizedRouteId = string.IsNullOrWhiteSpace(routeId) ? "unknown" : routeId;
+            if (!routeStats.TryGetValue(normalizedRouteId, out var stats))
+            {
+                stats = new RouteBattleStats(normalizedRouteId);
+                routeStats[normalizedRouteId] = stats;
+            }
+
+            return stats;
         }
 
         private static void CreateMarker(

@@ -19,15 +19,25 @@ MonoBehaviour:
     delayBeforeGroup: 0
     healthMultiplier: 1.5
     speedMultiplier: 1.2
+    routeSelectionRule: 0
+    routeIds:
+    - north_lane
   - enemyConfig: {fileID: 11400000, guid: a52e892d13cddf440a1b5c66acd5069b, type: 2}
     count: 7
     spawnInterval: 0.62
-    delayBeforeGroup: 0.4
+    delayBeforeGroup: 0
     healthMultiplier: 1.5
     speedMultiplier: 1.2
+    routeSelectionRule: 0
+    routeIds:
+    - south_lane
   - enemyConfig: {fileID: 11400000, guid: b47878b293e7cdf4bb20b3301eb7876d, type: 2}
     count: 5
     spawnInterval: 0.82
-    delayBeforeGroup: 0.6
+    delayBeforeGroup: 0.4
     healthMultiplier: 1.5
     speedMultiplier: 1.2
+    routeSelectionRule: 0
+    routeIds:
+    - well_boss
+  concurrentGroups: 1

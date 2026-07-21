@@ -2,6 +2,13 @@ using UnityEngine;
 
 namespace CatGuard.Gameplay.Towers
 {
+    public enum TowerTargetPriority
+    {
+        First,
+        Last,
+        Strong
+    }
+
     [CreateAssetMenu(fileName = "TowerConfig", menuName = "Cat Guard/Tower Config")]
     public sealed class TowerConfig : ScriptableObject
     {
@@ -19,6 +26,7 @@ namespace CatGuard.Gameplay.Towers
         [SerializeField] private float visualScale = 0.62f;
         [SerializeField] private Color visualColor = new(0.24f, 0.78f, 0.96f);
         [SerializeField] private Sprite visualSprite;
+        [SerializeField] private TowerTargetPriority targetPriority = TowerTargetPriority.First;
 
         [Header("Economy")]
         [Min(1)]
@@ -33,6 +41,7 @@ namespace CatGuard.Gameplay.Towers
         public float VisualScale => Mathf.Max(0.1f, visualScale);
         public Color VisualColor => visualColor;
         public Sprite VisualSprite => visualSprite;
+        public TowerTargetPriority TargetPriority => targetPriority;
         public int BuildCost => Mathf.Max(1, buildCost);
 
         public bool IsValid()
@@ -56,7 +65,8 @@ namespace CatGuard.Gameplay.Towers
             Color color,
             int cost = 45,
             float attackSplashRadius = 0f,
-            Sprite sprite = null)
+            Sprite sprite = null,
+            TowerTargetPriority priority = TowerTargetPriority.First)
         {
             towerId = id;
             displayName = title;
@@ -67,7 +77,13 @@ namespace CatGuard.Gameplay.Towers
             visualScale = scale;
             visualColor = color;
             visualSprite = sprite;
+            targetPriority = priority;
             buildCost = Mathf.Max(1, cost);
+        }
+
+        public void ConfigureTargetPriority(TowerTargetPriority priority)
+        {
+            targetPriority = priority;
         }
     }
 }

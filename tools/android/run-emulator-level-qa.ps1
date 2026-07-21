@@ -15,6 +15,8 @@
         "bell_sniper"
     ),
     [string]$ScenarioId = "",
+    [string]$RouteIdFilter = "",
+    [int]$StartingLives = 0,
     [string]$ApkPath = "Builds\Android\CatGuardTowerDefense-emulator.apk",
     [string]$PackageName = "com.catguard.towerdefense.qa",
     [string]$DeviceSerial = "",
@@ -243,6 +245,8 @@ $externalFilesPath = "/sdcard/Android/data/$PackageName/files"
     scenarioId = $effectiveScenarioId
     levelId = $LevelId
     towerIds = $TowerIds
+    routeIdFilter = $RouteIdFilter
+    startingLives = $StartingLives
 } | ConvertTo-Json -Depth 3 | Set-Content -LiteralPath $commandPath -Encoding UTF8
 
 Invoke-TargetAdb -Arguments @("shell", "am", "force-stop", $PackageName) -AllowFailure | Out-Null

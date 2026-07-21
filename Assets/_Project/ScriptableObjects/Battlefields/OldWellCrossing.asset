@@ -31,6 +31,70 @@ MonoBehaviour:
     height: 8.6
   initialCameraFocus: {x: -6, y: 0}
   scrollableViewHeight: 6
+  routes:
+  - routeId: north_lane
+    displayName: North Lane
+    points:
+    - {x: -11, y: 2.55}
+    - {x: -7.7, y: 1.45}
+    - {x: -4.4, y: 2.35}
+    - {x: -1.9, y: 1.75}
+    - {x: 2.1, y: 1.75}
+    - {x: 5.1, y: 2.3}
+    - {x: 8.2, y: 1.45}
+    - {x: 11, y: 2.55}
+    spawnAnchor: {x: -11, y: 2.55}
+    goalAnchor: {x: 11, y: 2.55}
+    visualStyleId: well_north
+    visualWidth: 0.48
+    routeWeight: 1
+    tags:
+    - ground
+    - lane
+    spawnDelayOffset: 0
+    validationMetadata: Separate northern lane.
+  - routeId: south_lane
+    displayName: South Lane
+    points:
+    - {x: -11, y: -2.55}
+    - {x: -8, y: -1.25}
+    - {x: -4.8, y: -2.05}
+    - {x: -2, y: -2.45}
+    - {x: 2, y: -2.45}
+    - {x: 5, y: -1.3}
+    - {x: 8.1, y: -1.7}
+    - {x: 11, y: -2.55}
+    spawnAnchor: {x: -11, y: -2.55}
+    goalAnchor: {x: 11, y: -2.55}
+    visualStyleId: well_south
+    visualWidth: 0.48
+    routeWeight: 1
+    tags:
+    - ground
+    - lane
+    spawnDelayOffset: 0
+    validationMetadata: Separate southern lane.
+  - routeId: well_boss
+    displayName: Well Boss Route
+    points:
+    - {x: -11, y: 0}
+    - {x: -7, y: 0.45}
+    - {x: -3, y: 0.55}
+    - {x: -1.85, y: 1.85}
+    - {x: 1.85, y: 1.85}
+    - {x: 3.2, y: 0.35}
+    - {x: 7.1, y: 0.2}
+    - {x: 11, y: 0}
+    spawnAnchor: {x: -11, y: 0}
+    goalAnchor: {x: 11, y: 0}
+    visualStyleId: well_boss
+    visualWidth: 0.6
+    routeWeight: 0.45
+    tags:
+    - ground
+    - boss
+    spawnDelayOffset: 0.35
+    validationMetadata: Boss-only route around the old well.
   pathPoints:
   - {x: -11, y: 2.5}
   - {x: -8, y: 1.2}

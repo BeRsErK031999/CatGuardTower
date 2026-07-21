@@ -1,3 +1,4 @@
+using CatGuard.Gameplay.Battlefield;
 using CatGuard.Gameplay.Levels;
 using CatGuard.Utils;
 using UnityEngine;
@@ -8,7 +9,7 @@ namespace CatGuard.Gameplay.Enemies
     {
         private PrototypeLevelController levelController;
         private EnemyConfig config;
-        private Vector2[] pathPoints;
+        private PathRouteDefinition route;
         private SpriteRenderer spriteRenderer;
         private float maxHealth;
         private float currentHealth;
@@ -19,26 +20,36 @@ namespace CatGuard.Gameplay.Enemies
 
         public bool IsAlive => !completed && currentHealth > 0f;
         public float HealthPercent => maxHealth <= 0f ? 0f : Mathf.Clamp01(currentHealth / maxHealth);
+        public float MaxHealth => maxHealth;
+        public float CurrentHealth => currentHealth;
+        public float NormalizedProgress { get; private set; }
         public int BattleFishReward => config == null ? 0 : config.BattleFishReward;
+        public PathRouteDefinition Route => route;
+        public string RouteId => route?.RouteId ?? string.Empty;
+        public int SpawnOrder { get; private set; }
+        public string EnemyId => config?.EnemyId ?? string.Empty;
 
         public void Initialize(
             PrototypeLevelController owner,
-            Vector2[] path,
+            PathRouteDefinition assignedRoute,
             EnemyConfig enemyConfig,
+            int spawnOrder,
             float healthMultiplier = 1f,
             float speedMultiplier = 1f)
         {
             levelController = owner;
             config = enemyConfig;
-            pathPoints = path;
+            route = assignedRoute;
+            SpawnOrder = spawnOrder;
             maxHealth = config.Health * Mathf.Max(0.1f, healthMultiplier);
             currentHealth = maxHealth;
             speed = config.Speed * Mathf.Max(0.1f, speedMultiplier);
             baseDamage = config.BaseDamage;
             nextPathIndex = 1;
             completed = false;
+            NormalizedProgress = 0f;
 
-            transform.position = pathPoints[0];
+            transform.position = route.Points[0];
             EnsureVisual();
             UpdateVisual();
         }
@@ -67,20 +78,22 @@ namespace CatGuard.Gameplay.Enemies
                 return;
             }
 
-            if (pathPoints == null || nextPathIndex >= pathPoints.Length)
+            if (route == null || route.Points == null || nextPathIndex >= route.Points.Length)
             {
                 ReachBase();
                 return;
             }
 
-            var target = (Vector3)pathPoints[nextPathIndex];
+            var target = (Vector3)route.Points[nextPathIndex];
             transform.position = Vector3.MoveTowards(transform.position, target, speed * Time.deltaTime);
+            NormalizedProgress = route.GetNormalizedProgress(nextPathIndex, transform.position);
 
             if (Vector3.Distance(transform.position, target) <= 0.02f)
             {
                 nextPathIndex++;
-                if (nextPathIndex >= pathPoints.Length)
+                if (nextPathIndex >= route.Points.Length)
                 {
+                    NormalizedProgress = 1f;
                     ReachBase();
                 }
             }

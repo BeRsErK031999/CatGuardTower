@@ -19,15 +19,25 @@ MonoBehaviour:
     delayBeforeGroup: 0
     healthMultiplier: 1
     speedMultiplier: 1
+    routeSelectionRule: 0
+    routeIds:
+    - main
   - enemyConfig: {fileID: 11400000, guid: a52e892d13cddf440a1b5c66acd5069b, type: 2}
     count: 4
     spawnInterval: 0.78
     delayBeforeGroup: 0.5
     healthMultiplier: 1
     speedMultiplier: 1
+    routeSelectionRule: 0
+    routeIds:
+    - main
   - enemyConfig: {fileID: 11400000, guid: d8e34b8a87134304781d6f19ceee8c6a, type: 2}
     count: 8
     spawnInterval: 0.32
     delayBeforeGroup: 0.5
     healthMultiplier: 1
     speedMultiplier: 1
+    routeSelectionRule: 0
+    routeIds:
+    - main
+  concurrentGroups: 0

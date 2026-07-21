@@ -184,6 +184,8 @@ namespace CatGuard.QA
         public string levelId;
         public string[] towerIds = Array.Empty<string>();
         public bool manualInput;
+        public string routeIdFilter;
+        public int startingLives;
     }
 
     [Serializable]
@@ -216,6 +218,19 @@ namespace CatGuard.QA
         public float cameraMinFocusY;
         public float cameraMaxFocusY;
         public DevelopmentQaCellSnapshot[] cells = Array.Empty<DevelopmentQaCellSnapshot>();
+        public string[] configuredRouteIds = Array.Empty<string>();
+        public string[] incomingRouteIds = Array.Empty<string>();
+    }
+
+    [Serializable]
+    public sealed class DevelopmentQaRouteResult
+    {
+        public string routeId;
+        public int spawned;
+        public int defeated;
+        public int escaped;
+        public float firstSpawnTime;
+        public float lastSpawnTime;
     }
 
     [Serializable]
@@ -234,6 +249,9 @@ namespace CatGuard.QA
         public int battleFish;
         public float durationSeconds;
         public string[] towerIds = Array.Empty<string>();
+        public string routeIdFilter;
+        public string[] configuredRouteIds = Array.Empty<string>();
+        public DevelopmentQaRouteResult[] routes = Array.Empty<DevelopmentQaRouteResult>();
         public string error;
     }
 
@@ -274,6 +292,21 @@ namespace CatGuard.QA
             towerGrid = grid;
             command = qaCommand;
             startedAt = Time.unscaledTime;
+
+            if (!controller.ConfigureDevelopmentScenario(command.routeIdFilter, command.startingLives))
+            {
+                completed = true;
+                DevelopmentQaService.Complete(new DevelopmentQaResult
+                {
+                    scenarioId = command.scenarioId ?? string.Empty,
+                    levelId = controller.Config.LevelId,
+                    battlefieldId = controller.Battlefield.BattlefieldId,
+                    state = "error",
+                    routeIdFilter = command.routeIdFilter ?? string.Empty,
+                    error = "Development route filter or expected enemy count is invalid."
+                });
+                return;
+            }
 
             if (command.manualInput)
             {
@@ -325,6 +358,9 @@ namespace CatGuard.QA
                     battleFish = controller.BattleFish,
                     durationSeconds = Time.unscaledTime - startedAt,
                     towerIds = command.towerIds ?? Array.Empty<string>(),
+                    routeIdFilter = command.routeIdFilter ?? string.Empty,
+                    configuredRouteIds = GetConfiguredRouteIds(),
+                    routes = GetRouteResults(),
                     error = string.Empty
                 });
             }
@@ -420,6 +456,14 @@ namespace CatGuard.QA
             }
 
             var limits = cameraController.FocusLimits;
+            var incomingRoutes = new List<string>();
+            foreach (var route in battlefield.Routes)
+            {
+                if (controller.IsRouteWarningActive(route.RouteId))
+                {
+                    incomingRoutes.Add(route.RouteId);
+                }
+            }
             DevelopmentQaService.WriteSnapshot(new DevelopmentQaSnapshot
             {
                 scenarioId = command.scenarioId ?? string.Empty,
@@ -436,8 +480,46 @@ namespace CatGuard.QA
                 cameraMaxFocusX = limits.xMax,
                 cameraMinFocusY = limits.yMin,
                 cameraMaxFocusY = limits.yMax,
-                cells = cells
+                cells = cells,
+                configuredRouteIds = GetConfiguredRouteIds(),
+                incomingRouteIds = incomingRoutes.ToArray()
             });
+        }
+
+        private string[] GetConfiguredRouteIds()
+        {
+            var routes = controller.Battlefield.Routes;
+            var result = new string[routes.Length];
+            for (var index = 0; index < routes.Length; index++)
+            {
+                result[index] = routes[index]?.RouteId ?? string.Empty;
+            }
+
+            return result;
+        }
+
+        private DevelopmentQaRouteResult[] GetRouteResults()
+        {
+            var result = new List<DevelopmentQaRouteResult>();
+            foreach (var route in controller.Battlefield.Routes)
+            {
+                if (route == null || !controller.RouteStats.TryGetValue(route.RouteId, out var stats))
+                {
+                    continue;
+                }
+
+                result.Add(new DevelopmentQaRouteResult
+                {
+                    routeId = stats.RouteId,
+                    spawned = stats.Spawned,
+                    defeated = stats.Defeated,
+                    escaped = stats.Escaped,
+                    firstSpawnTime = stats.FirstSpawnTime,
+                    lastSpawnTime = stats.LastSpawnTime
+                });
+            }
+
+            return result.ToArray();
         }
 
         private int FindTowerIndex(string towerId)

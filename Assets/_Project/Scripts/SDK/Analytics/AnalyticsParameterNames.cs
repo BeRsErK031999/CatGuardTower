@@ -28,5 +28,13 @@ namespace CatGuard.SDK.Analytics
         public const string Success = "success";
         public const string ShopId = "shop_id";
         public const string FailReason = "fail_reason";
+        public const string BattlefieldId = "battlefield_id";
+        public const string RouteId = "route_id";
+        public const string RouteIds = "route_ids";
+        public const string RouteCount = "route_count";
+        public const string RouteTags = "route_tags";
+        public const string RouteProgress = "route_progress";
+        public const string EnemyId = "enemy_id";
+        public const string SpawnOrder = "spawn_order";
     }
 }

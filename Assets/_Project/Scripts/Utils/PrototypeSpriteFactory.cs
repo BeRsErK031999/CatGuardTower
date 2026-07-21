@@ -7,6 +7,7 @@ namespace CatGuard.Utils
         private static Sprite squareSprite;
         private static Sprite circleSprite;
         private static Sprite diamondSprite;
+        private static Sprite arrowSprite;
 
         public static Sprite SquareSprite
         {
@@ -61,6 +62,20 @@ namespace CatGuard.Utils
             }
         }
 
+        public static Sprite ArrowSprite
+        {
+            get
+            {
+                if (arrowSprite != null)
+                {
+                    return arrowSprite;
+                }
+
+                arrowSprite = CreateShapeSprite("ArrowSprite", IsInsideArrow);
+                return arrowSprite;
+            }
+        }
+
         private static Sprite CreateShapeSprite(string spriteName, System.Func<float, float, bool> shapeTest)
         {
             const int size = 32;
@@ -96,6 +111,13 @@ namespace CatGuard.Utils
         private static bool IsInsideDiamond(float x, float y)
         {
             return Mathf.Abs(x) + Mathf.Abs(y) <= 1.05f;
+        }
+
+        private static bool IsInsideArrow(float x, float y)
+        {
+            var shaft = x >= -0.9f && x <= 0.2f && Mathf.Abs(y) <= 0.22f;
+            var head = x >= -0.15f && Mathf.Abs(y) <= (1f - x) * 0.55f;
+            return shaft || head;
         }
     }
 }

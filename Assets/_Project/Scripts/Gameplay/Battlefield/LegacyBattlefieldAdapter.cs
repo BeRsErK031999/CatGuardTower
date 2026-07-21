@@ -38,6 +38,18 @@ namespace CatGuard.Gameplay.Battlefield
             const float padding = 0.7f;
             var worldBounds = Rect.MinMaxRect(minX - padding, minY - padding, maxX + padding, maxY + padding);
             var placementZone = new BattlefieldZone("legacy_grid", gridBounds);
+            var route = new PathRouteDefinition(
+                "main",
+                "Main Route",
+                path,
+                path[0],
+                path[^1],
+                "legacy_main",
+                0.42f,
+                1f,
+                new[] { "ground", "legacy" },
+                0f,
+                "LevelConfig legacy geometry adapter.");
             return new BattlefieldDefinition(
                 $"legacy_{level.LevelId}",
                 $"Legacy {level.DisplayName}",
@@ -48,14 +60,12 @@ namespace CatGuard.Gameplay.Battlefield
                 worldBounds,
                 worldBounds.center,
                 worldBounds.height,
-                path,
-                0.42f,
-                path[0],
-                path[^1],
+                new[] { route },
                 cellSize,
                 new[] { placementZone },
                 Array.Empty<BattlefieldZone>(),
                 Array.Empty<BattlefieldDecorationAnchor>(),
+                true,
                 true);
         }
     }

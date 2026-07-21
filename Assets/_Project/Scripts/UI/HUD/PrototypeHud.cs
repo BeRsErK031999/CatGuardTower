@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using CatGuard.Core.Audio;
 using CatGuard.Core.Localization;
 using CatGuard.Core.SceneLoading;
@@ -338,20 +339,67 @@ namespace CatGuard.UI.HUD
             }
 
             var battlefieldRect = LandscapeLayout.Inset(GetBattlefieldRect(layout), 44f, 34f);
-            DrawWorldIndicator(
-                battlefield.SpawnPresentationAnchor,
-                LocalizationService.Text("hud.spawnShort"),
-                new Color(0.18f, 0.55f, 0.35f, 0.94f),
-                camera,
-                layout,
-                battlefieldRect);
-            DrawWorldIndicator(
-                battlefield.GoalPresentationAnchor,
-                LocalizationService.Text("hud.goalShort"),
-                new Color(0.72f, 0.38f, 0.12f, 0.94f),
-                camera,
-                layout,
-                battlefieldRect);
+            var drawnEndpoints = new HashSet<Vector3Int>();
+            for (var index = 0; index < battlefield.Routes.Length; index++)
+            {
+                var route = battlefield.Routes[index];
+                var warningActive = HasActiveWarningAtSpawn(battlefield, route.SpawnAnchor);
+                var spawnKey = EndpointKey(route.SpawnAnchor, 0);
+                if (drawnEndpoints.Add(spawnKey))
+                {
+                    var spawnLabel = warningActive
+                        ? LocalizationService.Text("hud.waveIncoming")
+                        : battlefield.Routes.Length > 1
+                            ? $"{LocalizationService.Text("hud.spawnShort")} {index + 1}"
+                            : LocalizationService.Text("hud.spawnShort");
+                    DrawWorldIndicator(
+                        route.SpawnAnchor,
+                        spawnLabel,
+                        warningActive
+                            ? new Color(0.94f, 0.58f, 0.12f, 0.98f)
+                            : new Color(0.18f, 0.55f, 0.35f, 0.94f),
+                        camera,
+                        layout,
+                        battlefieldRect);
+                }
+
+                var goalKey = EndpointKey(route.GoalAnchor, 1);
+                if (drawnEndpoints.Add(goalKey))
+                {
+                    var goalLabel = battlefield.Routes.Length > 1
+                        ? $"{LocalizationService.Text("hud.goalShort")} {index + 1}"
+                        : LocalizationService.Text("hud.goalShort");
+                    DrawWorldIndicator(
+                        route.GoalAnchor,
+                        goalLabel,
+                        new Color(0.72f, 0.38f, 0.12f, 0.94f),
+                        camera,
+                        layout,
+                        battlefieldRect);
+                }
+            }
+        }
+
+        private static Vector3Int EndpointKey(Vector2 position, int endpointType)
+        {
+            return new Vector3Int(
+                Mathf.RoundToInt(position.x * 100f),
+                Mathf.RoundToInt(position.y * 100f),
+                endpointType);
+        }
+
+        private bool HasActiveWarningAtSpawn(CatGuard.Gameplay.Battlefield.BattlefieldDefinition battlefield, Vector2 spawn)
+        {
+            foreach (var route in battlefield.Routes)
+            {
+                if ((route.SpawnAnchor - spawn).sqrMagnitude <= 0.0001f
+                    && levelController.IsRouteWarningActive(route.RouteId))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private void DrawWorldIndicator(

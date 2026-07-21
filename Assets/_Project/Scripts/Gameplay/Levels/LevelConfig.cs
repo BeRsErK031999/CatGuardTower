@@ -118,7 +118,7 @@ namespace CatGuard.Gameplay.Levels
                 return false;
             }
 
-            return waveConfig != null && waveConfig.IsValid();
+            return waveConfig != null && waveConfig.IsValid(battlefield, out _);
         }
 
         public BattlefieldDefinition ResolveBattlefield()

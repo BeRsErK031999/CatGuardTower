@@ -63,6 +63,8 @@ For the E1 emulator orientation/layout regression, run `tools/android/run-emulat
 
 For the E2 map/camera regression, run `tools/android/run-emulator-battlefield-qa.ps1`. It validates all three map themes, the legacy level adapter, fixed and scrollable cameras, pan boundaries, drag-versus-tap behavior, and tower placement near all map edges at 16:9 and wide-phone sizes.
 
+For the E3 multi-route regression, run `tools/android/run-emulator-route-qa.ps1`. It covers the single-route control, concurrent independent lanes, shared-endpoint forks, boss-only routes, route-filtered defeat, victory, local-save persistence across app restarts, screenshots, and fatal log signatures.
+
 ## Store Materials
 
 Current drafts live under `docs/store/`:

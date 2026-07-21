@@ -43,7 +43,7 @@ namespace CatGuard.Gameplay.Towers
                 return;
             }
 
-            var target = levelController.FindNearestEnemy(transform.position, range);
+            var target = levelController.FindTargetEnemy(transform.position, range, config.TargetPriority);
             if (target == null)
             {
                 return;

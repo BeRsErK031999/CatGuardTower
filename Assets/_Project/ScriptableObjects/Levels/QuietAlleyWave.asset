@@ -19,21 +19,34 @@ MonoBehaviour:
     delayBeforeGroup: 0
     healthMultiplier: 1.9
     speedMultiplier: 1.4
+    routeSelectionRule: 0
+    routeIds:
+    - west_branch
   - enemyConfig: {fileID: 11400000, guid: a52e892d13cddf440a1b5c66acd5069b, type: 2}
     count: 8
     spawnInterval: 0.56
-    delayBeforeGroup: 0.4
+    delayBeforeGroup: 0
     healthMultiplier: 1.9
     speedMultiplier: 1.4
+    routeSelectionRule: 0
+    routeIds:
+    - moon_branch
   - enemyConfig: {fileID: 11400000, guid: b47878b293e7cdf4bb20b3301eb7876d, type: 2}
     count: 7
     spawnInterval: 0.74
-    delayBeforeGroup: 0.6
-    healthMultiplier: 1.9
-    speedMultiplier: 1.4
-  - enemyConfig: {fileID: 11400000, guid: d8e34b8a87134304781d6f19ceee8c6a, type: 2}
-    count: 16
-    spawnInterval: 0.22
     delayBeforeGroup: 0.4
     healthMultiplier: 1.9
     speedMultiplier: 1.4
+    routeSelectionRule: 0
+    routeIds:
+    - chimney_boss
+  - enemyConfig: {fileID: 11400000, guid: d8e34b8a87134304781d6f19ceee8c6a, type: 2}
+    count: 16
+    spawnInterval: 0.22
+    delayBeforeGroup: 0.35
+    healthMultiplier: 1.9
+    speedMultiplier: 1.4
+    routeSelectionRule: 0
+    routeIds:
+    - west_branch
+  concurrentGroups: 1

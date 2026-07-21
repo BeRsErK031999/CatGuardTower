@@ -67,6 +67,8 @@ namespace CatGuard.Gameplay.Battlefield
         [SerializeField] private float scrollableViewHeight = 7.5f;
 
         [Header("Route")]
+        [SerializeField] private PathRouteConfig[] routes = Array.Empty<PathRouteConfig>();
+        [Header("Legacy Single Route")]
         [SerializeField] private Vector2[] pathPoints = Array.Empty<Vector2>();
         [Min(0.1f)]
         [SerializeField] private float pathVisualWidth = 0.48f;
@@ -91,10 +93,19 @@ namespace CatGuard.Gameplay.Battlefield
         public Rect CameraBounds => cameraBounds;
         public Vector2 InitialCameraFocus => initialCameraFocus;
         public float ScrollableViewHeight => Mathf.Max(3f, scrollableViewHeight);
-        public Vector2[] PathPoints => pathPoints ?? Array.Empty<Vector2>();
-        public float PathVisualWidth => Mathf.Max(0.1f, pathVisualWidth);
-        public Vector2 SpawnPresentationAnchor => spawnPresentationAnchor;
-        public Vector2 GoalPresentationAnchor => goalPresentationAnchor;
+        public PathRouteConfig[] RouteConfigs => routes ?? Array.Empty<PathRouteConfig>();
+        public Vector2[] PathPoints => RouteConfigs.Length > 0 && RouteConfigs[0] != null
+            ? RouteConfigs[0].Points
+            : pathPoints ?? Array.Empty<Vector2>();
+        public float PathVisualWidth => RouteConfigs.Length > 0 && RouteConfigs[0] != null
+            ? RouteConfigs[0].VisualWidth
+            : Mathf.Max(0.1f, pathVisualWidth);
+        public Vector2 SpawnPresentationAnchor => RouteConfigs.Length > 0 && RouteConfigs[0] != null
+            ? RouteConfigs[0].SpawnAnchor
+            : spawnPresentationAnchor;
+        public Vector2 GoalPresentationAnchor => RouteConfigs.Length > 0 && RouteConfigs[0] != null
+            ? RouteConfigs[0].GoalAnchor
+            : goalPresentationAnchor;
         public float PlacementCellSize => Mathf.Max(0.5f, placementCellSize);
         public BattlefieldZone[] PlacementZones => placementZones ?? Array.Empty<BattlefieldZone>();
         public BattlefieldZone[] BlockedZones => blockedZones ?? Array.Empty<BattlefieldZone>();
@@ -142,10 +153,30 @@ namespace CatGuard.Gameplay.Battlefield
             pathVisualWidth = Mathf.Max(0.1f, routeVisualWidth);
             spawnPresentationAnchor = spawnAnchor;
             goalPresentationAnchor = goalAnchor;
+            routes = new[]
+            {
+                new PathRouteConfig(
+                    "main",
+                    "Main Route",
+                    pathPoints,
+                    spawnAnchor,
+                    goalAnchor,
+                    "main",
+                    pathVisualWidth,
+                    1f,
+                    new[] { "ground" },
+                    0f,
+                    "Migrated from the E2 single-route contract.")
+            };
             placementCellSize = Mathf.Max(0.5f, cellSize);
             placementZones = buildZones ?? Array.Empty<BattlefieldZone>();
             blockedZones = noBuildZones ?? Array.Empty<BattlefieldZone>();
             decorationAnchors = decorations ?? Array.Empty<BattlefieldDecorationAnchor>();
+        }
+
+        public void ConfigureRoutes(PathRouteConfig[] routeConfigs)
+        {
+            routes = routeConfigs ?? Array.Empty<PathRouteConfig>();
         }
     }
 }

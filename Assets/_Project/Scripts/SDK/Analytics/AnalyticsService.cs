@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using CatGuard.Gameplay.Battlefield;
+using CatGuard.Gameplay.Enemies;
 using CatGuard.Gameplay.Levels;
 using CatGuard.Gameplay.Towers;
 using CatGuard.Meta.DailyRewards;
@@ -94,6 +96,39 @@ namespace CatGuard.SDK.Analytics
             TrackEvent(AnalyticsEventNames.TowerPlace, parameters);
         }
 
+        public static void TrackEnemySpawn(
+            LevelConfig level,
+            EnemyConfig enemy,
+            PathRouteDefinition route,
+            int spawnOrder)
+        {
+            var parameters = CreateEnemyRouteParameters(level, enemy, route, 0f);
+            parameters[AnalyticsParameterNames.SpawnOrder] = spawnOrder;
+            TrackEvent(AnalyticsEventNames.EnemySpawn, parameters);
+        }
+
+        public static void TrackEnemyDefeat(LevelConfig level, BasicEnemy enemy)
+        {
+            var parameters = CreateEnemyRouteParameters(
+                level,
+                null,
+                enemy?.Route,
+                enemy?.NormalizedProgress ?? 0f);
+            parameters[AnalyticsParameterNames.EnemyId] = enemy?.EnemyId ?? "unknown";
+            TrackEvent(AnalyticsEventNames.EnemyDefeat, parameters);
+        }
+
+        public static void TrackEnemyEscape(LevelConfig level, BasicEnemy enemy)
+        {
+            var parameters = CreateEnemyRouteParameters(
+                level,
+                null,
+                enemy?.Route,
+                enemy?.NormalizedProgress ?? 1f);
+            parameters[AnalyticsParameterNames.EnemyId] = enemy?.EnemyId ?? "unknown";
+            TrackEvent(AnalyticsEventNames.EnemyEscape, parameters);
+        }
+
         public static void TrackTowerUpgrade(UpgradeConfig upgrade, int nextLevel, int costFishCoins)
         {
             var parameters = CreateUpgradeParameters(upgrade, nextLevel, costFishCoins);
@@ -168,11 +203,41 @@ namespace CatGuard.SDK.Analytics
 
         private static Dictionary<string, object> CreateLevelParameters(LevelConfig level)
         {
+            var battlefield = level?.ResolveBattlefield();
+            var routeIds = new List<string>();
+            if (battlefield?.Routes != null)
+            {
+                foreach (var route in battlefield.Routes)
+                {
+                    if (route != null)
+                    {
+                        routeIds.Add(route.RouteId);
+                    }
+                }
+            }
+
             return new Dictionary<string, object>
             {
                 [AnalyticsParameterNames.LevelId] = level == null ? "unknown" : level.LevelId,
-                [AnalyticsParameterNames.LevelName] = level == null ? "Unknown" : level.DisplayName
+                [AnalyticsParameterNames.LevelName] = level == null ? "Unknown" : level.DisplayName,
+                [AnalyticsParameterNames.BattlefieldId] = battlefield?.BattlefieldId ?? "unknown",
+                [AnalyticsParameterNames.RouteCount] = routeIds.Count,
+                [AnalyticsParameterNames.RouteIds] = string.Join(",", routeIds)
             };
+        }
+
+        private static Dictionary<string, object> CreateEnemyRouteParameters(
+            LevelConfig level,
+            EnemyConfig enemy,
+            PathRouteDefinition route,
+            float normalizedProgress)
+        {
+            var parameters = CreateLevelParameters(level);
+            parameters[AnalyticsParameterNames.EnemyId] = enemy?.EnemyId ?? "unknown";
+            parameters[AnalyticsParameterNames.RouteId] = route?.RouteId ?? "unknown";
+            parameters[AnalyticsParameterNames.RouteTags] = route == null ? string.Empty : string.Join(",", route.Tags);
+            parameters[AnalyticsParameterNames.RouteProgress] = Mathf.Clamp01(normalizedProgress);
+            return parameters;
         }
 
         private static Dictionary<string, object> CreateLevelResultParameters(

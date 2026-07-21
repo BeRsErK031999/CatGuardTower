@@ -47,7 +47,7 @@ Send testers:
 
 - Opt-in link from Play Console.
 - Minimum testing period: 14 continuous days.
-- Device expectations: Android phone, portrait mode.
+- Device expectations for the current MVP build: Android phone, portrait mode. The expansion candidate will require landscape-left/right checks after E1 and the final E15 device gate.
 - Core tasks:
   - launch the app;
   - play at least three levels;

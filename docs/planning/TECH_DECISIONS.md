@@ -14,11 +14,13 @@ Each decision can be revisited, but changes must be deliberate and documented.
 - Alternatives considered: iOS-first, simultaneous Android/iOS.
 - Why alternatives are not chosen now: iOS adds signing, device, store, and QA overhead too early.
 
-## 2D Portrait
+## 2D Landscape With Automatic Rotation
 
-- Why: fits short mobile sessions, simpler controls, and smaller asset scope.
-- Alternatives considered: landscape, 3D.
-- Why alternatives are not chosen now: landscape may be less casual for this concept; 3D increases asset, performance, and camera complexity.
+- Decision changed on 2026-07-21: the active product direction is landscape, with automatic rotation between `Landscape Left` and `Landscape Right`; portrait directions are disabled.
+- Why: larger maps, simultaneous routes, in-battle upgrade panels, ultimates, and the home hub require more horizontal space and clearer separation between battlefield and controls.
+- Alternatives considered: keep portrait, support all four orientations, move to 3D.
+- Why alternatives are not chosen now: portrait constrains the expansion; allowing portrait would require two complete gameplay layouts; 3D increases art, performance, camera, and content cost.
+- Migration source of truth: `EXPANSION_ROADMAP.md`, section `E1`.
 
 ## C#
 

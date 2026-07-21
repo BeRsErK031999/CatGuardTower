@@ -1,6 +1,35 @@
 # Next Codex Prompts
 
-## Current Next Safe Prompt - Phase 11 Store Materials
+## Current Next Safe Prompt - E1 Landscape Foundation
+
+```text
+Ты работаешь в локальном Unity-репозитории:
+
+C:\Users\Borodin_Artem\Desktop\Mobile Games\CatGuardTowerDefense
+
+Задача: выполнить только E1 — Landscape Foundation And Automatic Rotation
+из docs/planning/EXPANSION_ROADMAP.md.
+
+Перед изменениями:
+1. Обнови develop через fetch + fast-forward.
+2. Прочитай AGENTS.md.
+3. Прочитай docs/planning/EXPANSION_ROADMAP.md.
+4. Прочитай docs/planning/DEFINITION_OF_DONE.md.
+5. Проверь git status и текущую архитектуру UI/orientation/build validators.
+
+Правило работы:
+- сначала полностью реализуй все пункты и exit criteria E1;
+- не запускай Unity gameplay, Android build или эмулятор для промежуточных частей;
+- не начинай E2, большие карты или multi-route;
+- когда весь E1 готов, выполни полный Block Test Gate E1;
+- исправь найденные дефекты внутри E1;
+- обнови документы и TASK_BOARD;
+- создай Conventional Commit;
+- сразу push в origin/develop;
+- проверь, что local develop == origin/develop.
+```
+
+## Legacy Prompt - Phase 11 Store Materials
 
 Use this prompt after the initial Phase 11 package/version setup.
 

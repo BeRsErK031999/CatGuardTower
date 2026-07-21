@@ -1,5 +1,7 @@
 # Phases
 
+Phases 0–13 below describe the original MVP and release path. The active post-MVP direction is maintained separately in `EXPANSION_ROADMAP.md`; do not append landscape, multi-route, hub, quest, achievement, or ultimate work to the legacy phases.
+
 Each phase must be completed and reviewed before the next phase starts.
 
 ## Phase 0 - Unity Setup And Scaffold Migration

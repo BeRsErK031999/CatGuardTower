@@ -8,7 +8,7 @@ The first public path is Android closed testing, then a small soft launch.
 
 - Unity Android Build Support installed.
 - Package name selected.
-- Portrait orientation configured.
+- Legacy portrait orientation is configured in the current build; the accepted landscape direction will replace it only when expansion section E1 is complete and verified.
 - Version code and version name set.
 - Keystore created and stored safely outside Git.
 - Basic privacy declarations prepared.

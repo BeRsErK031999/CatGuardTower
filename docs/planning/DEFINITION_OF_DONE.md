@@ -2,6 +2,17 @@
 
 These rules apply to every task unless the owner explicitly narrows the task to read-only analysis.
 
+## Expansion Block Rule
+
+For the active post-MVP expansion, the unit of completion is one large section from `EXPANSION_ROADMAP.md`.
+
+- Partial implementation inside a section is not “done”.
+- Unity runtime, Android build, emulator, and manual gameplay QA begin only after every exit criterion of the section is implemented.
+- The whole section then passes its documented block test gate.
+- The completed section is committed and pushed to `develop` only after that gate.
+- Static checks and `git diff` inspection may be used during implementation when they do not launch the application.
+- A documentation-only section uses documentation checks and does not require Unity/emulator runtime.
+
 ## General Rules
 
 A task is not done if:
@@ -35,7 +46,7 @@ A documentation task is done when:
 - no phase claims work that has not happened;
 - links or references point to existing files where possible;
 - `git diff --check` passes;
-- changes are committed.
+- changes are committed and pushed to `develop` when the documentation block is complete.
 
 ## Unity Setup Tasks
 

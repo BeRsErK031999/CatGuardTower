@@ -5,7 +5,7 @@
 - Unity 6 LTS.
 - C#.
 - Android-first build target.
-- Portrait 2D presentation.
+- Landscape 2D presentation with automatic `Landscape Left` / `Landscape Right` rotation (migration planned in expansion section E1; current runtime remains portrait until that block is complete).
 - Git for version control.
 - VS Code as the lightweight editor.
 

@@ -4,11 +4,12 @@ Use this workflow when asking Codex to continue the project.
 
 ## Core Rules
 
-- Work phase by phase.
+- For legacy MVP work, use phases; for the active expansion, work one complete `E` section from `EXPANSION_ROADMAP.md` at a time.
 - Before each phase, read `AGENTS.md` and `docs/planning/`.
 - Before file changes, write a file-level plan.
-- Do not perform several phases in one prompt.
-- Do not move to the next phase without explicit owner approval.
+- Do not perform several expansion sections in one prompt.
+- Do not move to the next section until the current section passes its full block test gate.
+- Do not launch Unity gameplay or emulator QA for partial slices inside the section.
 - Stop at review gates and ask the owner to send the required report to ChatGPT.
 - Do not connect SDKs without a separate task.
 - Do not do a large refactor without a clear reason.
@@ -28,7 +29,7 @@ Codex should:
 
 Codex should:
 
-- keep changes small;
+- keep changes bounded to the active large section;
 - preserve existing scope guardrails;
 - avoid gameplay work unless the current phase asks for it;
 - avoid server, iOS, Firebase, ads, and IAP unless the current phase asks for them;
@@ -45,6 +46,8 @@ Codex should report:
 - risks/TODO;
 - commit hash;
 - git status.
+
+For expansion work, “after each task” means after the complete section and its block test gate, not after an incomplete internal slice. The final commit must be pushed to `develop`, and local/remote equality must be reported.
 
 ## Review Gate Behavior
 

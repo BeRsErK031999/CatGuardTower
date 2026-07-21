@@ -322,3 +322,36 @@ Only mark tasks as done when they are actually present in the repository or veri
 ### Done
 
 * [ ] None.
+
+## Expansion Program E0-E15
+
+Source of truth: `EXPANSION_ROADMAP.md`.
+
+### Todo
+
+* [ ] E1 — Landscape Foundation And Automatic Rotation.
+* [ ] E2 — Scalable Battlefield, Camera, And Larger Maps.
+* [ ] E3 — Multi-Route Enemy Path Engine.
+* [ ] E4 — Map Authoring And Content Validation Pipeline.
+* [ ] E5 — Animated Enemies And Unit Presentation.
+* [ ] E6 — In-Battle Tower Upgrade Trees.
+* [ ] E7 — Guardian Ultimates And Map-Scale Abilities.
+* [ ] E8 — Home Hub Foundation.
+* [ ] E9 — Post-Round Contracts And Quest Board.
+* [ ] E10 — Meta Progression And Guardian Growth.
+* [ ] E11 — Achievements And Reward Claims.
+* [ ] E12 — Expanded Landscape Campaign.
+* [ ] E13 — Bosses And Advanced Map Rules.
+* [ ] E14 — Balance, Performance, Accessibility, And Polish.
+* [ ] E15 — Expansion Release Gate.
+
+### In Progress
+
+* [ ] None.
+
+### Done
+
+* [x] E0 — Product Direction And Production Plan.
+* [x] Select `Bloons TD 6` as the primary systems benchmark and `Kingdom Rush` as the secondary presentation benchmark.
+* [x] Define the large-section test/commit/push workflow.
+* [x] Create the external production backlog.

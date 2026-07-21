@@ -199,7 +199,7 @@ This phase still uses the existing prototype combat behavior; the new content is
 ## Phase 10 Android Build And QA
 
 - `Phase10ProjectSetup` configures Android QA build settings through Unity Editor APIs.
-- Android QA builds use application id `com.catguard.towerdefense.qa`, portrait orientation, min SDK 25, automatic target SDK, IL2CPP, and ARM64.
+- Android QA builds currently use application id `com.catguard.towerdefense.qa`, legacy portrait orientation, min SDK 25, automatic target SDK, IL2CPP, and ARM64. Expansion section E1 will migrate orientation and validators together.
 - Forced Internet and external storage permissions remain disabled so offline smoke is meaningful.
 - `GameBootstrap` sets `Application.targetFrameRate` to `60` for the Android QA baseline.
 - Local build artifacts are generated under `Builds/Android/`:
@@ -220,5 +220,5 @@ This phase still uses the existing prototype combat behavior; the new content is
 - `Phase11ProjectSetup` configures the initial store Android identity separately from the Phase 10 QA package.
 - Store package: `com.berserk031999.catguardtower`.
 - Initial store version: `versionName` `0.1.0`, `versionCode` `1`.
-- Store Android settings keep the same portrait, IL2CPP, ARM64, API 25+, and no-forced-permission baseline.
+- Store Android settings currently keep the legacy portrait, IL2CPP, ARM64, API 25+, and no-forced-permission baseline. They must not claim landscape until E1 passes its block test gate.
 - Package name and versioning are validated through Unity batchmode before Play Console upload.

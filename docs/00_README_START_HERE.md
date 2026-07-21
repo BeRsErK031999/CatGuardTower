@@ -1,8 +1,8 @@
 # Start Here
 
-This repository is the planning and bootstrap scaffold for **Cat Guard: Tower Defense** / **КотоОборона: башни и хвосты**.
+This repository contains the active Unity project and planning system for **Cat Guard: Tower Defense** / **КотоОборона: башни и хвосты**.
 
-The current goal is not to build full gameplay yet. The goal is to prepare a clean Android-first Unity 6 LTS project foundation that can be expanded in small iterations.
+The current goal is to expand the working Android MVP into a landscape, multi-route tower-defense game with deeper combat and a persistent cat hub.
 
 ## Current State
 
@@ -26,6 +26,8 @@ The current goal is not to build full gameplay yet. The goal is to prepare a cle
 - Phase 9 MVP content exists: 10 levels, 5 tower configs, 5 enemy configs, baseline rewards, clear wave ramp, and a tutorial hint on the first level.
 - Phase 10 Android build pipeline exists: QA APK/AAB generation is automated, Android settings are validated, emulator offline smoke has been run, save persistence is verified on a debuggable QA build, and a real-device QA runner is available at `tools/android/run-device-qa.ps1`.
 - Phase 11 Google Play preparation has started: the initial store package/version are configured as `com.berserk031999.catguardtower` `0.1.0` (`versionCode` `1`), while the QA package remains separate, store/compliance drafts live under `docs/store/`, and refreshed store image assets include five current Russian runtime captures from a validated emulator release build.
+- The post-MVP expansion direction was accepted on 2026-07-21: landscape auto-rotation, larger maps, multiple enemy routes, animated units, in-battle tower upgrades, map-scale ultimates, a home hub, quests, progression, and achievements.
+- `docs/planning/EXPANSION_ROADMAP.md` is the source of truth for that expansion.
 
 ## Recommended Reading Order
 
@@ -33,10 +35,12 @@ The current goal is not to build full gameplay yet. The goal is to prepare a cle
 2. `02_MVP_SCOPE.md`
 3. `04_GAME_DESIGN_CORE_LOOP.md`
 4. `05_UNITY_ARCHITECTURE.md`
-5. `06_ROADMAP_TASKS.md`
-6. `BACKLOG.md`
-7. `NEXT_CODEX_PROMPTS.md`
+5. `planning/PRODUCT_REFERENCE_REPORT.md`
+6. `planning/EXPANSION_ROADMAP.md`
+7. `planning/EXTERNAL_PRODUCTION_BACKLOG.md`
+8. `planning/TASK_BOARD.md`
+9. `NEXT_CODEX_PROMPTS.md`
 
 ## Next Safe Step
 
-Connect a real Android device, run `tools/android/run-device-qa.ps1`, and finish the remaining Phase 10 install/FPS QA. Then owner-review the refreshed store image assets and confirm or selectively replace the emulator captures if the physical device reveals a material rendering difference.
+Complete only `E1 — Landscape Foundation And Automatic Rotation` from `docs/planning/EXPANSION_ROADMAP.md`. Do not start larger maps or multi-route runtime until the complete E1 block passes its test gate.

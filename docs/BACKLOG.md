@@ -58,6 +58,9 @@ Use this file as a short entry point only. The phase-by-phase source of truth is
 ## Planning References
 
 - Full roadmap: `docs/planning/MASTER_PLAN.md`
+- Active expansion roadmap: `docs/planning/EXPANSION_ROADMAP.md`
+- Product reference decision: `docs/planning/PRODUCT_REFERENCE_REPORT.md`
+- External art/account/device backlog: `docs/planning/EXTERNAL_PRODUCTION_BACKLOG.md`
 - Phase details: `docs/planning/PHASES.md`
 - Review gates: `docs/planning/REVIEW_GATES.md`
 - Definition of Done: `docs/planning/DEFINITION_OF_DONE.md`

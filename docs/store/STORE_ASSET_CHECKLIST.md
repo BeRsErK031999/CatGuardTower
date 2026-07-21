@@ -1,6 +1,8 @@
 # Google Play Store Asset Checklist
 
-Source status: requirements checklist plus validated emulator release capture set.
+> Expansion note (2026-07-21): the portrait screenshot package below documents the current MVP. It becomes legacy evidence after E1 and must be replaced with landscape captures at E15, not during partial implementation.
+
+Source status: legacy portrait MVP requirements checklist plus validated emulator release capture set.
 
 Official Google Play reference checked on 2026-07-16:
 

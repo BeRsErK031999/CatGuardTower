@@ -4,7 +4,7 @@
 
 - Android-first mobile game.
 - Unity 6 LTS and C#.
-- 2D portrait orientation.
+- 2D landscape orientation with automatic rotation between Landscape Left and Landscape Right.
 - Genre: tower defense / merge defense / RPG-lite.
 - Working English name: Cat Guard: Tower Defense.
 - Working Russian name: КотоОборона: башни и хвосты.
@@ -35,3 +35,11 @@ After each task, report:
 - what was intentionally not touched;
 - how to verify the result;
 - known risks or next TODO items.
+
+## Expansion Workflow
+
+- The active post-MVP source of truth is `docs/planning/EXPANSION_ROADMAP.md`.
+- Implement one complete expansion section at a time.
+- Do not run Unity gameplay, Android, or emulator QA for partial slices inside a section.
+- Run the section's complete block test gate only after all exit criteria are implemented.
+- Commit and push to `develop` only after the completed section passes its required gate.

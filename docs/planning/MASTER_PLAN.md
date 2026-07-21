@@ -2,6 +2,12 @@
 
 This document is the main route from the current documentation scaffold to a first Android soft launch for **Cat Guard: Tower Defense** / **КотоОборона: башни и хвосты**.
 
+The active post-MVP product direction is now defined in:
+
+- `PRODUCT_REFERENCE_REPORT.md` — product benchmark and originality boundary;
+- `EXPANSION_ROADMAP.md` — landscape/multi-route/hub expansion source of truth;
+- `EXTERNAL_PRODUCTION_BACKLOG.md` — owner/specialist assets and external work.
+
 Current state:
 
 - Git repository exists.
@@ -21,7 +27,7 @@ Current state:
 - Phase 9 MVP content exists: 10 playable level configs, 5 towers, 5 enemies, a tutorial first level, and a validated difficulty ramp.
 - Phase 10 Android build pipeline exists: QA builds target Android with IL2CPP/ARM64, APK/AAB/debug APK artifacts can be generated reproducibly, emulator offline smoke launches the MainMenu, and debug APK save persistence survives app restart.
 
-Core rule: work one phase at a time. Do not start the next phase without explicit owner approval and do not implement gameplay before the required setup phase is complete.
+Core rule for phases 0–13: work one phase at a time. Core rule for the active expansion: complete one large `E` section, then run its full block test gate, commit, push to `develop`, and only then start the next section.
 
 ## Phase 0. Unity Setup And Scaffold Migration
 
@@ -221,8 +227,9 @@ Main result: the game is live with initial data about retention, stability, feed
 
 ## Operating Rhythm
 
-- Start each phase with a small prompt and a file-level plan.
-- Stop at every review gate.
-- Commit after each file-changing task.
+- Start each large section with a bounded prompt and a file-level plan.
+- Do not run direct Unity/emulator gameplay tests for partial work inside a section.
+- Stop at every section test gate.
+- Commit and push after the complete section passes its gate.
 - Keep docs updated with changed decisions and verification steps.
 - Avoid SDKs, backend, iOS, or large refactors until a dedicated phase asks for them.

@@ -1,6 +1,6 @@
 # Google Play Store Listing Draft
 
-Source status: draft for closed testing review. Do not publish without owner review.
+Source status: legacy portrait MVP draft. Do not publish without owner review. Refresh the description and screenshots for the landscape expansion only after E14/E15; current portrait wording remains an honest snapshot of the existing build.
 
 Official Google Play references checked on 2026-07-07:
 

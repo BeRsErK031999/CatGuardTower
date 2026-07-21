@@ -1129,6 +1129,8 @@ Ceilings здесь означают ожидаемую способность d
 
 Следующий и только следующий implementation block: **`E1 — Landscape Foundation And Automatic Rotation`**.
 
+Готовый self-contained prompt для новой задачи: [E1_IMPLEMENTATION_PROMPT.md](E1_IMPLEMENTATION_PROMPT.md).
+
 До его завершения нельзя начинать большие карты, multi-route runtime, tower upgrades, ultimates или hub. Причина — все эти системы зависят от стабильного landscape viewport и новой UI-композиции.
 
 Новый task prompt должен прямо сказать:

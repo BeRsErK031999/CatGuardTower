@@ -2,6 +2,10 @@
 
 ## Current Next Safe Prompt - E1 Landscape Foundation
 
+Полная самостоятельная версия промпта: [E1_IMPLEMENTATION_PROMPT.md](planning/E1_IMPLEMENTATION_PROMPT.md).
+
+Ниже сохранена короткая версия для быстрого запуска.
+
 ```text
 Ты работаешь в локальном Unity-репозитории:
 

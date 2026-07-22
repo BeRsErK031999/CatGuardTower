@@ -1,6 +1,7 @@
 using System;
 using CatGuard.Gameplay.Levels;
 using CatGuard.Meta.Progression;
+using CatGuard.Meta.Quests;
 
 namespace CatGuard.Meta.HomeHub
 {
@@ -15,6 +16,7 @@ namespace CatGuard.Meta.HomeHub
         public int RemainingLives { get; }
         public int DefeatedEnemies { get; }
         public int EscapedEnemies { get; }
+        public QuestProgressBatch QuestProgress { get; }
 
         public HomeHubBattleSummary(
             bool won,
@@ -25,7 +27,8 @@ namespace CatGuard.Meta.HomeHub
             string[] unlockedLevelNames,
             int remainingLives,
             int defeatedEnemies,
-            int escapedEnemies)
+            int escapedEnemies,
+            QuestProgressBatch questProgress)
         {
             Won = won;
             LevelId = levelId ?? string.Empty;
@@ -36,6 +39,7 @@ namespace CatGuard.Meta.HomeHub
             RemainingLives = Math.Max(0, remainingLives);
             DefeatedEnemies = Math.Max(0, defeatedEnemies);
             EscapedEnemies = Math.Max(0, escapedEnemies);
+            QuestProgress = questProgress ?? QuestProgressBatch.Empty;
         }
     }
 
@@ -55,7 +59,8 @@ namespace CatGuard.Meta.HomeHub
             LevelCompletionResult result,
             int remainingLives,
             int defeatedEnemies,
-            int escapedEnemies)
+            int escapedEnemies,
+            QuestProgressBatch questProgress = null)
         {
             var unlockedNames = result?.UnlockedLevelNames == null
                 ? Array.Empty<string>()
@@ -77,13 +82,15 @@ namespace CatGuard.Meta.HomeHub
                 unlockedNames,
                 remainingLives,
                 defeatedEnemies,
-                escapedEnemies);
+                escapedEnemies,
+                questProgress ?? pendingBattleSummary?.QuestProgress);
         }
 
         public static void RecordDefeat(
             LevelConfig level,
             int defeatedEnemies,
-            int escapedEnemies)
+            int escapedEnemies,
+            QuestProgressBatch questProgress = null)
         {
             pendingBattleSummary = new HomeHubBattleSummary(
                 false,
@@ -94,7 +101,8 @@ namespace CatGuard.Meta.HomeHub
                 Array.Empty<string>(),
                 0,
                 defeatedEnemies,
-                escapedEnemies);
+                escapedEnemies,
+                questProgress);
         }
 
         public static HomeHubBattleSummary ConsumeBattleSummary()

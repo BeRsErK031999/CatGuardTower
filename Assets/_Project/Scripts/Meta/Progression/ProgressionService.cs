@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using CatGuard.Core.Audio;
 using CatGuard.Core.Localization;
 using CatGuard.Core.Save;
@@ -14,7 +13,6 @@ namespace CatGuard.Meta.Progression
 {
     public static class ProgressionService
     {
-        private const string DateKeyFormat = "yyyy-MM-dd";
         private const int FreeCoinsRewardAmount = 15;
 
         private static LevelCatalogConfig levelCatalog;
@@ -477,6 +475,21 @@ namespace CatGuard.Meta.Progression
                 data.dailyMissions = new List<DailyMissionSaveEntry>();
             }
 
+            if (data.quests == null)
+            {
+                data.quests = new List<QuestProgressSaveEntry>();
+            }
+
+            if (data.activeQuestIds == null)
+            {
+                data.activeQuestIds = new List<string>();
+            }
+
+            if (data.processedQuestEventIds == null)
+            {
+                data.processedQuestEventIds = new List<string>();
+            }
+
             var firstLevelId = levelCatalog?.FirstLevel?.LevelId;
             if (!string.IsNullOrWhiteSpace(firstLevelId) && !data.unlockedLevelIds.Contains(firstLevelId))
             {
@@ -596,8 +609,9 @@ namespace CatGuard.Meta.Progression
                 data.dailyMissions = new List<DailyMissionSaveEntry>();
             }
 
-            var today = TodayDateKey();
-            if (data.dailyMissionDateKey != today)
+            var utcNow = DateTime.UtcNow;
+            var today = DailyMissionRotationPolicy.GetUtcDateKey(utcNow);
+            if (DailyMissionRotationPolicy.RequiresRollover(data.dailyMissionDateKey, utcNow))
             {
                 data.dailyMissionDateKey = today;
                 data.dailyMissions.Clear();
@@ -695,7 +709,7 @@ namespace CatGuard.Meta.Progression
 
         private static string TodayDateKey()
         {
-            return DateTime.UtcNow.ToString(DateKeyFormat, CultureInfo.InvariantCulture);
+            return DailyMissionRotationPolicy.GetUtcDateKey(DateTime.UtcNow);
         }
 
         private static int GetDaysSinceDateKey(string dateKey)
@@ -710,12 +724,7 @@ namespace CatGuard.Meta.Progression
 
         private static bool TryParseDateKey(string dateKey, out DateTime date)
         {
-            return DateTime.TryParseExact(
-                dateKey,
-                DateKeyFormat,
-                CultureInfo.InvariantCulture,
-                DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal,
-                out date);
+            return DailyMissionRotationPolicy.TryParseUtcDateKey(dateKey, out date);
         }
     }
 }

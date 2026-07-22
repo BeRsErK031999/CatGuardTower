@@ -472,6 +472,8 @@ Owner: RU copy editor + EN copy editor
 
 Status: `Not started`
 
+Current E9 boundary: contract names and descriptions are functional code-authored RU/EN copy for system and layout validation. They do not satisfy the final `LOC-NARRATIVE-001` copy review.
+
 ### Scope
 
 - final Russian names for towers, branches, enemies, ultimates and hub zones;

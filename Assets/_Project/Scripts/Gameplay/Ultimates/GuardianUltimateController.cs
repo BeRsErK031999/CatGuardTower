@@ -225,6 +225,7 @@ namespace CatGuard.Gameplay.Ultimates
             if (enemy != null && catnipMoonEndsAt > Time.time)
             {
                 enemy.ApplyUltimateSlow(catnipSlowPercent, catnipMoonEndsAt - Time.time);
+                owner?.RecordControlledEnemy(enemy);
             }
         }
 
@@ -434,6 +435,7 @@ namespace CatGuard.Gameplay.Ultimates
                 if (enemy.IsAlive && stunEffect != null)
                 {
                     enemy.ApplyUltimateStun(stunEffect.Duration);
+                    owner.RecordControlledEnemy(enemy);
                 }
             }
 
@@ -454,6 +456,7 @@ namespace CatGuard.Gameplay.Ultimates
             foreach (var enemy in owner.ActiveEnemies)
             {
                 enemy?.ApplyUltimateSlow(catnipSlowPercent, duration);
+                owner.RecordControlledEnemy(enemy);
             }
 
             foreach (var tower in owner.Towers)

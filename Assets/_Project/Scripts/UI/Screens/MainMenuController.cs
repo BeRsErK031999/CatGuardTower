@@ -6,6 +6,7 @@ using CatGuard.Gameplay.Ultimates;
 using CatGuard.Meta.DailyRewards;
 using CatGuard.Meta.HomeHub;
 using CatGuard.Meta.Progression;
+using CatGuard.Meta.Quests;
 using CatGuard.Meta.Upgrades;
 using CatGuard.QA;
 using CatGuard.SDK.Ads;
@@ -63,6 +64,9 @@ namespace CatGuard.UI.Screens
         private Vector2 levelsScrollPosition;
         private Vector2 upgradesScrollPosition;
         private Vector2 missionsScrollPosition;
+        private Vector2 activeQuestScrollPosition;
+        private Vector2 completedQuestScrollPosition;
+        private Vector2 claimedQuestScrollPosition;
         private Vector2 privacyScrollPosition;
         private string dailyMessage = string.Empty;
         private string freeCoinsMessage = string.Empty;
@@ -122,6 +126,11 @@ namespace CatGuard.UI.Screens
                 dailyRewardChain,
                 dailyMissionCatalog,
                 new FakeRewardedAdService());
+
+            if (!QuestService.Initialize(QuestCatalogConfig.LoadDefault(), levelCatalog))
+            {
+                Debug.LogWarning("Quest Board contracts are unavailable because the default E9 catalog is invalid.");
+            }
 
             currentRoute = HomeHubRoute.Home;
             battleSummary = HomeHubNavigationService.ConsumeBattleSummary();
@@ -312,7 +321,8 @@ namespace CatGuard.UI.Screens
             DrawAmbientDetails(rect);
 
             var inner = LandscapeLayout.Inset(rect, 22f, 18f);
-            var bannerHeight = battleSummary == null ? 106f : 136f;
+            var hasQuestProgress = battleSummary?.QuestProgress?.HasUpdates == true;
+            var bannerHeight = battleSummary == null ? 106f : hasQuestProgress ? 176f : 136f;
             var bannerRect = new Rect(inner.x, inner.y, inner.width, bannerHeight);
             GUI.Box(bannerRect, GUIContent.none, panelStyle);
 
@@ -380,6 +390,18 @@ namespace CatGuard.UI.Screens
                 new Rect(rect.center.x - 20f, rect.y + 24f, rect.width * 0.48f, 84f),
                 details,
                 smallLabelStyle);
+
+            var questProgress = battleSummary.QuestProgress;
+            if (questProgress?.HasUpdates == true)
+            {
+                GUI.Label(
+                    new Rect(rect.x + 30f, rect.yMax - 54f, rect.width - 230f, 34f),
+                    string.Format(
+                        LocalizationService.Text("quest.postRoundSummary"),
+                        questProgress.Updates.Length,
+                        questProgress.CompletedCount),
+                    eyebrowStyle);
+            }
 
             var dismissRect = new Rect(rect.xMax - 166f, rect.yMax - 52f, 138f, 38f);
             if (GUI.Button(dismissRect, LocalizationService.Text("common.done"), compactButtonStyle))
@@ -818,7 +840,7 @@ namespace CatGuard.UI.Screens
 
         private void DrawDailyMissions(Rect viewport)
         {
-            var missions = dailyMissionCatalog.Missions;
+            var missions = DailyMissionQuestAdapter.CreateSnapshot(dailyMissionCatalog);
             const float rowHeight = 78f;
             const float rowSpacing = 10f;
             var rowWidth = viewport.width - 22f;
@@ -832,15 +854,16 @@ namespace CatGuard.UI.Screens
 
             for (var index = 0; index < missions.Length; index++)
             {
-                var mission = missions[index];
+                var missionState = missions[index];
+                var mission = missionState?.Mission;
                 if (mission == null)
                 {
                     continue;
                 }
 
-                var progress = ProgressionService.GetDailyMissionProgress(mission);
-                var claimed = ProgressionService.IsDailyMissionRewardClaimed(mission);
-                var canClaim = ProgressionService.CanClaimDailyMissionReward(mission);
+                var progress = missionState.Progress;
+                var claimed = missionState.Status == QuestStatus.Claimed;
+                var canClaim = missionState.CanClaim;
                 var label = string.Format(
                     LocalizationService.Text("daily.missionLabel"),
                     LocalizationService.MissionName(mission),
@@ -869,17 +892,143 @@ namespace CatGuard.UI.Screens
         private void DrawQuestBoard(Rect contentRect)
         {
             GUI.Box(contentRect, GUIContent.none, strongPanelStyle);
-            var inner = LandscapeLayout.Inset(contentRect, 28f, 24f);
-            GUI.Box(inner, GUIContent.none, panelStyle);
+            var inner = LandscapeLayout.Inset(contentRect, 22f, 20f);
+            var gap = 18f;
+            var dailyWidth = Mathf.Clamp(inner.width * 0.3f, 430f, 560f);
+            var contractsRect = new Rect(inner.x, inner.y, inner.width - dailyWidth - gap, inner.height);
+            var dailyRect = new Rect(contractsRect.xMax + gap, inner.y, dailyWidth, inner.height);
+            GUI.Box(contractsRect, GUIContent.none, panelStyle);
+            GUI.Box(dailyRect, GUIContent.none, panelStyle);
+
+            var snapshot = QuestService.CreateSnapshot();
             GUI.Label(
-                new Rect(inner.x + 24f, inner.y + 20f, inner.width - 48f, 42f),
-                LocalizationService.Text("daily.missions").ToUpperInvariant(),
-                eyebrowStyle);
+                new Rect(contractsRect.x + 24f, contractsRect.y + 18f, contractsRect.width - 48f, 42f),
+                LocalizationService.Text("quest.contracts"),
+                headingStyle);
             GUI.Label(
-                new Rect(inner.x + 28f, inner.y + 62f, inner.width - 56f, 36f),
-                LocalizationService.Text("hub.questHint"),
+                new Rect(contractsRect.x + 28f, contractsRect.y + 60f, contractsRect.width - 56f, 30f),
+                string.Format(
+                    LocalizationService.Text("quest.activeSlots"),
+                    snapshot.Active.Length + snapshot.Completed.Length,
+                    snapshot.ActiveLimit),
                 smallLabelStyle);
-            DrawDailyMissions(new Rect(inner.x + 28f, inner.y + 112f, inner.width - 56f, inner.height - 140f));
+
+            const float columnGap = 12f;
+            var columnsRect = new Rect(
+                contractsRect.x + 20f,
+                contractsRect.y + 102f,
+                contractsRect.width - 40f,
+                contractsRect.height - 122f);
+            var columnWidth = (columnsRect.width - (columnGap * 2f)) / 3f;
+            DrawContractColumn(
+                new Rect(columnsRect.x, columnsRect.y, columnWidth, columnsRect.height),
+                "quest.status.active",
+                snapshot.Active,
+                ref activeQuestScrollPosition);
+            DrawContractColumn(
+                new Rect(columnsRect.x + columnWidth + columnGap, columnsRect.y, columnWidth, columnsRect.height),
+                "quest.status.completed",
+                snapshot.Completed,
+                ref completedQuestScrollPosition);
+            DrawContractColumn(
+                new Rect(columnsRect.x + ((columnWidth + columnGap) * 2f), columnsRect.y, columnWidth, columnsRect.height),
+                "quest.status.claimed",
+                snapshot.Claimed,
+                ref claimedQuestScrollPosition);
+
+            GUI.Label(
+                new Rect(dailyRect.x + 22f, dailyRect.y + 20f, dailyRect.width - 44f, 38f),
+                LocalizationService.Text("quest.dailyAdapter"),
+                headingStyle);
+            GUI.Label(
+                new Rect(dailyRect.x + 24f, dailyRect.y + 62f, dailyRect.width - 48f, 52f),
+                LocalizationService.Text("quest.dailyAdapterHint"),
+                smallLabelStyle);
+            DrawDailyMissions(new Rect(dailyRect.x + 20f, dailyRect.y + 124f, dailyRect.width - 40f, dailyRect.height - 146f));
+        }
+
+        private void DrawContractColumn(
+            Rect rect,
+            string titleKey,
+            QuestViewState[] quests,
+            ref Vector2 scrollPosition)
+        {
+            GUI.Box(rect, GUIContent.none, strongPanelStyle);
+            GUI.Label(
+                new Rect(rect.x + 12f, rect.y + 10f, rect.width - 24f, 30f),
+                LocalizationService.Text(titleKey).ToUpperInvariant(),
+                eyebrowStyle);
+
+            var viewport = new Rect(rect.x + 10f, rect.y + 48f, rect.width - 20f, rect.height - 58f);
+            const float cardHeight = 214f;
+            const float spacing = 10f;
+            var contentWidth = viewport.width - 20f;
+            var contentHeight = Mathf.Max(viewport.height, (quests.Length * (cardHeight + spacing)) - spacing);
+            scrollPosition = GUI.BeginScrollView(
+                viewport,
+                scrollPosition,
+                new Rect(0f, 0f, contentWidth, contentHeight),
+                false,
+                contentHeight > viewport.height);
+
+            if (quests.Length == 0)
+            {
+                GUI.Label(
+                    new Rect(14f, 20f, contentWidth - 28f, 80f),
+                    LocalizationService.Text("quest.none"),
+                    smallLabelStyle);
+            }
+
+            for (var index = 0; index < quests.Length; index++)
+            {
+                var state = quests[index];
+                var quest = state?.Quest;
+                if (quest == null)
+                {
+                    continue;
+                }
+
+                var y = index * (cardHeight + spacing);
+                var card = new Rect(0f, y, contentWidth, cardHeight);
+                GUI.Box(card, GUIContent.none, panelStyle);
+                GUI.Label(
+                    new Rect(14f, y + 10f, contentWidth - 28f, 54f),
+                    LocalizationService.Text(quest.NameLocalizationKey),
+                    labelStyle);
+                GUI.Label(
+                    new Rect(16f, y + 66f, contentWidth - 32f, 62f),
+                    LocalizationService.Text(quest.DescriptionLocalizationKey),
+                    smallLabelStyle);
+
+                var progress = Mathf.Min(state.Progress, quest.Objective.TargetAmount);
+                var progressText = string.Format(
+                    LocalizationService.Text("quest.progressReward"),
+                    progress,
+                    quest.Objective.TargetAmount,
+                    quest.Reward.FishCoins);
+                GUI.Label(
+                    new Rect(16f, y + 132f, contentWidth - 32f, 28f),
+                    progressText,
+                    eyebrowStyle);
+
+                var actionRect = new Rect(16f, y + 164f, contentWidth - 32f, 40f);
+                GUI.enabled = uiInteractionEnabled && state.CanClaim;
+                var actionLabel = state.Status switch
+                {
+                    QuestStatus.Completed => LocalizationService.Text("common.claim"),
+                    QuestStatus.Claimed => LocalizationService.Text("common.done"),
+                    _ => LocalizationService.Text("quest.inProgress")
+                };
+                if (GUI.Button(actionRect, actionLabel, compactButtonStyle)
+                    && QuestService.ClaimReward(quest.QuestId))
+                {
+                    ProceduralAudioService.Play(ProceduralSoundId.MenuClick);
+                }
+
+                GUI.enabled = uiInteractionEnabled;
+            }
+
+            GUI.EndScrollView();
         }
 
         private void DrawFutureZone(Rect contentRect, string statusKey, string hintKey)
@@ -1034,6 +1183,7 @@ namespace CatGuard.UI.Screens
                 if (resetConfirmationArmed)
                 {
                     ProgressionService.ResetProgress();
+                    QuestService.Initialize(QuestCatalogConfig.LoadDefault(), levelCatalog);
                     battleSummary = null;
                     resetConfirmationArmed = false;
                 }

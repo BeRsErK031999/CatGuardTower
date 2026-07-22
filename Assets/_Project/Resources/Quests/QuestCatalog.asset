@@ -1,0 +1,160 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3fdc9def74038684ca46adcd5215b784, type: 3}
+  m_Name: QuestCatalog
+  m_EditorClassIdentifier: Assembly-CSharp::CatGuard.Meta.Quests.QuestCatalogConfig
+  quests:
+  - questId: tutorial_hold_line
+    category: 0
+    nameLocalizationKey: quest.name.tutorial_hold_line
+    descriptionLocalizationKey: quest.description.tutorial_hold_line
+    objective:
+      objectiveType: 0
+      targetAmount: 1
+      threshold: 0
+      requiredLevelId: 
+      requiredTowerId: 
+    reward:
+      fishCoins: 15
+  - questId: pest_patrol
+    category: 1
+    nameLocalizationKey: quest.name.pest_patrol
+    descriptionLocalizationKey: quest.description.pest_patrol
+    objective:
+      objectiveType: 1
+      targetAmount: 20
+      threshold: 0
+      requiredLevelId: 
+      requiredTowerId: 
+    reward:
+      fishCoins: 12
+  - questId: build_circle
+    category: 1
+    nameLocalizationKey: quest.name.build_circle
+    descriptionLocalizationKey: quest.description.build_circle
+    objective:
+      objectiveType: 2
+      targetAmount: 8
+      threshold: 0
+      requiredLevelId: 
+      requiredTowerId: 
+    reward:
+      fishCoins: 10
+  - questId: guardian_signal
+    category: 0
+    nameLocalizationKey: quest.name.guardian_signal
+    descriptionLocalizationKey: quest.description.guardian_signal
+    objective:
+      objectiveType: 8
+      targetAmount: 1
+      threshold: 0
+      requiredLevelId: 
+      requiredTowerId: 
+    reward:
+      fishCoins: 14
+  - questId: careful_craftsman
+    category: 2
+    nameLocalizationKey: quest.name.careful_craftsman
+    descriptionLocalizationKey: quest.description.careful_craftsman
+    objective:
+      objectiveType: 3
+      targetAmount: 1
+      threshold: 3
+      requiredLevelId: 
+      requiredTowerId: cat_dart
+    reward:
+      fishCoins: 18
+  - questId: control_school
+    category: 2
+    nameLocalizationKey: quest.name.control_school
+    descriptionLocalizationKey: quest.description.control_school
+    objective:
+      objectiveType: 4
+      targetAmount: 15
+      threshold: 0
+      requiredLevelId: 
+      requiredTowerId: 
+    reward:
+      fishCoins: 16
+  - questId: untouched_barrel
+    category: 1
+    nameLocalizationKey: quest.name.untouched_barrel
+    descriptionLocalizationKey: quest.description.untouched_barrel
+    objective:
+      objectiveType: 5
+      targetAmount: 1
+      threshold: 0
+      requiredLevelId: 
+      requiredTowerId: 
+    reward:
+      fishCoins: 22
+  - questId: small_paw_squad
+    category: 1
+    nameLocalizationKey: quest.name.small_paw_squad
+    descriptionLocalizationKey: quest.description.small_paw_squad
+    objective:
+      objectiveType: 6
+      targetAmount: 1
+      threshold: 3
+      requiredLevelId: 
+      requiredTowerId: 
+    reward:
+      fishCoins: 25
+  - questId: no_scrap
+    category: 1
+    nameLocalizationKey: quest.name.no_scrap
+    descriptionLocalizationKey: quest.description.no_scrap
+    objective:
+      objectiveType: 7
+      targetAmount: 1
+      threshold: 0
+      requiredLevelId: 
+      requiredTowerId: 
+    reward:
+      fishCoins: 20
+  - questId: old_well_watch
+    category: 3
+    nameLocalizationKey: quest.name.old_well_watch
+    descriptionLocalizationKey: quest.description.old_well_watch
+    objective:
+      objectiveType: 9
+      targetAmount: 1
+      threshold: 0
+      requiredLevelId: level_08
+      requiredTowerId: 
+    reward:
+      fishCoins: 28
+  - questId: rooftop_watch
+    category: 3
+    nameLocalizationKey: quest.name.rooftop_watch
+    descriptionLocalizationKey: quest.description.rooftop_watch
+    objective:
+      objectiveType: 9
+      targetAmount: 1
+      threshold: 0
+      requiredLevelId: level_07
+      requiredTowerId: 
+    reward:
+      fishCoins: 30
+  - questId: veteran_guard
+    category: 2
+    nameLocalizationKey: quest.name.veteran_guard
+    descriptionLocalizationKey: quest.description.veteran_guard
+    objective:
+      objectiveType: 0
+      targetAmount: 3
+      threshold: 0
+      requiredLevelId: 
+      requiredTowerId: 
+    reward:
+      fishCoins: 35
+  activeContractLimit: 4

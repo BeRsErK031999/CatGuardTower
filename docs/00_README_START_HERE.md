@@ -33,6 +33,7 @@ The current goal is to expand the working Android MVP into a landscape, multi-ro
 - Expansion section E3 adds explicit multi-route battlefields and waves, normalized cross-route targeting, route presentation/analytics, legacy `main` migration, and deterministic Android route QA. Its block gate evidence is recorded in `docs/planning/E3_MULTI_ROUTE_REPORT.md`.
 - Expansion section E4 implements a data-only map factory, design cards, asset-path validation, preview gizmos/route handles, reproducible preview evidence, and legacy migration. Its completed block gate is recorded in `docs/planning/E4_MAP_AUTHORING_REPORT.md`.
 - Expansion section E8 turns MainMenu into the seven-zone Garden Outpost home hub with centralized badges, panel-first Back handling, idempotent meta initialization, and clear victory/defeat return summaries. See `docs/planning/E8_HOME_HUB_REPORT.md`.
+- Expansion section E9 adds persistent post-round contracts, ten objective types, explicit completion/claim states, one-time rewards, locked-content filtering, and the Quest Board daily adapter. See `docs/planning/E9_QUEST_BOARD_REPORT.md`.
 
 ## Recommended Reading Order
 

@@ -490,7 +490,7 @@ namespace CatGuard.UI.HUD
             GUI.DrawTexture(surfaceRect, modalBackdropTexture, ScaleMode.StretchToFill);
 
             var overlayWidth = Mathf.Min(900f, safeRect.width - 120f);
-            var overlayHeight = Mathf.Min(520f, safeRect.height - 100f);
+            var overlayHeight = Mathf.Min(600f, safeRect.height - 100f);
             var overlayRect = new Rect(
                 safeRect.center.x - (overlayWidth * 0.5f),
                 safeRect.center.y - (overlayHeight * 0.5f),
@@ -524,12 +524,24 @@ namespace CatGuard.UI.HUD
             if (!string.IsNullOrWhiteSpace(resultMessage))
             {
                 GUI.Label(
-                    new Rect(overlayRect.x + 28f, overlayRect.y + 150f, overlayRect.width - 56f, 34f),
+                    new Rect(overlayRect.x + 28f, overlayRect.y + 204f, overlayRect.width - 56f, 34f),
                     resultMessage,
                     instructionStyle);
             }
 
-            var adButtonRect = new Rect(overlayRect.center.x - 210f, overlayRect.y + 202f, 420f, 62f);
+            var questProgress = HomeHubNavigationService.PendingBattleSummary?.QuestProgress;
+            if (questProgress?.HasUpdates == true)
+            {
+                GUI.Label(
+                    new Rect(overlayRect.x + 30f, overlayRect.y + 154f, overlayRect.width - 60f, 36f),
+                    string.Format(
+                        LocalizationService.Text("quest.postRoundSummary"),
+                        questProgress.Updates.Length,
+                        questProgress.CompletedCount),
+                    instructionStyle);
+            }
+
+            var adButtonRect = new Rect(overlayRect.center.x - 210f, overlayRect.y + 258f, 420f, 62f);
             if (won && levelController.CanClaimVictoryDoubleReward)
             {
                 if (GUI.Button(adButtonRect, LocalizationService.Text("button.claimX2"), selectedButtonStyle)

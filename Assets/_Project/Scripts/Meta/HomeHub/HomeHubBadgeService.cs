@@ -1,6 +1,7 @@
 using CatGuard.Gameplay.Levels;
 using CatGuard.Meta.DailyRewards;
 using CatGuard.Meta.Progression;
+using CatGuard.Meta.Quests;
 using CatGuard.Meta.Upgrades;
 
 namespace CatGuard.Meta.HomeHub
@@ -100,6 +101,8 @@ namespace CatGuard.Meta.HomeHub
                     }
                 }
             }
+
+            questCount += QuestService.ClaimableCount;
 
             var dailyCount = ProgressionService.CanClaimDailyReward() ? 1 : 0;
             if (ProgressionService.CanClaimFreeCoinsReward())

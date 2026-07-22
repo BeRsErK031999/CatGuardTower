@@ -1135,6 +1135,6 @@ Ceilings здесь означают ожидаемую способность d
 
 ## 9. Next Action
 
-`E8 — Home Hub Foundation` завершён; фактический gate находится в [E8_HOME_HUB_REPORT.md](E8_HOME_HUB_REPORT.md).
+`E9 — Post-Round Contracts And Quest Board` завершён; фактический gate находится в [E9_QUEST_BOARD_REPORT.md](E9_QUEST_BOARD_REPORT.md).
 
-Следующий допустимый implementation block: **`E9 — Post-Round Contracts And Quest Board`**. Он должен выполняться отдельной самостоятельной задачей с собственным scope, external-art boundary и Block Test Gate; E8-delivery не включает реализацию E9.
+Следующий допустимый implementation block: **`E10 — Meta Progression And Guardian Growth`**. Он должен выполняться отдельной самостоятельной задачей с собственным scope, external-art boundary и Block Test Gate; E9-delivery не включает реализацию E10.

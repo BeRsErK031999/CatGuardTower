@@ -15,6 +15,9 @@ namespace CatGuard.Core.Save
         public int dailyRewardStreakIndex;
         public string dailyMissionDateKey;
         public List<DailyMissionSaveEntry> dailyMissions = new();
+        public List<QuestProgressSaveEntry> quests = new();
+        public List<string> activeQuestIds = new();
+        public List<string> processedQuestEventIds = new();
         public bool audioMuted;
         public string languageCode = "ru";
         public string lastFreeCoinsRewardDateKey;
@@ -69,6 +72,23 @@ namespace CatGuard.Core.Save
         public DailyMissionSaveEntry(string id)
         {
             missionId = id;
+        }
+    }
+
+    [Serializable]
+    public sealed class QuestProgressSaveEntry
+    {
+        public string questId;
+        public int progress;
+        public bool rewardClaimed;
+
+        public QuestProgressSaveEntry()
+        {
+        }
+
+        public QuestProgressSaveEntry(string id)
+        {
+            questId = id;
         }
     }
 }

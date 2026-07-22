@@ -140,9 +140,28 @@ namespace CatGuard.QA
                 save.unlockedLevelIds.Add(level.LevelId);
             }
 
-            ProgressionService.SelectLevel(level);
+            if (!string.IsNullOrWhiteSpace(command.challengeId))
+            {
+                var challenge = level.CampaignMetadata?.Challenge;
+                if (challenge == null || !string.Equals(challenge.ChallengeId, command.challengeId, StringComparison.Ordinal))
+                {
+                    WriteFailure(command.scenarioId, command.levelId, "Requested QA challenge is missing from the level.");
+                    return false;
+                }
+
+                if (!save.completedLevelIds.Contains(level.LevelId))
+                {
+                    save.completedLevelIds.Add(level.LevelId);
+                }
+            }
+
+            ProgressionService.SelectLevel(level, command.challengeId);
             var selectedLevel = ProgressionService.GetSelectedLevelOrDefault(null);
-            if (selectedLevel != null && selectedLevel.LevelId == level.LevelId)
+            var selectedChallenge = ProgressionService.GetSelectedChallenge(level);
+            if (selectedLevel != null
+                && selectedLevel.LevelId == level.LevelId
+                && (string.IsNullOrWhiteSpace(command.challengeId)
+                    || string.Equals(selectedChallenge?.ChallengeId, command.challengeId, StringComparison.Ordinal)))
             {
                 return true;
             }
@@ -188,6 +207,7 @@ namespace CatGuard.QA
     {
         public string scenarioId;
         public string levelId;
+        public string challengeId;
         public string[] towerIds = Array.Empty<string>();
         public bool manualInput;
         public string routeIdFilter;
@@ -218,6 +238,7 @@ namespace CatGuard.QA
     {
         public string scenarioId;
         public string levelId;
+        public string challengeId;
         public string battlefieldId;
         public string cameraMode;
         public bool legacyBattlefield;
@@ -251,6 +272,7 @@ namespace CatGuard.QA
     {
         public string scenarioId;
         public string levelId;
+        public string challengeId;
         public string battlefieldId;
         public string cameraMode;
         public bool legacyBattlefield;
@@ -343,6 +365,7 @@ namespace CatGuard.QA
                 {
                     scenarioId = command.scenarioId ?? string.Empty,
                     levelId = controller.Config.LevelId,
+                    challengeId = controller.ActiveChallenge?.ChallengeId ?? string.Empty,
                     battlefieldId = controller.Battlefield.BattlefieldId,
                     state = "error",
                     routeIdFilter = command.routeIdFilter ?? string.Empty,
@@ -393,6 +416,7 @@ namespace CatGuard.QA
                 {
                     scenarioId = command.scenarioId ?? string.Empty,
                     levelId = controller.Config.LevelId,
+                    challengeId = controller.ActiveChallenge?.ChallengeId ?? string.Empty,
                     battlefieldId = controller.Battlefield.BattlefieldId,
                     cameraMode = controller.Battlefield.CameraMode.ToString(),
                     legacyBattlefield = controller.Battlefield.IsLegacy,
@@ -763,6 +787,7 @@ namespace CatGuard.QA
             {
                 scenarioId = command.scenarioId ?? string.Empty,
                 levelId = controller.Config.LevelId,
+                challengeId = controller.ActiveChallenge?.ChallengeId ?? string.Empty,
                 battlefieldId = battlefield.BattlefieldId,
                 cameraMode = battlefield.CameraMode.ToString(),
                 legacyBattlefield = battlefield.IsLegacy,

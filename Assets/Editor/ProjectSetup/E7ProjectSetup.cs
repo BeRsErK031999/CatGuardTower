@@ -209,20 +209,25 @@ public static class E7ProjectSetup
     private static void ValidateEnemyResistances(ICollection<string> errors)
     {
         var profiles = LoadEnemyProfiles();
-        if (profiles.Count != 5)
+        var originalIds = new HashSet<string>(new[]
         {
-            errors.Add("E7 requires ultimate resistance profiles for all five enemy families.");
+            "mouse_scout", "rat_bruiser", "beetle_guard", "moth_swarm", "snail_tank"
+        }, StringComparer.Ordinal);
+        var originalProfiles = profiles.Where(enemy => originalIds.Contains(enemy.EnemyId)).ToList();
+        if (originalProfiles.Count != 5)
+        {
+            errors.Add("E7 requires ultimate resistance profiles for all five original enemy families.");
             return;
         }
 
-        var snail = profiles.FirstOrDefault(enemy => enemy.EnemyId == "snail_tank");
+        var snail = originalProfiles.FirstOrDefault(enemy => enemy.EnemyId == "snail_tank");
         if (snail == null || !snail.UltimateControlImmune || snail.UltimateDamageMultiplier >= 1f)
         {
             errors.Add("Snail tank must expose explicit boss-like control immunity and ultimate armor.");
         }
 
-        if (!profiles.Any(enemy => enemy.UltimateStunDurationMultiplier > 0f && enemy.UltimateStunDurationMultiplier < 1f)
-            || !profiles.Any(enemy => Mathf.Approximately(enemy.UltimateDamageMultiplier, 1f)))
+        if (!originalProfiles.Any(enemy => enemy.UltimateStunDurationMultiplier > 0f && enemy.UltimateStunDurationMultiplier < 1f)
+            || !originalProfiles.Any(enemy => Mathf.Approximately(enemy.UltimateDamageMultiplier, 1f)))
         {
             errors.Add("E7 roster must cover normal, resistant, armored, and control-immune targets.");
         }

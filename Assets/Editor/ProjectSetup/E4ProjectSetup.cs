@@ -151,16 +151,21 @@ public static class E4ProjectSetup
             catalog.FindById("level_07")
         };
         var expectedMaps = new[] { garden, well, rooftop };
+        var expandedCampaign = catalog.Levels.Length > 10;
         for (var index = 0; index < representativeLevels.Length; index++)
         {
             var level = representativeLevels[index];
-            if (level?.BattlefieldConfig != expectedMaps[index])
+            if (!expandedCampaign && level?.BattlefieldConfig != expectedMaps[index])
             {
                 errors.Add($"E4 representative level {index} does not reference the expected vertical-slice map.");
                 continue;
             }
 
-            AppendUnexpectedIssues(MapAuthoringValidator.ValidateLevel(level), errors);
+            AppendUnexpectedIssues(
+                expandedCampaign
+                    ? MapAuthoringValidator.ValidateBattlefield(expectedMaps[index])
+                    : MapAuthoringValidator.ValidateLevel(level),
+                errors);
         }
 
         if (sandboxMap == null || sandboxLevel == null || sandboxLevel.BattlefieldConfig != sandboxMap)
@@ -438,16 +443,25 @@ public static class E4ProjectSetup
     private static void ValidateMigrationHelper(LevelCatalogConfig catalog, ICollection<string> errors)
     {
         var legacy = catalog?.FindById("level_03");
-        if (legacy == null || !legacy.UsesLegacyBattlefield)
+        if (legacy == null)
         {
-            errors.Add("E4 migration rehearsal requires level_03 to remain the explicit legacy source.");
+            errors.Add("E4 migration rehearsal requires level_03 source geometry.");
             return;
         }
 
         BattlefieldConfig migrated = null;
+        LevelConfig syntheticLegacy = null;
         try
         {
-            migrated = MapAuthoringMigrationService.CreateMigratedBattlefieldInMemory(legacy);
+            var migrationSource = legacy;
+            if (!legacy.UsesLegacyBattlefield)
+            {
+                syntheticLegacy = UnityEngine.Object.Instantiate(legacy);
+                syntheticLegacy.ConfigureBattlefield(null);
+                migrationSource = syntheticLegacy;
+            }
+
+            migrated = MapAuthoringMigrationService.CreateMigratedBattlefieldInMemory(migrationSource);
             var result = MapAuthoringValidator.ValidateBattlefield(migrated, "Assets/__E4Negative__/migrated-level03.asset");
             if (!result.IsValid
                 || migrated.RouteConfigs.Length != 1
@@ -463,6 +477,11 @@ public static class E4ProjectSetup
             if (migrated != null)
             {
                 UnityEngine.Object.DestroyImmediate(migrated);
+            }
+
+            if (syntheticLegacy != null)
+            {
+                UnityEngine.Object.DestroyImmediate(syntheticLegacy);
             }
         }
     }

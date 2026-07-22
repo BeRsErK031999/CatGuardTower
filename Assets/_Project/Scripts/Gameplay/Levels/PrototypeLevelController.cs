@@ -86,6 +86,7 @@ namespace CatGuard.Gameplay.Levels
         public bool CanPlaceTowers => State is PrototypeLevelState.Preparing or PrototypeLevelState.Running;
         public bool CanStartWave => State == PrototypeLevelState.Preparing && waveSpawner != null;
         public LevelCompletionResult CompletionResult { get; private set; }
+        public CampaignChallengeConfig ActiveChallenge { get; private set; }
         public bool CanClaimVictoryDoubleReward => State == PrototypeLevelState.Won
             && CompletionResult != null
             && CompletionResult.EarnedFishCoins > 0
@@ -510,8 +511,8 @@ namespace CatGuard.Gameplay.Levels
                 route,
                 enemyConfig,
                 spawnOrder,
-                healthMultiplier,
-                speedMultiplier);
+                healthMultiplier * (ActiveChallenge?.EnemyHealthMultiplier ?? 1f),
+                speedMultiplier * (ActiveChallenge?.EnemySpeedMultiplier ?? 1f));
 
             activeEnemies.Add(enemy);
             encounteredEnemyIds.Add(enemyConfig.EnemyId);
@@ -719,6 +720,7 @@ namespace CatGuard.Gameplay.Levels
         private void StartLevel()
         {
             config = ProgressionService.GetSelectedLevelOrDefault(config);
+            ActiveChallenge = ProgressionService.GetSelectedChallenge(config);
             Battlefield = config.ResolveBattlefield();
             var battlefieldError = "Battlefield definition is missing.";
             if (Battlefield == null || !Battlefield.IsValid(out battlefieldError))
@@ -740,13 +742,20 @@ namespace CatGuard.Gameplay.Levels
             EnsureBattlefieldControllers();
             battlefieldCameraController.Initialize(Battlefield);
 
-            MaximumLives = config.BaseLives + ProgressionService.GetBaseLivesBonus();
+            MaximumLives = Mathf.Max(
+                1,
+                config.BaseLives
+                + ProgressionService.GetBaseLivesBonus()
+                + (ActiveChallenge?.MaximumLivesDelta ?? 0));
             Lives = MaximumLives;
             DefeatedEnemies = 0;
             EscapedEnemies = 0;
             SpawnedEnemies = 0;
             expectedEnemyCount = config.WaveConfig.TotalEnemyCount;
-            BattleFish = config.StartingBattleFish + ProgressionService.GetStartingBattleFishBonus();
+            BattleFish = Mathf.Max(
+                1,
+                Mathf.RoundToInt(config.StartingBattleFish * (ActiveChallenge?.StartingBattleFishMultiplier ?? 1f))
+                + ProgressionService.GetStartingBattleFishBonus());
             selectedTowerIndex = 0;
             SelectedPlacedTower = null;
             waveCompleted = false;
@@ -857,7 +866,7 @@ namespace CatGuard.Gameplay.Levels
             }
 
             resultApplied = true;
-            CompletionResult = ProgressionService.CompleteLevel(config);
+            CompletionResult = ProgressionService.CompleteLevel(config, ActiveChallenge);
             var questProgress = ProcessQuestBattleResult(true);
             var metaProgress = ProcessMetaBattleResult(true);
             var achievementProgress = ProcessAchievementBattleResult(true);
@@ -1008,13 +1017,7 @@ namespace CatGuard.Gameplay.Levels
 
         private Color GetBackgroundTint()
         {
-            return Battlefield.BiomeId switch
-            {
-                "old_well" => new Color(0.62f, 0.72f, 0.66f, 1f),
-                "rooftop" => new Color(0.42f, 0.52f, 0.68f, 1f),
-                "legacy_garden" => new Color(0.75f, 0.84f, 0.78f, 1f),
-                _ => new Color(0.82f, 0.9f, 0.84f, 1f)
-            };
+            return Battlefield.PresentationPalette.BackgroundTint;
         }
 
         private void CreateFallbackBackdrop(Transform parent)
@@ -1023,9 +1026,7 @@ namespace CatGuard.Gameplay.Levels
                 "FallbackGround",
                 Battlefield.WorldBounds.center,
                 new Vector3(Battlefield.WorldBounds.width, Battlefield.WorldBounds.height, 1f),
-                Battlefield.BiomeId == "rooftop"
-                    ? new Color(0.08f, 0.11f, 0.18f)
-                    : new Color(0.09f, 0.2f, 0.16f),
+                Battlefield.PresentationPalette.FallbackGround,
                 parent,
                 false,
                 -30);
@@ -1034,12 +1035,7 @@ namespace CatGuard.Gameplay.Levels
         private void CreateTerrain(Transform parent)
         {
             var bounds = Battlefield.WorldBounds;
-            var accentColor = Battlefield.BiomeId switch
-            {
-                "old_well" => new Color(0.12f, 0.22f, 0.2f, 0.32f),
-                "rooftop" => new Color(0.16f, 0.16f, 0.24f, 0.36f),
-                _ => new Color(0.12f, 0.28f, 0.18f, 0.28f)
-            };
+            var accentColor = Battlefield.PresentationPalette.TerrainAccent;
             CreateBackdropPatch(
                 "TerrainAccent",
                 new Vector2(bounds.center.x, bounds.yMin + (bounds.height * 0.22f)),
@@ -1078,7 +1074,7 @@ namespace CatGuard.Gameplay.Levels
                     $"NoBuild_{zone.ZoneId}",
                     zone.Bounds.center,
                     new Vector3(zone.Bounds.width, zone.Bounds.height, 1f),
-                    new Color(0.34f, 0.16f, 0.09f, 0.34f),
+                    Battlefield.PresentationPalette.BlockedZone,
                     parent,
                     false,
                     1);

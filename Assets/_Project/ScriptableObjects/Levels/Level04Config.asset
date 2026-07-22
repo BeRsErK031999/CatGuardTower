@@ -13,29 +13,50 @@ MonoBehaviour:
   m_Name: Level04Config
   m_EditorClassIdentifier: Assembly-CSharp::CatGuard.Gameplay.Levels.LevelConfig
   levelId: level_04
-  displayName: Lantern Path
+  displayName: Orchard Switchback
   baseLives: 8
-  startingBattleFish: 135
-  battlefieldConfig: {fileID: 11400000, guid: ba0bfc9f7f008534cba9f9b01bbb9b00, type: 2}
+  startingBattleFish: 140
+  battlefieldConfig: {fileID: 11400000, guid: 40422a1b84ac8bf41b2cf622f42e19f5, type: 2}
   gridColumns: 4
   gridRows: 3
   cellSize: 1.15
   gridOrigin: {x: -1.75, y: -2.8}
   pathPoints:
-  - {x: -3.8, y: 3.1}
-  - {x: -3, y: 1.1}
-  - {x: -0.7, y: 1}
-  - {x: 1.2, y: 2.2}
-  - {x: 3, y: 0.4}
-  - {x: 3.7, y: -2.8}
+  - {x: -11, y: 2.7}
+  - {x: -8, y: 0.7}
+  - {x: -5, y: 2.2}
+  - {x: -2, y: -1.8}
+  - {x: 2, y: 1.8}
+  - {x: 5, y: -2.2}
+  - {x: 8, y: -0.5}
+  - {x: 11, y: -2.7}
   availableTowers:
-  - {fileID: 11400000, guid: 46fc021c90f8cab4d8c916237353a577, type: 2}
-  - {fileID: 11400000, guid: db503ece8852a6a4ba44682b13fcf1b4, type: 2}
   - {fileID: 11400000, guid: c9536196982c34341acb60731de4c653, type: 2}
+  - {fileID: 11400000, guid: 9f62c30ee9a20c543aa6a5d31f10191f, type: 2}
+  - {fileID: 11400000, guid: 46fc021c90f8cab4d8c916237353a577, type: 2}
   - {fileID: 11400000, guid: 5f1012f251e8525489c183b551824698, type: 2}
-  waveConfig: {fileID: 11400000, guid: 16b916b3669932b4abfd1a2cae387fef, type: 2}
-  firstClearRewardCoins: 80
+  - {fileID: 11400000, guid: db503ece8852a6a4ba44682b13fcf1b4, type: 2}
+  waveConfig: {fileID: 11400000, guid: 87c0edb36f53ef74ba31550c37036f8d, type: 2}
+  firstClearRewardCoins: 89
   replayRewardCoins: 14
   unlocksLevelIds:
   - level_05
   tutorialTextKey: 
+  campaignMetadata:
+    biomeNameLocalizationKey: campaign.biome.backyard
+    tacticalSummaryLocalizationKey: campaign.map.level_04.summary
+    challenge:
+      challengeId: challenge_level_04
+      nameLocalizationKey: campaign.challenge.level_04.name
+      descriptionLocalizationKey: campaign.challenge.health
+      maximumLivesDelta: 0
+      startingBattleFishMultiplier: 1
+      enemyHealthMultiplier: 1.28
+      enemySpeedMultiplier: 1
+      firstClearRewardCoins: 54
+      replayRewardCoins: 9
+    questHookId: guardian_signal
+    achievementHookId: 
+    recommendedMaxActiveEnemies: 96
+    externalAssetManifest: Internal code-authored layout; existing Cat Guard prototype
+      sprites and animation profiles only; no external asset or license dependency.

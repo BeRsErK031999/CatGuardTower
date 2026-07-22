@@ -13,29 +13,47 @@ MonoBehaviour:
   m_Name: Level10Config
   m_EditorClassIdentifier: Assembly-CSharp::CatGuard.Gameplay.Levels.LevelConfig
   levelId: level_10
-  displayName: Quiet Alley
+  displayName: Crate Maze
   baseLives: 10
-  startingBattleFish: 195
-  battlefieldConfig: {fileID: 11400000, guid: 6f329977a8953ef41a6e0596d86b3c80, type: 2}
+  startingBattleFish: 200
+  battlefieldConfig: {fileID: 11400000, guid: d837e0d362fbf404bad47218eeaa3b60, type: 2}
   gridColumns: 4
   gridRows: 3
   cellSize: 1.15
   gridOrigin: {x: -1.75, y: -2.8}
   pathPoints:
-  - {x: -3.7, y: 2.9}
-  - {x: -2.7, y: 1.8}
-  - {x: -0.7, y: 2.4}
-  - {x: 0.4, y: -0.5}
-  - {x: 2.5, y: -0.2}
-  - {x: 3.7, y: -2.8}
+  - {x: -7, y: 2.7}
+  - {x: -4, y: 1.4}
+  - {x: -1, y: 2.1}
+  - {x: 2, y: 0.2}
+  - {x: 7, y: -1.8}
   availableTowers:
-  - {fileID: 11400000, guid: 46fc021c90f8cab4d8c916237353a577, type: 2}
-  - {fileID: 11400000, guid: db503ece8852a6a4ba44682b13fcf1b4, type: 2}
   - {fileID: 11400000, guid: c9536196982c34341acb60731de4c653, type: 2}
-  - {fileID: 11400000, guid: 5f1012f251e8525489c183b551824698, type: 2}
   - {fileID: 11400000, guid: 9f62c30ee9a20c543aa6a5d31f10191f, type: 2}
-  waveConfig: {fileID: 11400000, guid: 8d45b65140232ca4eafda1626bd6055e, type: 2}
-  firstClearRewardCoins: 235
-  replayRewardCoins: 30
-  unlocksLevelIds: []
+  - {fileID: 11400000, guid: 46fc021c90f8cab4d8c916237353a577, type: 2}
+  - {fileID: 11400000, guid: 5f1012f251e8525489c183b551824698, type: 2}
+  - {fileID: 11400000, guid: db503ece8852a6a4ba44682b13fcf1b4, type: 2}
+  waveConfig: {fileID: 11400000, guid: f774d243b0675ec42bd345a66ba129f7, type: 2}
+  firstClearRewardCoins: 197
+  replayRewardCoins: 26
+  unlocksLevelIds:
+  - level_11
   tutorialTextKey: 
+  campaignMetadata:
+    biomeNameLocalizationKey: campaign.biome.pantry
+    tacticalSummaryLocalizationKey: campaign.map.level_10.summary
+    challenge:
+      challengeId: challenge_level_10
+      nameLocalizationKey: campaign.challenge.level_10.name
+      descriptionLocalizationKey: campaign.challenge.combined
+      maximumLivesDelta: 0
+      startingBattleFishMultiplier: 1
+      enemyHealthMultiplier: 1.18
+      enemySpeedMultiplier: 1.14
+      firstClearRewardCoins: 102
+      replayRewardCoins: 15
+    questHookId: old_well_watch
+    achievementHookId: ten_maps
+    recommendedMaxActiveEnemies: 96
+    externalAssetManifest: Internal code-authored layout; existing Cat Guard prototype
+      sprites and animation profiles only; no external asset or license dependency.

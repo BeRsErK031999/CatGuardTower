@@ -150,7 +150,12 @@ namespace CatGuard.UI.HUD
 
             GUI.Label(
                 new Rect(panelRect.x + 18f, panelRect.y + 10f, levelWidth, panelRect.height - 20f),
-                string.Format(LocalizationService.Text("hud.level"), levelName),
+                levelController.ActiveChallenge == null
+                    ? string.Format(LocalizationService.Text("hud.level"), levelName)
+                    : string.Format(
+                        LocalizationService.Text("hud.levelChallenge"),
+                        levelName,
+                        LocalizationService.Text(levelController.ActiveChallenge.NameLocalizationKey)),
                 levelStyle);
 
             var enemiesHandled = levelController.DefeatedEnemies + levelController.EscapedEnemies;
@@ -500,6 +505,10 @@ namespace CatGuard.UI.HUD
 
             var won = levelController.State == PrototypeLevelState.Won;
             var status = won ? LocalizationService.Text("result.victory") : LocalizationService.Text("result.defeat");
+            if (levelController.ActiveChallenge != null)
+            {
+                status = $"{status} · {LocalizationService.Text(levelController.ActiveChallenge.NameLocalizationKey)}";
+            }
             GUI.Label(
                 new Rect(overlayRect.x + 28f, overlayRect.y + 22f, overlayRect.width - 56f, 70f),
                 status,

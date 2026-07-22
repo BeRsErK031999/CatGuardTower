@@ -2,7 +2,14 @@
 
 ## Source of truth
 
-`GameSaveData.schemaVersion` and `GameSaveMigrationService.CurrentSchemaVersion` define the local-save contract. E11 uses schema version `3`. A missing version is legacy version `0`; migrations run sequentially (`0 -> 1 -> 2 -> 3`) and are safe to repeat because a completed step advances the stored version exactly once.
+`GameSaveData.schemaVersion` and `GameSaveMigrationService.CurrentSchemaVersion` define the local-save contract. E12 uses schema version `4`. A missing version is legacy version `0`; migrations run sequentially (`0 -> 1 -> 2 -> 3 -> 4`) and are safe to repeat because a completed step advances the stored version exactly once.
+
+## E12 campaign challenge fields
+
+- `selectedChallengeId` chooses challenge mode only for the selected completed normal map;
+- `completedChallengeIds` records first-clear state by globally unique challenge id;
+- challenge rewards do not add map completion or unlock the next level;
+- migration `3 -> 4` initializes both fields empty and preserves all E11 achievement/meta/quest state.
 
 ## Load and backup policy
 

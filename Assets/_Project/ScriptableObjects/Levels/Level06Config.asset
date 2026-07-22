@@ -13,30 +13,47 @@ MonoBehaviour:
   m_Name: Level06Config
   m_EditorClassIdentifier: Assembly-CSharp::CatGuard.Gameplay.Levels.LevelConfig
   levelId: level_06
-  displayName: Moonlit Fence
+  displayName: Drainpipe Divide
   baseLives: 8
-  startingBattleFish: 155
-  battlefieldConfig: {fileID: 11400000, guid: 6f329977a8953ef41a6e0596d86b3c80, type: 2}
+  startingBattleFish: 160
+  battlefieldConfig: {fileID: 11400000, guid: ce41a6b23ddbdde4e918573fa570a750, type: 2}
   gridColumns: 4
   gridRows: 3
   cellSize: 1.15
   gridOrigin: {x: -1.75, y: -2.8}
   pathPoints:
-  - {x: -3.8, y: 2.8}
-  - {x: -2.6, y: 0.9}
-  - {x: -0.4, y: 2.3}
-  - {x: 1.2, y: 0}
-  - {x: 2.7, y: -0.8}
-  - {x: 3.7, y: -2.7}
+  - {x: -7, y: 2.8}
+  - {x: -4, y: 1.4}
+  - {x: -1, y: 2.1}
+  - {x: 3, y: 1.1}
+  - {x: 7, y: 2.4}
   availableTowers:
-  - {fileID: 11400000, guid: 46fc021c90f8cab4d8c916237353a577, type: 2}
-  - {fileID: 11400000, guid: db503ece8852a6a4ba44682b13fcf1b4, type: 2}
   - {fileID: 11400000, guid: c9536196982c34341acb60731de4c653, type: 2}
-  - {fileID: 11400000, guid: 5f1012f251e8525489c183b551824698, type: 2}
   - {fileID: 11400000, guid: 9f62c30ee9a20c543aa6a5d31f10191f, type: 2}
-  waveConfig: {fileID: 11400000, guid: 25a2cbf77db010f49a6f12a354bd6d66, type: 2}
-  firstClearRewardCoins: 120
+  - {fileID: 11400000, guid: 46fc021c90f8cab4d8c916237353a577, type: 2}
+  - {fileID: 11400000, guid: 5f1012f251e8525489c183b551824698, type: 2}
+  - {fileID: 11400000, guid: db503ece8852a6a4ba44682b13fcf1b4, type: 2}
+  waveConfig: {fileID: 11400000, guid: 6582aa5683074d440bfd83b92e982b9f, type: 2}
+  firstClearRewardCoins: 125
   replayRewardCoins: 18
   unlocksLevelIds:
   - level_07
   tutorialTextKey: 
+  campaignMetadata:
+    biomeNameLocalizationKey: campaign.biome.rooftops
+    tacticalSummaryLocalizationKey: campaign.map.level_06.summary
+    challenge:
+      challengeId: challenge_level_06
+      nameLocalizationKey: campaign.challenge.level_06.name
+      descriptionLocalizationKey: campaign.challenge.supplies
+      maximumLivesDelta: 0
+      startingBattleFishMultiplier: 0.72
+      enemyHealthMultiplier: 1
+      enemySpeedMultiplier: 1
+      firstClearRewardCoins: 70
+      replayRewardCoins: 11
+    questHookId: control_school
+    achievementHookId: 
+    recommendedMaxActiveEnemies: 96
+    externalAssetManifest: Internal code-authored layout; existing Cat Guard prototype
+      sprites and animation profiles only; no external asset or license dependency.

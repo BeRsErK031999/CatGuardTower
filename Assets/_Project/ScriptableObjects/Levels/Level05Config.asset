@@ -13,30 +13,49 @@ MonoBehaviour:
   m_Name: Level05Config
   m_EditorClassIdentifier: Assembly-CSharp::CatGuard.Gameplay.Levels.LevelConfig
   levelId: level_05
-  displayName: Fish Barrel
+  displayName: Moonlit Fence
   baseLives: 8
-  startingBattleFish: 145
-  battlefieldConfig: {fileID: 11400000, guid: ba0bfc9f7f008534cba9f9b01bbb9b00, type: 2}
+  startingBattleFish: 150
+  battlefieldConfig: {fileID: 11400000, guid: 73065995c9dfc48458da5c3695216a51, type: 2}
   gridColumns: 4
   gridRows: 3
   cellSize: 1.15
   gridOrigin: {x: -1.75, y: -2.8}
   pathPoints:
-  - {x: -3.7, y: 2.9}
-  - {x: -1.8, y: 2.9}
-  - {x: -0.9, y: 0.4}
-  - {x: 1.7, y: 0.4}
-  - {x: 2.4, y: -1.4}
-  - {x: 3.7, y: -2.6}
+  - {x: -7, y: 2.8}
+  - {x: -5, y: 0.2}
+  - {x: -2, y: -0.8}
+  - {x: 0, y: 1.4}
+  - {x: 3, y: 0.4}
+  - {x: 5, y: -1.3}
+  - {x: 7, y: -2.7}
   availableTowers:
-  - {fileID: 11400000, guid: 46fc021c90f8cab4d8c916237353a577, type: 2}
-  - {fileID: 11400000, guid: db503ece8852a6a4ba44682b13fcf1b4, type: 2}
   - {fileID: 11400000, guid: c9536196982c34341acb60731de4c653, type: 2}
-  - {fileID: 11400000, guid: 5f1012f251e8525489c183b551824698, type: 2}
   - {fileID: 11400000, guid: 9f62c30ee9a20c543aa6a5d31f10191f, type: 2}
-  waveConfig: {fileID: 11400000, guid: 9b32c4df3a965404c9196ec69aa3c851, type: 2}
-  firstClearRewardCoins: 100
+  - {fileID: 11400000, guid: 46fc021c90f8cab4d8c916237353a577, type: 2}
+  - {fileID: 11400000, guid: 5f1012f251e8525489c183b551824698, type: 2}
+  - {fileID: 11400000, guid: db503ece8852a6a4ba44682b13fcf1b4, type: 2}
+  waveConfig: {fileID: 11400000, guid: 4714b0d147a7eb1449f1ed2e26a4e31d, type: 2}
+  firstClearRewardCoins: 107
   replayRewardCoins: 16
   unlocksLevelIds:
   - level_06
   tutorialTextKey: 
+  campaignMetadata:
+    biomeNameLocalizationKey: campaign.biome.rooftops
+    tacticalSummaryLocalizationKey: campaign.map.level_05.summary
+    challenge:
+      challengeId: challenge_level_05
+      nameLocalizationKey: campaign.challenge.level_05.name
+      descriptionLocalizationKey: campaign.challenge.combined
+      maximumLivesDelta: 0
+      startingBattleFishMultiplier: 1
+      enemyHealthMultiplier: 1.18
+      enemySpeedMultiplier: 1.14
+      firstClearRewardCoins: 62
+      replayRewardCoins: 10
+    questHookId: careful_craftsman
+    achievementHookId: 
+    recommendedMaxActiveEnemies: 96
+    externalAssetManifest: Internal code-authored layout; existing Cat Guard prototype
+      sprites and animation profiles only; no external asset or license dependency.

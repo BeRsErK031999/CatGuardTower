@@ -14,6 +14,7 @@ The Garden Outpost now contains a persistent, configuration-driven long-term pro
 - Added rank thresholds and battle/quest experience sources.
 - Added three unlockable Guardian abilities, two equipped slots, three unlockable perks, and one equipped perk slot.
 - Added a 20-entry map/tower/enemy codex that records only content encountered in completed battle events.
+- E12 subsequently expands the same data-driven codex to 25 entries (12 maps, 5 towers, 8 enemies) without changing E10 discovery semantics.
 - Added duplicate-event protection and rewarded-revive rollback for every E10 battle reward.
 - Migrated legacy upgrade ownership into bounded research while retaining original save entries.
 

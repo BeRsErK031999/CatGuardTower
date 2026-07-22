@@ -166,7 +166,33 @@ namespace CatGuard.Meta.Progression
             return level != null && EnsureSave().completedLevelIds.Contains(level.LevelId);
         }
 
+        public static bool IsChallengeUnlocked(LevelConfig level)
+        {
+            return level?.CampaignMetadata?.Challenge?.IsValid() == true && IsLevelCompleted(level);
+        }
+
+        public static bool IsChallengeCompleted(LevelConfig level)
+        {
+            var challenge = level?.CampaignMetadata?.Challenge;
+            return challenge != null && EnsureSave().completedChallengeIds.Contains(challenge.ChallengeId);
+        }
+
+        public static CampaignChallengeConfig GetSelectedChallenge(LevelConfig level)
+        {
+            var challenge = level?.CampaignMetadata?.Challenge;
+            return challenge != null
+                && IsChallengeUnlocked(level)
+                && string.Equals(EnsureSave().selectedChallengeId, challenge.ChallengeId, StringComparison.Ordinal)
+                    ? challenge
+                    : null;
+        }
+
         public static void SelectLevel(LevelConfig level)
+        {
+            SelectLevel(level, string.Empty);
+        }
+
+        public static void SelectLevel(LevelConfig level, string challengeId)
         {
             if (level == null || !IsLevelUnlocked(level))
             {
@@ -174,7 +200,14 @@ namespace CatGuard.Meta.Progression
             }
 
             selectedLevel = level;
-            EnsureSave().selectedLevelId = level.LevelId;
+            var data = EnsureSave();
+            data.selectedLevelId = level.LevelId;
+            var challenge = level.CampaignMetadata?.Challenge;
+            data.selectedChallengeId = challenge != null
+                && IsChallengeUnlocked(level)
+                && string.Equals(challengeId, challenge.ChallengeId, StringComparison.Ordinal)
+                    ? challenge.ChallengeId
+                    : string.Empty;
             Save();
         }
 
@@ -189,6 +222,21 @@ namespace CatGuard.Meta.Progression
             if (level == null)
             {
                 return new LevelCompletionResult(0, false, new List<string>());
+            }
+
+            return CompleteLevel(level, GetSelectedChallenge(level));
+        }
+
+        public static LevelCompletionResult CompleteLevel(LevelConfig level, CampaignChallengeConfig challenge)
+        {
+            if (level == null)
+            {
+                return new LevelCompletionResult(0, false, new List<string>());
+            }
+
+            if (challenge != null)
+            {
+                return CompleteChallenge(level, challenge);
             }
 
             var data = EnsureSave();
@@ -217,6 +265,34 @@ namespace CatGuard.Meta.Progression
             AddDailyMissionProgress(DailyMissionType.CompleteLevels, 1, false);
             Save();
             return new LevelCompletionResult(earnedCoins, firstClear, unlockedNames);
+        }
+
+        private static LevelCompletionResult CompleteChallenge(LevelConfig level, CampaignChallengeConfig challenge)
+        {
+            if (!IsChallengeUnlocked(level)
+                || level.CampaignMetadata?.Challenge != challenge
+                || !challenge.IsValid())
+            {
+                return new LevelCompletionResult(0, false, new List<string>());
+            }
+
+            var data = EnsureSave();
+            var firstClear = !data.completedChallengeIds.Contains(challenge.ChallengeId);
+            var earnedCoins = firstClear ? challenge.FirstClearRewardCoins : challenge.ReplayRewardCoins;
+            data.fishCoins += earnedCoins;
+            if (firstClear)
+            {
+                data.completedChallengeIds.Add(challenge.ChallengeId);
+            }
+
+            AddDailyMissionProgress(DailyMissionType.CompleteLevels, 1, false);
+            Save();
+            return new LevelCompletionResult(
+                earnedCoins,
+                firstClear,
+                new List<string>(),
+                0,
+                challenge.ChallengeId);
         }
 
         public static void RecordTowerPlaced()

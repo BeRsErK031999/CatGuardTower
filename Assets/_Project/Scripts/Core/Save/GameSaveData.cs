@@ -9,8 +9,10 @@ namespace CatGuard.Core.Save
         public int schemaVersion = GameSaveMigrationService.CurrentSchemaVersion;
         public int fishCoins;
         public string selectedLevelId;
+        public string selectedChallengeId = string.Empty;
         public List<string> unlockedLevelIds = new();
         public List<string> completedLevelIds = new();
+        public List<string> completedChallengeIds = new();
         public List<UpgradeSaveEntry> upgrades = new();
         public string lastDailyRewardClaimDateKey;
         public int dailyRewardStreakIndex;

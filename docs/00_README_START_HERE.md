@@ -23,7 +23,7 @@ The current goal is to expand the working Android MVP into a landscape, multi-ro
 - Phase 6 polish exists: self-made placeholder visuals, procedural audio/music, VFX, UI motion, sound/language settings, and RU/EN text coverage.
 - Phase 7 analytics service boundary exists: gameplay/meta code emits named analytics events through wrappers and the Editor/fake implementation works without external SDKs.
 - Phase 8 rewarded ads exist through voluntary fake/no-SDK placements: victory x2, revive, daily x2, and daily free coins.
-- Phase 9 MVP content exists: 10 levels, 5 tower configs, 5 enemy configs, baseline rewards, clear wave ramp, and a tutorial hint on the first level.
+- The E12 campaign contains 12 explicit maps across 3 biomes, 5 tower configs, 8 standard enemy families, per-map challenges, increasing rewards/threat, and a tutorial hint on the first level.
 - Phase 10 Android build pipeline exists: QA APK/AAB generation is automated, Android settings are validated, emulator offline smoke has been run, save persistence is verified on a debuggable QA build, and a real-device QA runner is available at `tools/android/run-device-qa.ps1`.
 - Phase 11 Google Play preparation has started: the initial store package/version are configured as `com.berserk031999.catguardtower` `0.1.0` (`versionCode` `1`), while the QA package remains separate, store/compliance drafts live under `docs/store/`, and refreshed store image assets include five current Russian runtime captures from a validated emulator release build.
 - The post-MVP expansion direction was accepted on 2026-07-21: landscape auto-rotation, larger maps, multiple enemy routes, animated units, in-battle tower upgrades, map-scale ultimates, a home hub, quests, progression, and achievements.
@@ -36,6 +36,7 @@ The current goal is to expand the working Android MVP into a landscape, multi-ro
 - Expansion section E9 adds persistent post-round contracts, ten objective types, explicit completion/claim states, one-time rewards, locked-content filtering, and the Quest Board daily adapter. See `docs/planning/E9_QUEST_BOARD_REPORT.md`.
 - Expansion section E10 adds schema-versioned save migration, player rank, five tower masteries, capped Workshop research, Guardian loadout/perks, and a discovery codex. See `docs/planning/E10_META_PROGRESSION_REPORT.md`.
 - Expansion section E11 adds 12 configuration-driven achievements, hidden and incremental progress, schema-v3 persistence, one-time Fish/XP claims, claimable hub badges, and non-PII analytics. See `docs/planning/E11_ACHIEVEMENTS_REPORT.md`.
+- Expansion section E12 adds the 3×4 landscape campaign, schema-v4 challenge persistence, data-driven biome presentation, and 25-entry codex. See `docs/planning/E12_EXPANDED_CAMPAIGN_REPORT.md`.
 
 ## Recommended Reading Order
 
@@ -51,4 +52,4 @@ The current goal is to expand the working Android MVP into a landscape, multi-ro
 
 ## Next Safe Step
 
-E11 is complete. The next safe isolated block is E12 — Expanded Landscape Campaign. Keep its large content scope, external-art dependencies, and complete block gate explicit before moving to E13.
+E12 is complete. The next safe isolated block is E13 — Bosses And Advanced Map Rules. Boss phases and authoritative boss achievement events must use a real boss framework rather than standard-enemy placeholders.

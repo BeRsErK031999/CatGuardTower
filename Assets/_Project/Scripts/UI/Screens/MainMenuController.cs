@@ -66,6 +66,8 @@ namespace CatGuard.UI.Screens
         private GUIStyle privacyMetaStyle;
 
         private Vector2 levelsScrollPosition;
+        private string selectedCampaignLevelId = string.Empty;
+        private bool selectedCampaignChallenge;
         private Vector2 upgradesScrollPosition;
         private Vector2 masteryScrollPosition;
         private Vector2 codexScrollPosition;
@@ -614,8 +616,18 @@ namespace CatGuard.UI.Screens
             var inner = LandscapeLayout.Inset(contentRect, 22f, 20f);
             var levels = levelCatalog.Levels;
             var recommendedIndex = GetRecommendedLevelIndex(levels);
-            var recommendedLevel = levels[recommendedIndex];
-            var completed = ProgressionService.IsLevelCompleted(recommendedLevel);
+            var selectedLevel = levels.FirstOrDefault(level => level != null && level.LevelId == selectedCampaignLevelId)
+                ?? levels[recommendedIndex];
+            selectedCampaignLevelId = selectedLevel.LevelId;
+            var completed = ProgressionService.IsLevelCompleted(selectedLevel);
+            var challenge = selectedLevel.CampaignMetadata?.Challenge;
+            var challengeUnlocked = ProgressionService.IsChallengeUnlocked(selectedLevel);
+            if (!challengeUnlocked)
+            {
+                selectedCampaignChallenge = false;
+            }
+
+            var selectedChallengeCompleted = ProgressionService.IsChallengeCompleted(selectedLevel);
             var columnGap = 20f;
             var heroWidth = Mathf.Clamp((inner.width - columnGap) * 0.42f, 380f, 700f);
             var heroRect = new Rect(inner.x, inner.y, heroWidth, inner.height);
@@ -632,18 +644,57 @@ namespace CatGuard.UI.Screens
                 eyebrowStyle);
             GUI.Label(
                 new Rect(heroRect.x + 28f, heroRect.y + 78f, heroRect.width - 56f, 96f),
-                LocalizationService.LevelName(recommendedLevel),
+                LocalizationService.LevelName(selectedLevel),
                 headingStyle);
+            var metadata = selectedLevel.CampaignMetadata;
+            if (metadata != null)
+            {
+                GUI.Label(
+                    new Rect(heroRect.x + 36f, heroRect.y + 164f, heroRect.width - 72f, 34f),
+                    LocalizationService.Text(metadata.BiomeNameLocalizationKey).ToUpperInvariant(),
+                    eyebrowStyle);
+                GUI.Label(
+                    new Rect(heroRect.x + 36f, heroRect.y + 204f, heroRect.width - 72f, 66f),
+                    LocalizationService.Text(metadata.TacticalSummaryLocalizationKey),
+                    smallLabelStyle);
+            }
+
+            var modeY = heroRect.yMax - 234f;
+            var modeWidth = (heroRect.width - 86f) * 0.5f;
+            if (GUI.Button(
+                    new Rect(heroRect.x + 36f, modeY, modeWidth, 52f),
+                    LocalizationService.Text("campaign.normal"),
+                    selectedCampaignChallenge ? compactButtonStyle : primaryButtonStyle))
+            {
+                selectedCampaignChallenge = false;
+            }
+
+            GUI.enabled = uiInteractionEnabled && challengeUnlocked;
+            if (GUI.Button(
+                    new Rect(heroRect.x + 50f + modeWidth, modeY, modeWidth, 52f),
+                    LocalizationService.Text("campaign.challenge"),
+                    selectedCampaignChallenge ? primaryButtonStyle : compactButtonStyle))
+            {
+                selectedCampaignChallenge = true;
+            }
+
+            GUI.enabled = uiInteractionEnabled;
+            var reward = selectedCampaignChallenge && challenge != null
+                ? selectedChallengeCompleted ? challenge.ReplayRewardCoins : challenge.FirstClearRewardCoins
+                : completed ? selectedLevel.ReplayRewardCoins : selectedLevel.FirstClearRewardCoins;
             GUI.Label(
-                new Rect(heroRect.x + 36f, heroRect.y + 182f, heroRect.width - 72f, 72f),
-                string.Format(LocalizationService.Text("menu.levelReward"), recommendedLevel.FirstClearRewardCoins),
+                new Rect(heroRect.x + 36f, modeY + 60f, heroRect.width - 72f, 74f),
+                selectedCampaignChallenge && challenge != null
+                    ? $"{LocalizationService.Text(challenge.NameLocalizationKey)} · {LocalizationService.Text(challenge.DescriptionLocalizationKey)}\n{string.Format(LocalizationService.Text("campaign.reward"), reward)}"
+                    : string.Format(LocalizationService.Text("campaign.reward"), reward),
                 smallLabelStyle);
 
             var playRect = new Rect(heroRect.x + 38f, heroRect.yMax - 86f, heroRect.width - 76f, 60f);
-            var playLabel = LocalizationService.Text(completed ? "button.replay" : "button.play");
+            var selectedModeCompleted = selectedCampaignChallenge ? selectedChallengeCompleted : completed;
+            var playLabel = LocalizationService.Text(selectedModeCompleted ? "button.replay" : "button.play");
             if (GUI.Button(playRect, playLabel, primaryButtonStyle))
             {
-                StartLevel(recommendedLevel);
+                StartLevel(selectedLevel, selectedCampaignChallenge);
             }
 
             GUI.Label(
@@ -672,8 +723,11 @@ namespace CatGuard.UI.Screens
 
                 var unlocked = ProgressionService.IsLevelUnlocked(level);
                 var isCompleted = ProgressionService.IsLevelCompleted(level);
+                var isChallengeCompleted = ProgressionService.IsChallengeCompleted(level);
                 var status = isCompleted
-                    ? LocalizationService.Text("level.clear")
+                    ? isChallengeCompleted
+                        ? LocalizationService.Text("campaign.mastered")
+                        : LocalizationService.Text("level.clear")
                     : unlocked ? LocalizationService.Text("common.open") : LocalizationService.Text("level.locked");
                 var label = $"{index + 1:00}   {LocalizationService.LevelName(level)}   |   {status}";
                 var rect = new Rect(0f, index * (rowHeight + rowSpacing), rowWidth, rowHeight);
@@ -681,7 +735,8 @@ namespace CatGuard.UI.Screens
                 GUI.enabled = uiInteractionEnabled && unlocked;
                 if (GUI.Button(rect, label, levelButtonStyle))
                 {
-                    StartLevel(level);
+                    selectedCampaignLevelId = level.LevelId;
+                    selectedCampaignChallenge = false;
                 }
             }
 
@@ -710,10 +765,11 @@ namespace CatGuard.UI.Screens
             return lastUnlockedIndex;
         }
 
-        private void StartLevel(LevelConfig level)
+        private void StartLevel(LevelConfig level, bool challengeMode = false)
         {
             ProceduralAudioService.Play(ProceduralSoundId.MenuClick);
-            ProgressionService.SelectLevel(level);
+            var challengeId = challengeMode ? level?.CampaignMetadata?.Challenge?.ChallengeId : string.Empty;
+            ProgressionService.SelectLevel(level, challengeId);
             HomeHubNavigationService.BeginBattle(level);
             SceneLoader.LoadLevel();
         }

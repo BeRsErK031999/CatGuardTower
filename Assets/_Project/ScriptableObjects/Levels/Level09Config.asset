@@ -13,30 +13,49 @@ MonoBehaviour:
   m_Name: Level09Config
   m_EditorClassIdentifier: Assembly-CSharp::CatGuard.Gameplay.Levels.LevelConfig
   levelId: level_09
-  displayName: Orchard Wall
-  baseLives: 10
-  startingBattleFish: 185
-  battlefieldConfig: {fileID: 11400000, guid: 4053abfe8ce86f241b1c01a90ddff3ef, type: 2}
+  displayName: Pantry Threshold
+  baseLives: 9
+  startingBattleFish: 190
+  battlefieldConfig: {fileID: 11400000, guid: 07a228cf418fe8a4a984749bb31cc0f2, type: 2}
   gridColumns: 4
   gridRows: 3
   cellSize: 1.15
   gridOrigin: {x: -1.75, y: -2.8}
   pathPoints:
-  - {x: -3.8, y: 3}
-  - {x: -0.9, y: 2.5}
-  - {x: -1.9, y: 0.2}
-  - {x: 1.4, y: 0.5}
-  - {x: 2.2, y: -1.7}
-  - {x: 3.7, y: -2.8}
+  - {x: -7, y: 0.4}
+  - {x: -5, y: 2.4}
+  - {x: -2, y: 1.4}
+  - {x: 0, y: -1.7}
+  - {x: 3, y: -2.2}
+  - {x: 5, y: 0.5}
+  - {x: 7, y: -0.4}
   availableTowers:
-  - {fileID: 11400000, guid: 46fc021c90f8cab4d8c916237353a577, type: 2}
-  - {fileID: 11400000, guid: db503ece8852a6a4ba44682b13fcf1b4, type: 2}
   - {fileID: 11400000, guid: c9536196982c34341acb60731de4c653, type: 2}
-  - {fileID: 11400000, guid: 5f1012f251e8525489c183b551824698, type: 2}
   - {fileID: 11400000, guid: 9f62c30ee9a20c543aa6a5d31f10191f, type: 2}
-  waveConfig: {fileID: 11400000, guid: 28d13260e523de04cb78b892bb3bdd87, type: 2}
-  firstClearRewardCoins: 200
-  replayRewardCoins: 25
+  - {fileID: 11400000, guid: 46fc021c90f8cab4d8c916237353a577, type: 2}
+  - {fileID: 11400000, guid: 5f1012f251e8525489c183b551824698, type: 2}
+  - {fileID: 11400000, guid: db503ece8852a6a4ba44682b13fcf1b4, type: 2}
+  waveConfig: {fileID: 11400000, guid: c77e1b2ea9061104595e8e8d4e492979, type: 2}
+  firstClearRewardCoins: 179
+  replayRewardCoins: 24
   unlocksLevelIds:
   - level_10
   tutorialTextKey: 
+  campaignMetadata:
+    biomeNameLocalizationKey: campaign.biome.pantry
+    tacticalSummaryLocalizationKey: campaign.map.level_09.summary
+    challenge:
+      challengeId: challenge_level_09
+      nameLocalizationKey: campaign.challenge.level_09.name
+      descriptionLocalizationKey: campaign.challenge.health
+      maximumLivesDelta: 0
+      startingBattleFishMultiplier: 1
+      enemyHealthMultiplier: 1.28
+      enemySpeedMultiplier: 1
+      firstClearRewardCoins: 94
+      replayRewardCoins: 14
+    questHookId: no_scrap
+    achievementHookId: 
+    recommendedMaxActiveEnemies: 96
+    externalAssetManifest: Internal code-authored layout; existing Cat Guard prototype
+      sprites and animation profiles only; no external asset or license dependency.

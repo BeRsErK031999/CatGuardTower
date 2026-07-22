@@ -300,11 +300,13 @@ public static class E2ProjectSetup
     private static void ValidateLevelMigration(IReadOnlyCollection<BattlefieldConfig> maps, ICollection<string> errors)
     {
         var catalog = LoadLevelCatalog();
-        if (catalog == null || catalog.Levels.Length != 10)
+        if (catalog == null || catalog.Levels.Length < 10)
         {
-            errors.Add("E2 migration requires all ten existing level configs.");
+            errors.Add("E2 migration requires the original ten level configs to remain available.");
             return;
         }
+
+        var expandedCampaign = catalog.Levels.Length > 10;
 
         var referencedMaps = new HashSet<BattlefieldConfig>();
         var legacyLevels = new List<LevelConfig>();
@@ -330,14 +332,19 @@ public static class E2ProjectSetup
             }
         }
 
-        if (referencedMaps.Count != maps.Count)
+        if (!expandedCampaign && referencedMaps.Count != maps.Count)
         {
             errors.Add("All three E2 battlefield configs must be referenced by the existing campaign.");
         }
 
-        if (legacyLevels.Count != 1 || legacyLevels[0].LevelId != "level_03")
+        if (!expandedCampaign && (legacyLevels.Count != 1 || legacyLevels[0].LevelId != "level_03"))
         {
             errors.Add("Level 03 must remain the explicit single-level legacy compatibility path for E2.");
+        }
+
+        else if (expandedCampaign && legacyLevels.Count != 0)
+        {
+            errors.Add("Expanded E12 campaign levels must all use explicit battlefield configs.");
         }
     }
 

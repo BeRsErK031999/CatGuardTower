@@ -1135,6 +1135,6 @@ Ceilings здесь означают ожидаемую способность d
 
 ## 9. Next Action
 
-`E11 — Achievements And Reward Claims` завершён; фактический gate находится в [E11_ACHIEVEMENTS_REPORT.md](E11_ACHIEVEMENTS_REPORT.md), contract и event/claim flow — в [ACHIEVEMENT_WORKFLOW.md](ACHIEVEMENT_WORKFLOW.md), а schema-v3 migration/reset paths — в [SAVE_SCHEMA_AND_META_PROGRESSION.md](SAVE_SCHEMA_AND_META_PROGRESSION.md).
+`E12 — Expanded Landscape Campaign` завершён; фактический gate находится в [E12_EXPANDED_CAMPAIGN_REPORT.md](E12_EXPANDED_CAMPAIGN_REPORT.md), authoring и challenge flow — в [CAMPAIGN_CONTENT_WORKFLOW.md](CAMPAIGN_CONTENT_WORKFLOW.md), а schema-v4 migration/reset paths — в [SAVE_SCHEMA_AND_META_PROGRESSION.md](SAVE_SCHEMA_AND_META_PROGRESSION.md).
 
-Следующий допустимый implementation block: **`E12 — Expanded Landscape Campaign`**. Это самостоятельный `XXL` content block с отдельным scope, external-art boundary и полным Block Test Gate; E11-delivery не включает кампанию E12 или boss content E13.
+Следующий допустимый implementation block: **`E13 — Bosses And Advanced Map Rules`**. E12-delivery не подменяет босса обычным врагом: mini-boss/boss phases, telegraphs, resistance и authoritative achievement events остаются отдельным полным блоком.

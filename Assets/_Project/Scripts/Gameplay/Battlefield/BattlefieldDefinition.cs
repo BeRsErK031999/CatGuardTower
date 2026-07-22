@@ -26,6 +26,7 @@ namespace CatGuard.Gameplay.Battlefield
             BattlefieldZone[] buildZones,
             BattlefieldZone[] noBuildZones,
             BattlefieldDecorationAnchor[] decorations,
+            BattlefieldPresentationPalette palette,
             bool legacyBattlefield,
             bool legacyRoute)
         {
@@ -43,6 +44,7 @@ namespace CatGuard.Gameplay.Battlefield
             PlacementZones = buildZones ?? Array.Empty<BattlefieldZone>();
             BlockedZones = noBuildZones ?? Array.Empty<BattlefieldZone>();
             DecorationAnchors = decorations ?? Array.Empty<BattlefieldDecorationAnchor>();
+            PresentationPalette = palette ?? new BattlefieldPresentationPalette();
             IsLegacy = legacyBattlefield;
             UsesLegacyRoute = legacyRoute;
 
@@ -76,6 +78,7 @@ namespace CatGuard.Gameplay.Battlefield
         public BattlefieldZone[] PlacementZones { get; }
         public BattlefieldZone[] BlockedZones { get; }
         public BattlefieldDecorationAnchor[] DecorationAnchors { get; }
+        public BattlefieldPresentationPalette PresentationPalette { get; }
         public bool IsLegacy { get; }
         public bool UsesLegacyRoute { get; }
         public IReadOnlyList<Vector2> BuildCellCenters => buildCellCenters;
@@ -138,6 +141,7 @@ namespace CatGuard.Gameplay.Battlefield
                 config.PlacementZones,
                 config.BlockedZones,
                 config.DecorationAnchors,
+                config.PresentationPalette,
                 false,
                 usesLegacyRoute);
         }

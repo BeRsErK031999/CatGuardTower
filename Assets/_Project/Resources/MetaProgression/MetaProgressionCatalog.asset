@@ -157,6 +157,14 @@ MonoBehaviour:
     entryType: 0
     sourceId: level_10
     nameLocalizationKey: level.level_10
+  - entryId: map:level_11
+    entryType: 0
+    sourceId: level_11
+    nameLocalizationKey: level.level_11
+  - entryId: map:level_12
+    entryType: 0
+    sourceId: level_12
+    nameLocalizationKey: level.level_12
   - entryId: tower:cat_dart
     entryType: 1
     sourceId: cat_dart
@@ -181,10 +189,6 @@ MonoBehaviour:
     entryType: 2
     sourceId: mouse_scout
     nameLocalizationKey: meta.codex.enemy.mouse_scout
-  - entryId: enemy:moth_swarm
-    entryType: 2
-    sourceId: moth_swarm
-    nameLocalizationKey: meta.codex.enemy.moth_swarm
   - entryId: enemy:rat_bruiser
     entryType: 2
     sourceId: rat_bruiser
@@ -193,7 +197,23 @@ MonoBehaviour:
     entryType: 2
     sourceId: beetle_guard
     nameLocalizationKey: meta.codex.enemy.beetle_guard
+  - entryId: enemy:moth_swarm
+    entryType: 2
+    sourceId: moth_swarm
+    nameLocalizationKey: meta.codex.enemy.moth_swarm
   - entryId: enemy:snail_tank
     entryType: 2
     sourceId: snail_tank
     nameLocalizationKey: meta.codex.enemy.snail_tank
+  - entryId: enemy:sparrow_raider
+    entryType: 2
+    sourceId: sparrow_raider
+    nameLocalizationKey: meta.codex.enemy.sparrow_raider
+  - entryId: enemy:pipe_weasel
+    entryType: 2
+    sourceId: pipe_weasel
+    nameLocalizationKey: meta.codex.enemy.pipe_weasel
+  - entryId: enemy:cockroach_runner
+    entryType: 2
+    sourceId: cockroach_runner
+    nameLocalizationKey: meta.codex.enemy.cockroach_runner

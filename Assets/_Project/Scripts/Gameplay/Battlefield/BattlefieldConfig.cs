@@ -10,6 +10,32 @@ namespace CatGuard.Gameplay.Battlefield
     }
 
     [Serializable]
+    public sealed class BattlefieldPresentationPalette
+    {
+        [SerializeField] private Color backgroundTint = new(0.82f, 0.9f, 0.84f, 1f);
+        [SerializeField] private Color fallbackGround = new(0.09f, 0.2f, 0.16f, 1f);
+        [SerializeField] private Color terrainAccent = new(0.12f, 0.28f, 0.18f, 0.28f);
+        [SerializeField] private Color blockedZone = new(0.34f, 0.16f, 0.09f, 0.34f);
+
+        public Color BackgroundTint => backgroundTint;
+        public Color FallbackGround => fallbackGround;
+        public Color TerrainAccent => terrainAccent;
+        public Color BlockedZone => blockedZone;
+
+        public BattlefieldPresentationPalette()
+        {
+        }
+
+        public BattlefieldPresentationPalette(Color background, Color fallback, Color terrain, Color blocked)
+        {
+            backgroundTint = background;
+            fallbackGround = fallback;
+            terrainAccent = terrain;
+            blockedZone = blocked;
+        }
+    }
+
+    [Serializable]
     public struct BattlefieldZone
     {
         [SerializeField] private string zoneId;
@@ -83,6 +109,7 @@ namespace CatGuard.Gameplay.Battlefield
 
         [Header("Presentation")]
         [SerializeField] private BattlefieldDecorationAnchor[] decorationAnchors = Array.Empty<BattlefieldDecorationAnchor>();
+        [SerializeField] private BattlefieldPresentationPalette presentationPalette = new();
 
         [Header("Authoring Design Card")]
         [SerializeField] private BattlefieldDesignCard designCard = new();
@@ -113,6 +140,7 @@ namespace CatGuard.Gameplay.Battlefield
         public BattlefieldZone[] PlacementZones => placementZones ?? Array.Empty<BattlefieldZone>();
         public BattlefieldZone[] BlockedZones => blockedZones ?? Array.Empty<BattlefieldZone>();
         public BattlefieldDecorationAnchor[] DecorationAnchors => decorationAnchors ?? Array.Empty<BattlefieldDecorationAnchor>();
+        public BattlefieldPresentationPalette PresentationPalette => presentationPalette ??= new BattlefieldPresentationPalette();
         public BattlefieldDesignCard DesignCard => designCard ??= new BattlefieldDesignCard();
 
         public BattlefieldDefinition CreateDefinition()
@@ -181,6 +209,11 @@ namespace CatGuard.Gameplay.Battlefield
         public void ConfigureRoutes(PathRouteConfig[] routeConfigs)
         {
             routes = routeConfigs ?? Array.Empty<PathRouteConfig>();
+        }
+
+        public void ConfigurePresentationPalette(BattlefieldPresentationPalette palette)
+        {
+            presentationPalette = palette ?? new BattlefieldPresentationPalette();
         }
 
         public void ConfigureDesignCard(

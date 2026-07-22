@@ -66,6 +66,7 @@ namespace CatGuard.Gameplay.Battlefield
                 new[] { placementZone },
                 Array.Empty<BattlefieldZone>(),
                 Array.Empty<BattlefieldDecorationAnchor>(),
+                new BattlefieldPresentationPalette(),
                 true,
                 true);
         }

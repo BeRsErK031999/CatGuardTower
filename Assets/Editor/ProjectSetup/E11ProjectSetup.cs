@@ -330,7 +330,7 @@ public static class E11ProjectSetup
             File.WriteAllText(path,
                 "{\"schemaVersion\":2,\"fishCoins\":73,\"selectedLevelId\":\"level_02\",\"unlockedLevelIds\":[\"level_01\",\"level_02\"],\"completedLevelIds\":[\"level_01\"],\"playerExperience\":105,\"languageCode\":\"en\"}");
             var migrated = GameSaveService.LoadOrCreateAtPath(path, "level_01", true);
-            if (migrated.schemaVersion != 3
+            if (migrated.schemaVersion != GameSaveMigrationService.CurrentSchemaVersion
                 || migrated.fishCoins != 73
                 || migrated.playerExperience != 105
                 || migrated.languageCode != "en"
@@ -340,7 +340,7 @@ public static class E11ProjectSetup
                 || GameSaveService.LastLoadStatus != GameSaveLoadStatus.Migrated
                 || !File.Exists(GameSaveService.LastBackupPath))
             {
-                errors.Add("Schema v2 to v3 migration did not preserve E10 progress or create E11 collections and backup evidence.");
+                errors.Add("Schema v2 through current migration did not preserve E10 progress or create E11 collections and backup evidence.");
             }
 
             GameSaveService.SaveAtPath(path, migrated);
@@ -348,7 +348,7 @@ public static class E11ProjectSetup
             if (GameSaveService.LastLoadStatus != GameSaveLoadStatus.Loaded
                 || JsonUtility.ToJson(reloaded) != JsonUtility.ToJson(migrated))
             {
-                errors.Add("Schema v3 achievement save is not idempotent after restart.");
+                errors.Add("Current achievement save is not idempotent after restart.");
             }
         }
         finally

@@ -329,7 +329,6 @@ Source of truth: `EXPANSION_ROADMAP.md`.
 
 ### Todo
 
-* [ ] E12 — Expanded Landscape Campaign.
 * [ ] E13 — Bosses And Advanced Map Rules.
 * [ ] E14 — Balance, Performance, Accessibility, And Polish.
 * [ ] E15 — Expansion Release Gate.
@@ -352,6 +351,7 @@ Source of truth: `EXPANSION_ROADMAP.md`.
 * [x] E9 — Post-Round Contracts And Quest Board; full gate recorded in `E9_QUEST_BOARD_REPORT.md`.
 * [x] E10 — Meta Progression And Guardian Growth; full gate recorded in `E10_META_PROGRESSION_REPORT.md`.
 * [x] E11 — Achievements And Reward Claims; full gate recorded in `E11_ACHIEVEMENTS_REPORT.md`.
+* [x] E12 — Expanded Landscape Campaign; 12 maps, 3 biomes, 8 enemies, challenges, schema v4, and device traversal gate.
 * [x] Select `Bloons TD 6` as the primary systems benchmark and `Kingdom Rush` as the secondary presentation benchmark.
 * [x] Define the large-section test/commit/push workflow.
 * [x] Create the external production backlog.

@@ -369,11 +369,13 @@ public static class E3ProjectSetup
     private static void ValidateWaveReferences(ICollection<string> errors)
     {
         var catalog = AssetDatabase.LoadAssetAtPath<LevelCatalogConfig>(LevelCatalogPath);
-        if (catalog == null || catalog.Levels.Length != 10)
+        if (catalog == null || catalog.Levels.Length < 10)
         {
-            errors.Add("E3 migration requires all ten campaign levels.");
+            errors.Add("E3 migration requires the original ten campaign levels.");
             return;
         }
+
+        var expandedCampaign = catalog.Levels.Length > 10;
 
         var simultaneousMultiRouteWave = false;
         var bossRouteReferences = 0;
@@ -416,7 +418,7 @@ public static class E3ProjectSetup
             errors.Add("At least one E3 wave must run groups concurrently on multiple explicit routes.");
         }
 
-        if (bossRouteReferences < 2)
+        if (!expandedCampaign && bossRouteReferences < 2)
         {
             errors.Add("E3 content must reference boss-only routes on both multi-route layouts.");
         }
@@ -446,7 +448,8 @@ public static class E3ProjectSetup
     private static void ValidateAnalytics(ICollection<string> errors)
     {
         var catalog = AssetDatabase.LoadAssetAtPath<LevelCatalogConfig>(LevelCatalogPath);
-        var level = catalog?.Levels.FirstOrDefault(candidate => candidate?.BattlefieldConfig?.BattlefieldId == "old_well_crossing");
+        var level = catalog?.Levels.FirstOrDefault(candidate => candidate?.ResolveBattlefield()?.Routes.Length > 1)
+            ?? catalog?.Levels.FirstOrDefault(candidate => candidate?.BattlefieldConfig?.BattlefieldId == "old_well_crossing");
         var route = level?.ResolveBattlefield()?.Routes.FirstOrDefault();
         var enemy = level?.WaveConfig?.Groups.FirstOrDefault()?.EnemyConfig;
         if (level == null || route == null || enemy == null)

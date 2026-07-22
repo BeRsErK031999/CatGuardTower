@@ -55,6 +55,9 @@ namespace CatGuard.Gameplay.Levels
         [SerializeField] private string[] unlocksLevelIds = Array.Empty<string>();
         [SerializeField] private string tutorialTextKey = string.Empty;
 
+        [Header("Expanded Campaign")]
+        [SerializeField] private CampaignMapMetadata campaignMetadata;
+
         public string LevelId => string.IsNullOrWhiteSpace(levelId) ? name : levelId;
         public string DisplayName => string.IsNullOrWhiteSpace(displayName) ? LevelId : displayName;
         public int BaseLives => Mathf.Max(1, baseLives);
@@ -78,6 +81,8 @@ namespace CatGuard.Gameplay.Levels
         public string[] UnlocksLevelIds => unlocksLevelIds ?? Array.Empty<string>();
         public string TutorialTextKey => tutorialTextKey ?? string.Empty;
         public bool HasTutorialText => !string.IsNullOrWhiteSpace(TutorialTextKey);
+        public CampaignMapMetadata CampaignMetadata => campaignMetadata;
+        public bool HasCampaignMetadata => campaignMetadata != null && campaignMetadata.IsValid();
 
         public bool IsValidForCore()
         {
@@ -131,6 +136,11 @@ namespace CatGuard.Gameplay.Levels
         public void ConfigureBattlefield(BattlefieldConfig mapConfig)
         {
             battlefieldConfig = mapConfig;
+        }
+
+        public void ConfigureCampaignMetadata(CampaignMapMetadata metadata)
+        {
+            campaignMetadata = metadata;
         }
 
         public void Configure(

@@ -1,5 +1,6 @@
 ﻿param(
     [string]$LevelId = "level_10",
+    [string]$ChallengeId = "",
     [string[]]$TowerIds = @(
         "cat_dart",
         "yarn_cannon",
@@ -254,6 +255,7 @@ $externalFilesPath = "/sdcard/Android/data/$PackageName/files"
 [pscustomobject]@{
     scenarioId = $effectiveScenarioId
     levelId = $LevelId
+    challengeId = $ChallengeId
     towerIds = $TowerIds
     routeIdFilter = $RouteIdFilter
     startingLives = $StartingLives
@@ -348,6 +350,7 @@ $summary = [pscustomobject]@{
     deviceSerial = $script:TargetSerial
     scenarioId = $effectiveScenarioId
     levelId = $LevelId
+    challengeId = $ChallengeId
     result = $scenarioResult
     fatalPatternCount = $fatalLines.Count
     landscapeConfirmed = $landscapeConfirmed
@@ -368,6 +371,7 @@ Write-Host "Материалы QA: $runDir"
 $failed = $scenarioResult.state -eq "error" `
     -or $fatalLines.Count -gt 0 `
     -or -not $landscapeConfirmed `
+    -or ($ChallengeId -and $scenarioResult.challengeId -ne $ChallengeId) `
     -or ($RequireVictory -and $scenarioResult.state -ne "won") `
     -or ($RequirePerformance -and -not $performancePassed) `
     -or ($RequireBattleUpgrades -and (

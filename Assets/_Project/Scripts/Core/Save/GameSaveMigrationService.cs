@@ -5,7 +5,7 @@ namespace CatGuard.Core.Save
 {
     public static class GameSaveMigrationService
     {
-        public const int CurrentSchemaVersion = 3;
+        public const int CurrentSchemaVersion = 4;
 
         public static bool TryMigrate(GameSaveData data, string firstLevelId, out bool changed, out string error)
         {
@@ -40,6 +40,11 @@ namespace CatGuard.Core.Save
                     case 2:
                         MigrateVersion2ToVersion3(data);
                         data.schemaVersion = 3;
+                        changed = true;
+                        break;
+                    case 3:
+                        MigrateVersion3ToVersion4(data);
+                        data.schemaVersion = 4;
                         changed = true;
                         break;
                     default:
@@ -110,10 +115,17 @@ namespace CatGuard.Core.Save
             data.processedAchievementEventIds ??= new List<string>();
         }
 
+        private static void MigrateVersion3ToVersion4(GameSaveData data)
+        {
+            data.selectedChallengeId ??= string.Empty;
+            data.completedChallengeIds ??= new List<string>();
+        }
+
         private static void NormalizeCollections(GameSaveData data, string firstLevelId)
         {
             data.unlockedLevelIds ??= new List<string>();
             data.completedLevelIds ??= new List<string>();
+            data.completedChallengeIds ??= new List<string>();
             data.upgrades ??= new List<UpgradeSaveEntry>();
             data.dailyMissions ??= new List<DailyMissionSaveEntry>();
             data.quests ??= new List<QuestProgressSaveEntry>();
@@ -131,6 +143,7 @@ namespace CatGuard.Core.Save
             data.achievementBossIds ??= new List<string>();
             data.processedAchievementEventIds ??= new List<string>();
             data.selectedLevelId ??= string.Empty;
+            data.selectedChallengeId ??= string.Empty;
             data.lastDailyRewardClaimDateKey ??= string.Empty;
             data.dailyMissionDateKey ??= string.Empty;
             data.languageCode ??= "ru";

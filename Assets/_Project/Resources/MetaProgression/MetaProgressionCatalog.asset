@@ -1,0 +1,199 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 97c593bcc8964e0d8a5d449b182117b3, type: 3}
+  m_Name: MetaProgressionCatalog
+  m_EditorClassIdentifier: Assembly-CSharp::CatGuard.Meta.GuardianGrowth.MetaProgressionCatalogConfig
+  playerRank:
+    experienceThresholds: 0000000032000000960000002c01000008020000
+    victoryExperience: 60
+    defeatExperience: 20
+  towerMasteries:
+  - towerId: cat_dart
+    experienceThresholds: 00000000140000003c000000
+    branchUnlockId: dart_precision
+    branchUnlockLevel: 2
+    cosmeticUnlockId: dart_calico
+    cosmeticUnlockLevel: 3
+  - towerId: yarn_cannon
+    experienceThresholds: 00000000140000003c000000
+    branchUnlockId: yarn_resonance
+    branchUnlockLevel: 2
+    cosmeticUnlockId: yarn_moonspun
+    cosmeticUnlockLevel: 3
+  - towerId: bell_sniper
+    experienceThresholds: 00000000140000003c000000
+    branchUnlockId: bell_hunter
+    branchUnlockLevel: 2
+    cosmeticUnlockId: bell_silver
+    cosmeticUnlockLevel: 3
+  - towerId: laser_pointer
+    experienceThresholds: 00000000140000003c000000
+    branchUnlockId: laser_chain
+    branchUnlockLevel: 2
+    cosmeticUnlockId: laser_aurora
+    cosmeticUnlockLevel: 3
+  - towerId: blanket_boom
+    experienceThresholds: 00000000140000003c000000
+    branchUnlockId: blanket_snare
+    branchUnlockLevel: 2
+    cosmeticUnlockId: blanket_patchwork
+    cosmeticUnlockLevel: 3
+  workshopResearch:
+  - researchId: starting_supplies
+    nameLocalizationKey: meta.research.starting_supplies.name
+    descriptionLocalizationKey: meta.research.starting_supplies.description
+    effectType: 0
+    costs: 140000002d00000050000000
+    cumulativeValues:
+    - 8
+    - 14
+    - 18
+    requiredRank: 1
+  - researchId: barrel_reinforcement
+    nameLocalizationKey: meta.research.barrel_reinforcement.name
+    descriptionLocalizationKey: meta.research.barrel_reinforcement.description
+    effectType: 1
+    costs: 1e000000410000006e000000
+    cumulativeValues:
+    - 1
+    - 2
+    - 3
+    requiredRank: 2
+  - researchId: guardian_focus
+    nameLocalizationKey: meta.research.guardian_focus.name
+    descriptionLocalizationKey: meta.research.guardian_focus.description
+    effectType: 2
+    costs: 19000000370000005f000000
+    cumulativeValues:
+    - 5
+    - 9
+    - 12
+    requiredRank: 2
+  ultimateUnlocks:
+  - ultimateId: yarn_meteor_shower
+    requiredRank: 1
+    requiredTowerId: 
+    requiredMasteryLevel: 0
+  - ultimateId: catnip_moon
+    requiredRank: 2
+    requiredTowerId: 
+    requiredMasteryLevel: 0
+  - ultimateId: nine_lives_ward
+    requiredRank: 2
+    requiredTowerId: cat_dart
+    requiredMasteryLevel: 2
+  guardianPerks:
+  - perkId: supply_pouch
+    nameLocalizationKey: meta.perk.supply_pouch.name
+    descriptionLocalizationKey: meta.perk.supply_pouch.description
+    effectType: 0
+    effectValue: 5
+    requiredRank: 1
+    requiredResearchId: 
+    requiredResearchLevel: 0
+  - perkId: steady_heart
+    nameLocalizationKey: meta.perk.steady_heart.name
+    descriptionLocalizationKey: meta.perk.steady_heart.description
+    effectType: 1
+    effectValue: 1
+    requiredRank: 2
+    requiredResearchId: 
+    requiredResearchLevel: 0
+  - perkId: charged_whiskers
+    nameLocalizationKey: meta.perk.charged_whiskers.name
+    descriptionLocalizationKey: meta.perk.charged_whiskers.description
+    effectType: 2
+    effectValue: 8
+    requiredRank: 2
+    requiredResearchId: guardian_focus
+    requiredResearchLevel: 1
+  codexEntries:
+  - entryId: map:level_01
+    entryType: 0
+    sourceId: level_01
+    nameLocalizationKey: level.level_01
+  - entryId: map:level_02
+    entryType: 0
+    sourceId: level_02
+    nameLocalizationKey: level.level_02
+  - entryId: map:level_03
+    entryType: 0
+    sourceId: level_03
+    nameLocalizationKey: level.level_03
+  - entryId: map:level_04
+    entryType: 0
+    sourceId: level_04
+    nameLocalizationKey: level.level_04
+  - entryId: map:level_05
+    entryType: 0
+    sourceId: level_05
+    nameLocalizationKey: level.level_05
+  - entryId: map:level_06
+    entryType: 0
+    sourceId: level_06
+    nameLocalizationKey: level.level_06
+  - entryId: map:level_07
+    entryType: 0
+    sourceId: level_07
+    nameLocalizationKey: level.level_07
+  - entryId: map:level_08
+    entryType: 0
+    sourceId: level_08
+    nameLocalizationKey: level.level_08
+  - entryId: map:level_09
+    entryType: 0
+    sourceId: level_09
+    nameLocalizationKey: level.level_09
+  - entryId: map:level_10
+    entryType: 0
+    sourceId: level_10
+    nameLocalizationKey: level.level_10
+  - entryId: tower:cat_dart
+    entryType: 1
+    sourceId: cat_dart
+    nameLocalizationKey: tower.cat_dart
+  - entryId: tower:yarn_cannon
+    entryType: 1
+    sourceId: yarn_cannon
+    nameLocalizationKey: tower.yarn_cannon
+  - entryId: tower:bell_sniper
+    entryType: 1
+    sourceId: bell_sniper
+    nameLocalizationKey: tower.bell_sniper
+  - entryId: tower:laser_pointer
+    entryType: 1
+    sourceId: laser_pointer
+    nameLocalizationKey: tower.laser_pointer
+  - entryId: tower:blanket_boom
+    entryType: 1
+    sourceId: blanket_boom
+    nameLocalizationKey: tower.blanket_boom
+  - entryId: enemy:mouse_scout
+    entryType: 2
+    sourceId: mouse_scout
+    nameLocalizationKey: meta.codex.enemy.mouse_scout
+  - entryId: enemy:moth_swarm
+    entryType: 2
+    sourceId: moth_swarm
+    nameLocalizationKey: meta.codex.enemy.moth_swarm
+  - entryId: enemy:rat_bruiser
+    entryType: 2
+    sourceId: rat_bruiser
+    nameLocalizationKey: meta.codex.enemy.rat_bruiser
+  - entryId: enemy:beetle_guard
+    entryType: 2
+    sourceId: beetle_guard
+    nameLocalizationKey: meta.codex.enemy.beetle_guard
+  - entryId: enemy:snail_tank
+    entryType: 2
+    sourceId: snail_tank
+    nameLocalizationKey: meta.codex.enemy.snail_tank

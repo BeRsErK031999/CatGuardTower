@@ -1,3 +1,4 @@
+using System.Linq;
 using CatGuard.Core.Audio;
 using CatGuard.Core.Localization;
 using CatGuard.Core.SceneLoading;
@@ -5,6 +6,7 @@ using CatGuard.Gameplay.Levels;
 using CatGuard.Gameplay.Ultimates;
 using CatGuard.Meta.DailyRewards;
 using CatGuard.Meta.HomeHub;
+using CatGuard.Meta.GuardianGrowth;
 using CatGuard.Meta.Progression;
 using CatGuard.Meta.Quests;
 using CatGuard.Meta.Upgrades;
@@ -63,6 +65,8 @@ namespace CatGuard.UI.Screens
 
         private Vector2 levelsScrollPosition;
         private Vector2 upgradesScrollPosition;
+        private Vector2 masteryScrollPosition;
+        private Vector2 codexScrollPosition;
         private Vector2 missionsScrollPosition;
         private Vector2 activeQuestScrollPosition;
         private Vector2 completedQuestScrollPosition;
@@ -126,6 +130,13 @@ namespace CatGuard.UI.Screens
                 dailyRewardChain,
                 dailyMissionCatalog,
                 new FakeRewardedAdService());
+
+            if (!MetaProgressionService.Initialize(
+                    MetaProgressionCatalogConfig.LoadDefault(),
+                    UltimateCatalogConfig.LoadDefault()))
+            {
+                Debug.LogWarning("E10 meta progression is unavailable because its production catalog is invalid.");
+            }
 
             if (!QuestService.Initialize(QuestCatalogConfig.LoadDefault(), levelCatalog))
             {
@@ -301,6 +312,12 @@ namespace CatGuard.UI.Screens
             var homeWidth = 180f;
             var homeRect = new Rect(rect.xMax - homeWidth - 20f, rect.y + 20f, homeWidth, 56f);
             var coinsRect = new Rect(homeRect.x - coinsWidth - 14f, rect.y + 20f, coinsWidth, 56f);
+            var rankRect = new Rect(coinsRect.x - 170f, rect.y + 20f, 156f, 56f);
+            GUI.Box(rankRect, GUIContent.none, pillStyle);
+            GUI.Label(
+                rankRect,
+                string.Format(LocalizationService.Text("meta.rank.short"), MetaProgressionService.Rank),
+                labelStyle);
             GUI.Box(coinsRect, GUIContent.none, pillStyle);
             GUI.Label(
                 coinsRect,
@@ -322,7 +339,8 @@ namespace CatGuard.UI.Screens
 
             var inner = LandscapeLayout.Inset(rect, 22f, 18f);
             var hasQuestProgress = battleSummary?.QuestProgress?.HasUpdates == true;
-            var bannerHeight = battleSummary == null ? 106f : hasQuestProgress ? 176f : 136f;
+            var hasMetaProgress = battleSummary?.MetaProgress?.HasUpdates == true;
+            var bannerHeight = battleSummary == null ? 106f : hasQuestProgress || hasMetaProgress ? 190f : 136f;
             var bannerRect = new Rect(inner.x, inner.y, inner.width, bannerHeight);
             GUI.Box(bannerRect, GUIContent.none, panelStyle);
 
@@ -392,10 +410,25 @@ namespace CatGuard.UI.Screens
                 smallLabelStyle);
 
             var questProgress = battleSummary.QuestProgress;
+            var metaProgress = battleSummary.MetaProgress;
+            var summaryLineY = rect.yMax - 54f;
+            if (metaProgress?.HasUpdates == true)
+            {
+                GUI.Label(
+                    new Rect(rect.x + 30f, summaryLineY - (questProgress?.HasUpdates == true ? 34f : 0f), rect.width - 230f, 32f),
+                    string.Format(
+                        LocalizationService.Text("meta.postRoundSummary"),
+                        metaProgress.ExperienceGained,
+                        metaProgress.CurrentRank,
+                        metaProgress.MasteryUpdates.Length,
+                        metaProgress.Discoveries.Length),
+                    eyebrowStyle);
+            }
+
             if (questProgress?.HasUpdates == true)
             {
                 GUI.Label(
-                    new Rect(rect.x + 30f, rect.yMax - 54f, rect.width - 230f, 34f),
+                    new Rect(rect.x + 30f, summaryLineY, rect.width - 230f, 34f),
                     string.Format(
                         LocalizationService.Text("quest.postRoundSummary"),
                         questProgress.Updates.Length,
@@ -501,13 +534,13 @@ namespace CatGuard.UI.Screens
                     DrawLevelSelection(contentRect);
                     break;
                 case HomeHubRoute.Workshop:
-                    DrawUpgrades(contentRect);
+                    DrawMetaProgression(contentRect);
                     break;
                 case HomeHubRoute.QuestBoard:
                     DrawQuestBoard(contentRect);
                     break;
                 case HomeHubRoute.AchievementWall:
-                    DrawFutureZone(contentRect, "hub.achievementStatus", "hub.achievementHint");
+                    DrawCodex(contentRect);
                     break;
                 case HomeHubRoute.GuardianLodge:
                     DrawGuardianLodge(contentRect);
@@ -651,64 +684,92 @@ namespace CatGuard.UI.Screens
             SceneLoader.LoadLevel();
         }
 
-        private void DrawUpgrades(Rect contentRect)
+        private void DrawMetaProgression(Rect contentRect)
         {
             GUI.Box(contentRect, GUIContent.none, strongPanelStyle);
             var inner = LandscapeLayout.Inset(contentRect, 22f, 20f);
+            var snapshot = MetaProgressionService.CreateSnapshot();
             GUI.Label(
-                new Rect(inner.x, inner.y, inner.width, 42f),
-                LocalizationService.Text("tabs.upgrades"),
+                new Rect(inner.x, inner.y, inner.width, 38f),
+                LocalizationService.Text("meta.workshop.title"),
                 headingStyle);
             GUI.Label(
-                new Rect(inner.x, inner.y + 42f, inner.width, 28f),
-                string.Format(LocalizationService.Text("menu.fishCoins"), ProgressionService.FishCoins),
+                new Rect(inner.x, inner.y + 40f, inner.width, 30f),
+                string.Format(
+                    LocalizationService.Text("meta.rank.summary"),
+                    snapshot.Rank,
+                    snapshot.Experience,
+                    snapshot.NextRankThreshold,
+                    ProgressionService.FishCoins),
                 smallLabelStyle);
 
-            var viewport = new Rect(inner.x, inner.y + 82f, inner.width, inner.height - 82f);
-            var upgrades = upgradeCatalog.Upgrades;
-            var columns = viewport.width >= 1050f ? 2 : 1;
-            const float columnGap = 14f;
-            const float rowHeight = 92f;
-            const float rowSpacing = 12f;
-            var cardWidth = (viewport.width - 22f - (columnGap * (columns - 1))) / columns;
-            var rowCount = Mathf.CeilToInt(upgrades.Length / (float)columns);
-            var scrollHeight = Mathf.Max(viewport.height, (rowCount * (rowHeight + rowSpacing)) - rowSpacing);
+            const float gap = 18f;
+            var body = new Rect(inner.x, inner.y + 82f, inner.width, inner.height - 82f);
+            var researchWidth = body.width * 0.58f;
+            var researchRect = new Rect(body.x, body.y, researchWidth, body.height);
+            var masteryRect = new Rect(researchRect.xMax + gap, body.y, body.width - researchWidth - gap, body.height);
+            GUI.Box(researchRect, GUIContent.none, panelStyle);
+            GUI.Box(masteryRect, GUIContent.none, panelStyle);
+            GUI.Label(new Rect(researchRect.x + 16f, researchRect.y + 12f, researchRect.width - 32f, 32f), LocalizationService.Text("meta.research.title"), eyebrowStyle);
+            GUI.Label(new Rect(masteryRect.x + 16f, masteryRect.y + 12f, masteryRect.width - 32f, 32f), LocalizationService.Text("meta.mastery.title"), eyebrowStyle);
+
+            var researchViewport = new Rect(researchRect.x + 16f, researchRect.y + 52f, researchRect.width - 32f, researchRect.height - 66f);
+            const float researchHeight = 142f;
+            var researchContentHeight = Mathf.Max(researchViewport.height, snapshot.Research.Length * (researchHeight + 12f));
             upgradesScrollPosition = GUI.BeginScrollView(
-                viewport,
+                researchViewport,
                 upgradesScrollPosition,
-                new Rect(0f, 0f, viewport.width - 22f, scrollHeight),
+                new Rect(0f, 0f, researchViewport.width - 20f, researchContentHeight),
                 false,
-                scrollHeight > viewport.height);
-
-            for (var index = 0; index < upgrades.Length; index++)
+                researchContentHeight > researchViewport.height);
+            for (var index = 0; index < snapshot.Research.Length; index++)
             {
-                var upgrade = upgrades[index];
-                if (upgrade == null)
-                {
-                    continue;
-                }
-
-                var level = ProgressionService.GetUpgradeLevel(upgrade);
-                var maxed = level >= upgrade.MaxLevel;
-                var cost = upgrade.GetCostForLevel(level + 1);
-                var upgradeName = LocalizationService.UpgradeName(upgrade);
-                var label = maxed
-                    ? string.Format(LocalizationService.Text("upgrade.max"), upgradeName, level, upgrade.MaxLevel)
-                    : string.Format(LocalizationService.Text("upgrade.label"), upgradeName, level, upgrade.MaxLevel, cost);
-                var column = index % columns;
-                var row = index / columns;
-                var rect = new Rect(
-                    column * (cardWidth + columnGap),
-                    row * (rowHeight + rowSpacing),
-                    cardWidth,
-                    rowHeight);
-
-                if (GUI.Button(rect, label, levelButtonStyle) && ProgressionService.BuyUpgrade(upgrade))
+                var state = snapshot.Research[index];
+                var config = state.Config;
+                var card = new Rect(0f, index * (researchHeight + 12f), researchViewport.width - 22f, researchHeight);
+                GUI.Box(card, GUIContent.none, strongPanelStyle);
+                GUI.Label(new Rect(card.x + 18f, card.y + 10f, card.width * 0.58f, 38f), LocalizationService.Text(config.NameLocalizationKey), labelStyle);
+                GUI.Label(new Rect(card.x + 18f, card.y + 48f, card.width * 0.58f, 74f), LocalizationService.Text(config.DescriptionLocalizationKey), smallLabelStyle);
+                var action = state.LockedByRank
+                    ? string.Format(LocalizationService.Text("meta.lockedRank"), config.RequiredRank)
+                    : state.IsMaxed
+                        ? string.Format(LocalizationService.Text("meta.levelMax"), state.Level, config.MaxLevel)
+                        : string.Format(LocalizationService.Text("meta.research.buy"), state.Level, config.MaxLevel, state.NextCost);
+                GUI.enabled = uiInteractionEnabled && state.CanBuy;
+                if (GUI.Button(new Rect(card.xMax - 210f, card.y + 28f, 188f, 84f), action, compactButtonStyle)
+                    && MetaProgressionService.BuyResearch(config.ResearchId))
                 {
                     ProceduralAudioService.Play(ProceduralSoundId.MenuClick);
                 }
+                GUI.enabled = uiInteractionEnabled;
             }
+            GUI.EndScrollView();
 
+            var masteryViewport = new Rect(masteryRect.x + 16f, masteryRect.y + 52f, masteryRect.width - 32f, masteryRect.height - 66f);
+            const float masteryHeight = 104f;
+            var masteryContentHeight = Mathf.Max(masteryViewport.height, snapshot.Masteries.Length * (masteryHeight + 10f));
+            masteryScrollPosition = GUI.BeginScrollView(
+                masteryViewport,
+                masteryScrollPosition,
+                new Rect(0f, 0f, masteryViewport.width - 20f, masteryContentHeight),
+                false,
+                masteryContentHeight > masteryViewport.height);
+            for (var index = 0; index < snapshot.Masteries.Length; index++)
+            {
+                var state = snapshot.Masteries[index];
+                var card = new Rect(0f, index * (masteryHeight + 10f), masteryViewport.width - 22f, masteryHeight);
+                GUI.Box(card, GUIContent.none, strongPanelStyle);
+                GUI.Label(new Rect(card.x + 14f, card.y + 8f, card.width - 28f, 32f), LocalizationService.Text($"tower.{state.Config.TowerId}"), labelStyle);
+                GUI.Label(
+                    new Rect(card.x + 14f, card.y + 42f, card.width - 28f, 50f),
+                    string.Format(
+                        LocalizationService.Text("meta.mastery.progress"),
+                        state.Level,
+                        state.Experience,
+                        state.NextThreshold,
+                        state.BranchUnlocked ? LocalizationService.Text("common.open") : LocalizationService.Text("level.locked")),
+                    smallLabelStyle);
+            }
             GUI.EndScrollView();
         }
 
@@ -1005,7 +1066,8 @@ namespace CatGuard.UI.Screens
                     LocalizationService.Text("quest.progressReward"),
                     progress,
                     quest.Objective.TargetAmount,
-                    quest.Reward.FishCoins);
+                    quest.Reward.FishCoins,
+                    quest.Reward.PlayerExperience);
                 GUI.Label(
                     new Rect(16f, y + 132f, contentWidth - 32f, 28f),
                     progressText,
@@ -1028,6 +1090,50 @@ namespace CatGuard.UI.Screens
                 GUI.enabled = uiInteractionEnabled;
             }
 
+            GUI.EndScrollView();
+        }
+
+        private void DrawCodex(Rect contentRect)
+        {
+            GUI.Box(contentRect, GUIContent.none, strongPanelStyle);
+            var inner = LandscapeLayout.Inset(contentRect, 24f, 20f);
+            var snapshot = MetaProgressionService.CreateSnapshot();
+            GUI.Label(new Rect(inner.x, inner.y, inner.width, 40f), LocalizationService.Text("meta.codex.title"), headingStyle);
+            GUI.Label(
+                new Rect(inner.x, inner.y + 42f, inner.width, 32f),
+                string.Format(LocalizationService.Text("meta.codex.progress"), snapshot.DiscoveredCodexEntries, snapshot.TotalCodexEntries),
+                smallLabelStyle);
+
+            var catalog = MetaProgressionService.Catalog;
+            var entries = catalog?.CodexEntries ?? System.Array.Empty<CodexEntryConfig>();
+            var discovered = new System.Collections.Generic.HashSet<string>(
+                MetaProgressionService.GetDiscoveredCodexEntries().Select(item => item.EntryId),
+                System.StringComparer.Ordinal);
+            var viewport = new Rect(inner.x, inner.y + 88f, inner.width, inner.height - 88f);
+            const float gap = 12f;
+            const float rowHeight = 88f;
+            var columns = viewport.width >= 1000f ? 3 : 2;
+            var cardWidth = (viewport.width - 22f - gap * (columns - 1)) / columns;
+            var rows = Mathf.CeilToInt(entries.Length / (float)columns);
+            var contentHeight = Mathf.Max(viewport.height, rows * (rowHeight + gap));
+            codexScrollPosition = GUI.BeginScrollView(viewport, codexScrollPosition, new Rect(0f, 0f, viewport.width - 20f, contentHeight), false, contentHeight > viewport.height);
+            for (var index = 0; index < entries.Length; index++)
+            {
+                var entry = entries[index];
+                var column = index % columns;
+                var row = index / columns;
+                var card = new Rect(column * (cardWidth + gap), row * (rowHeight + gap), cardWidth, rowHeight);
+                GUI.Box(card, GUIContent.none, panelStyle);
+                var isDiscovered = discovered.Contains(entry.EntryId);
+                GUI.Label(
+                    new Rect(card.x + 14f, card.y + 10f, card.width - 28f, 30f),
+                    LocalizationService.Text($"meta.codex.type.{entry.EntryType.ToString().ToLowerInvariant()}"),
+                    eyebrowStyle);
+                GUI.Label(
+                    new Rect(card.x + 14f, card.y + 42f, card.width - 28f, 34f),
+                    isDiscovered ? LocalizationService.Text(entry.NameLocalizationKey) : LocalizationService.Text("meta.codex.unknown"),
+                    labelStyle);
+            }
             GUI.EndScrollView();
         }
 
@@ -1072,10 +1178,11 @@ namespace CatGuard.UI.Screens
                 LocalizationService.Text("hub.guardianHint"),
                 smallLabelStyle);
 
+            var snapshot = MetaProgressionService.CreateSnapshot();
             const float gap = 18f;
             var cardWidth = (inner.width - (gap * 2f)) / 3f;
             var cardY = inner.y + 100f;
-            var cardHeight = inner.height - 112f;
+            var cardHeight = Mathf.Max(270f, inner.height * 0.56f);
             var ultimates = catalog.Ultimates;
             for (var index = 0; index < ultimates.Length; index++)
             {
@@ -1092,7 +1199,7 @@ namespace CatGuard.UI.Screens
                     LocalizationService.Text(ultimate.NameLocalizationKey),
                     headingStyle);
                 GUI.Label(
-                    new Rect(card.x + 26f, card.y + 106f, card.width - 52f, 130f),
+                    new Rect(card.x + 26f, card.y + 92f, card.width - 52f, 90f),
                     LocalizationService.Text(ultimate.DescriptionLocalizationKey),
                     smallLabelStyle);
                 var targeting = LocalizationService.Text($"hub.target.{ultimate.TargetingMode.ToString().ToLowerInvariant()}");
@@ -1102,9 +1209,46 @@ namespace CatGuard.UI.Screens
                     ultimate.CooldownSeconds,
                     targeting);
                 GUI.Label(
-                    new Rect(card.x + 24f, card.yMax - 114f, card.width - 48f, 88f),
+                    new Rect(card.x + 24f, card.yMax - 126f, card.width - 48f, 58f),
                     stats,
                     eyebrowStyle);
+                var unlocked = snapshot.UnlockedUltimateIds.Contains(ultimate.UltimateId);
+                var equipped = snapshot.EquippedUltimateIds.Contains(ultimate.UltimateId);
+                var action = !unlocked
+                    ? LocalizationService.Text("meta.loadout.locked")
+                    : LocalizationService.Text(equipped ? "meta.loadout.equipped" : "meta.loadout.equip");
+                GUI.enabled = uiInteractionEnabled && unlocked;
+                if (GUI.Button(new Rect(card.x + 24f, card.yMax - 62f, card.width - 48f, 46f), action, equipped ? primaryButtonStyle : compactButtonStyle)
+                    && MetaProgressionService.ToggleUltimateEquipped(ultimate.UltimateId))
+                {
+                    ProceduralAudioService.Play(ProceduralSoundId.MenuClick);
+                }
+                GUI.enabled = uiInteractionEnabled;
+            }
+
+            var perkY = cardY + cardHeight + 16f;
+            GUI.Label(new Rect(inner.x, perkY, inner.width, 32f), LocalizationService.Text("meta.perks.title"), eyebrowStyle);
+            var perks = MetaProgressionService.Catalog?.GuardianPerks ?? System.Array.Empty<GuardianPerkConfig>();
+            var perkWidth = (inner.width - gap * 2f) / 3f;
+            for (var index = 0; index < perks.Length; index++)
+            {
+                var perk = perks[index];
+                var card = new Rect(inner.x + index * (perkWidth + gap), perkY + 38f, perkWidth, Mathf.Max(112f, inner.yMax - perkY - 42f));
+                var unlocked = ProgressionService.EnsureSave().unlockedGuardianPerkIds.Contains(perk.PerkId);
+                var equipped = snapshot.EquippedPerkId == perk.PerkId;
+                GUI.Box(card, GUIContent.none, panelStyle);
+                GUI.Label(new Rect(card.x + 14f, card.y + 8f, card.width - 28f, 32f), LocalizationService.Text(perk.NameLocalizationKey), labelStyle);
+                GUI.Label(new Rect(card.x + 14f, card.y + 40f, card.width - 28f, 48f), LocalizationService.Text(perk.DescriptionLocalizationKey), smallLabelStyle);
+                GUI.enabled = uiInteractionEnabled && unlocked && !equipped;
+                if (GUI.Button(
+                        new Rect(card.x + 18f, card.yMax - 48f, card.width - 36f, 38f),
+                        LocalizationService.Text(!unlocked ? "meta.loadout.locked" : equipped ? "meta.loadout.equipped" : "meta.loadout.equip"),
+                        equipped ? primaryButtonStyle : compactButtonStyle)
+                    && MetaProgressionService.EquipPerk(perk.PerkId))
+                {
+                    ProceduralAudioService.Play(ProceduralSoundId.MenuClick);
+                }
+                GUI.enabled = uiInteractionEnabled;
             }
         }
 
@@ -1183,6 +1327,7 @@ namespace CatGuard.UI.Screens
                 if (resetConfirmationArmed)
                 {
                     ProgressionService.ResetProgress();
+                    MetaProgressionService.Initialize(MetaProgressionCatalogConfig.LoadDefault(), UltimateCatalogConfig.LoadDefault());
                     QuestService.Initialize(QuestCatalogConfig.LoadDefault(), levelCatalog);
                     battleSummary = null;
                     resetConfirmationArmed = false;

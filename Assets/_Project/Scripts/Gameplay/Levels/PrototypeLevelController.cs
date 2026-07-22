@@ -11,6 +11,7 @@ using CatGuard.Gameplay.Ultimates;
 using CatGuard.Gameplay.Waves;
 using CatGuard.Meta.Progression;
 using CatGuard.Meta.HomeHub;
+using CatGuard.Meta.GuardianGrowth;
 using CatGuard.Meta.Quests;
 using CatGuard.QA;
 using CatGuard.SDK.Ads;
@@ -37,7 +38,9 @@ namespace CatGuard.Gameplay.Levels
         private readonly Dictionary<string, RouteBattleStats> routeStats = new(System.StringComparer.Ordinal);
         private readonly Dictionary<string, float> incomingRouteWarnings = new(System.StringComparer.Ordinal);
         private readonly Dictionary<string, int> highestTowerTiers = new(System.StringComparer.Ordinal);
+        private readonly Dictionary<string, int> towerPlacementsByFamily = new(System.StringComparer.Ordinal);
         private readonly HashSet<int> controlledEnemyIds = new();
+        private readonly HashSet<string> encounteredEnemyIds = new(System.StringComparer.Ordinal);
         private int selectedTowerIndex;
         private bool waveCompleted;
         private bool resultApplied;
@@ -474,6 +477,9 @@ namespace CatGuard.Gameplay.Levels
             tower.Initialize(this, towerConfig);
             towers.Add(tower);
             towersPlacedTotal++;
+            towerPlacementsByFamily[towerConfig.TowerId] = towerPlacementsByFamily.TryGetValue(towerConfig.TowerId, out var placements)
+                ? placements + 1
+                : 1;
             guardianUltimates?.HandleTowerAdded(tower);
             ProgressionService.RecordTowerPlaced();
             AnalyticsService.TrackTowerPlace(config, towerConfig, towers.Count, worldPosition);
@@ -507,6 +513,7 @@ namespace CatGuard.Gameplay.Levels
                 speedMultiplier);
 
             activeEnemies.Add(enemy);
+            encounteredEnemyIds.Add(enemyConfig.EnemyId);
             guardianUltimates?.HandleEnemySpawned(enemy);
             SpawnedEnemies++;
             GetRouteStats(route.RouteId).RecordSpawn(Time.unscaledTime);
@@ -685,6 +692,7 @@ namespace CatGuard.Gameplay.Levels
 
             reviveUsed = true;
             QuestService.RollbackBattleEvent(questBattleEventId);
+            MetaProgressionService.RollbackBattleEvent(questBattleEventId);
             resultApplied = false;
             Lives = Mathf.Max(1, Mathf.CeilToInt((config.BaseLives + ProgressionService.GetBaseLivesBonus()) * 0.5f));
             State = PrototypeLevelState.Running;
@@ -736,7 +744,7 @@ namespace CatGuard.Gameplay.Levels
             EscapedEnemies = 0;
             SpawnedEnemies = 0;
             expectedEnemyCount = config.WaveConfig.TotalEnemyCount;
-            BattleFish = config.StartingBattleFish;
+            BattleFish = config.StartingBattleFish + ProgressionService.GetStartingBattleFishBonus();
             selectedTowerIndex = 0;
             SelectedPlacedTower = null;
             waveCompleted = false;
@@ -749,7 +757,9 @@ namespace CatGuard.Gameplay.Levels
             routeStats.Clear();
             incomingRouteWarnings.Clear();
             highestTowerTiers.Clear();
+            towerPlacementsByFamily.Clear();
             controlledEnemyIds.Clear();
+            encounteredEnemyIds.Clear();
             towersPlacedTotal = 0;
             towersSoldTotal = 0;
             livesLostTotal = 0;
@@ -814,7 +824,8 @@ namespace CatGuard.Gameplay.Levels
                 guardianUltimates?.EndBattle("defeat");
                 resultApplied = true;
                 var questProgress = ProcessQuestBattleResult(false);
-                HomeHubNavigationService.RecordDefeat(config, DefeatedEnemies, EscapedEnemies, questProgress);
+                var metaProgress = ProcessMetaBattleResult(false);
+                HomeHubNavigationService.RecordDefeat(config, DefeatedEnemies, EscapedEnemies, questProgress, metaProgress);
                 AnalyticsService.TrackLevelFail(config, DefeatedEnemies, EscapedEnemies, TowerCount, "base_lost");
                 ProceduralAudioService.Play(ProceduralSoundId.Defeat);
                 SimpleVfxFactory.Spawn(lastGoalPosition, SimpleVfxStyle.Defeat, vfxLayer != null ? vfxLayer : runtimeRoot);
@@ -839,13 +850,15 @@ namespace CatGuard.Gameplay.Levels
             resultApplied = true;
             CompletionResult = ProgressionService.CompleteLevel(config);
             var questProgress = ProcessQuestBattleResult(true);
+            var metaProgress = ProcessMetaBattleResult(true);
             HomeHubNavigationService.RecordVictory(
                 config,
                 CompletionResult,
                 Lives,
                 DefeatedEnemies,
                 EscapedEnemies,
-                questProgress);
+                questProgress,
+                metaProgress);
             AnalyticsService.TrackLevelComplete(config, CompletionResult, Lives, DefeatedEnemies, EscapedEnemies, TowerCount);
             ProceduralAudioService.Play(ProceduralSoundId.Victory);
             SimpleVfxFactory.Spawn(Battlefield.WorldBounds.center, SimpleVfxStyle.Victory, vfxLayer != null ? vfxLayer : runtimeRoot);
@@ -868,6 +881,17 @@ namespace CatGuard.Gameplay.Levels
                 guardianUltimates?.UseEventCount ?? 0,
                 highestTowerTiers);
             return QuestService.ProcessBattle(report);
+        }
+
+        private MetaProgressionBattleResult ProcessMetaBattleResult(bool won)
+        {
+            return MetaProgressionService.RecordBattle(new MetaBattleReport(
+                questBattleEventId,
+                config?.LevelId,
+                won,
+                towerPlacementsByFamily,
+                highestTowerTiers,
+                encounteredEnemyIds));
         }
 
         private bool HasRemainingThreats()

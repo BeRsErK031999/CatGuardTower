@@ -56,16 +56,19 @@ namespace CatGuard.Meta.Quests
     public sealed class QuestRewardConfig
     {
         public int fishCoins = 10;
+        public int playerExperience = 25;
 
         public int FishCoins => Math.Max(0, fishCoins);
+        public int PlayerExperience => Math.Max(0, playerExperience);
 
         public QuestRewardConfig()
         {
         }
 
-        public QuestRewardConfig(int rewardFishCoins)
+        public QuestRewardConfig(int rewardFishCoins, int rewardPlayerExperience = 25)
         {
             fishCoins = rewardFishCoins;
+            playerExperience = rewardPlayerExperience;
         }
 
         public bool IsValid()

@@ -1,6 +1,7 @@
 using CatGuard.Gameplay.Levels;
 using CatGuard.Meta.DailyRewards;
 using CatGuard.Meta.Progression;
+using CatGuard.Meta.GuardianGrowth;
 using CatGuard.Meta.Quests;
 using CatGuard.Meta.Upgrades;
 
@@ -79,14 +80,11 @@ namespace CatGuard.Meta.HomeHub
             }
 
             var workshopCount = 0;
-            if (upgradeCatalog != null)
+            foreach (var research in MetaProgressionService.CreateSnapshot().Research)
             {
-                foreach (var upgrade in upgradeCatalog.Upgrades)
+                if (research?.CanBuy == true)
                 {
-                    if (upgrade != null && ProgressionService.CanBuyUpgrade(upgrade))
-                    {
-                        workshopCount++;
-                    }
+                    workshopCount++;
                 }
             }
 

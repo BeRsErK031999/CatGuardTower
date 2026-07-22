@@ -275,3 +275,10 @@ This phase still uses the existing prototype combat behavior; the new content is
 - `UnitAnimationShowcase.unity` is editor-only and exercises all five enemies through the same runtime presenter.
 
 The current profiles use source-tracked code-authored temporary motion. Production sprite sheets from `ANIM-ENEMY-001` can be assigned later without changing the combat boundary.
+
+## E10 Meta Progression
+
+- `GameSaveMigrationService` owns sequential, idempotent local-save schema upgrades; `GameSaveService` preserves pre-migration, corrupt, and unknown-future inputs before a current save can replace them.
+- `MetaProgressionCatalogConfig` is the production source for rank thresholds, five tower mastery tracks, capped research, ultimate/perk unlock requirements, and codex entries.
+- `MetaProgressionStateMachine` owns persistent battle rewards, duplicate-event protection, rewarded-revive rollback, research purchases, and loadout selection.
+- Battle tower upgrade branches remain runtime-only. Legacy global damage/range purchases are retained for audit and translated to bounded pre-battle research instead of stacking with E6 branches.

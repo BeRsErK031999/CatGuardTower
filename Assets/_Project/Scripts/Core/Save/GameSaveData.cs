@@ -6,6 +6,7 @@ namespace CatGuard.Core.Save
     [Serializable]
     public sealed class GameSaveData
     {
+        public int schemaVersion = GameSaveMigrationService.CurrentSchemaVersion;
         public int fishCoins;
         public string selectedLevelId;
         public List<string> unlockedLevelIds = new();
@@ -18,6 +19,15 @@ namespace CatGuard.Core.Save
         public List<QuestProgressSaveEntry> quests = new();
         public List<string> activeQuestIds = new();
         public List<string> processedQuestEventIds = new();
+        public int playerExperience;
+        public List<TowerMasterySaveEntry> towerMasteries = new();
+        public List<ResearchSaveEntry> workshopResearch = new();
+        public List<string> unlockedUltimateIds = new();
+        public List<string> unlockedGuardianPerkIds = new();
+        public List<string> equippedUltimateIds = new();
+        public string equippedGuardianPerkId = string.Empty;
+        public List<string> discoveredCodexEntryIds = new();
+        public List<string> processedMetaBattleEventIds = new();
         public bool audioMuted;
         public string languageCode = "ru";
         public string lastFreeCoinsRewardDateKey;
@@ -28,6 +38,7 @@ namespace CatGuard.Core.Save
         {
             var data = new GameSaveData
             {
+                schemaVersion = GameSaveMigrationService.CurrentSchemaVersion,
                 fishCoins = 0,
                 selectedLevelId = firstLevelId
             };
@@ -89,6 +100,39 @@ namespace CatGuard.Core.Save
         public QuestProgressSaveEntry(string id)
         {
             questId = id;
+        }
+    }
+
+    [Serializable]
+    public sealed class TowerMasterySaveEntry
+    {
+        public string towerId;
+        public int experience;
+
+        public TowerMasterySaveEntry()
+        {
+        }
+
+        public TowerMasterySaveEntry(string id)
+        {
+            towerId = id;
+        }
+    }
+
+    [Serializable]
+    public sealed class ResearchSaveEntry
+    {
+        public string researchId;
+        public int level;
+
+        public ResearchSaveEntry()
+        {
+        }
+
+        public ResearchSaveEntry(string id, int researchLevel = 0)
+        {
+            researchId = id;
+            level = researchLevel;
         }
     }
 }

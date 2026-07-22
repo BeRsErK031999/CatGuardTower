@@ -34,6 +34,7 @@ The current goal is to expand the working Android MVP into a landscape, multi-ro
 - Expansion section E4 implements a data-only map factory, design cards, asset-path validation, preview gizmos/route handles, reproducible preview evidence, and legacy migration. Its completed block gate is recorded in `docs/planning/E4_MAP_AUTHORING_REPORT.md`.
 - Expansion section E8 turns MainMenu into the seven-zone Garden Outpost home hub with centralized badges, panel-first Back handling, idempotent meta initialization, and clear victory/defeat return summaries. See `docs/planning/E8_HOME_HUB_REPORT.md`.
 - Expansion section E9 adds persistent post-round contracts, ten objective types, explicit completion/claim states, one-time rewards, locked-content filtering, and the Quest Board daily adapter. See `docs/planning/E9_QUEST_BOARD_REPORT.md`.
+- Expansion section E10 adds schema-versioned save migration, player rank, five tower masteries, capped Workshop research, Guardian loadout/perks, and a discovery codex. See `docs/planning/E10_META_PROGRESSION_REPORT.md`.
 
 ## Recommended Reading Order
 
@@ -49,4 +50,4 @@ The current goal is to expand the working Android MVP into a landscape, multi-ro
 
 ## Next Safe Step
 
-E4 is complete. The next safe isolated block is E5 — Animated Enemies And Unit Presentation. Keep external-art dependencies explicit and execute the full E5 block gate before moving to E6 or E7.
+E10 is complete. The next safe isolated block is E11 — Achievements And Reward Claims. Keep external-art dependencies explicit and execute the full E11 block gate before moving to E12.

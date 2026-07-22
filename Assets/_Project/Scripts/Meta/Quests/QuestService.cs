@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using CatGuard.Core.Save;
 using CatGuard.Gameplay.Levels;
+using CatGuard.Meta.GuardianGrowth;
 using CatGuard.Meta.Progression;
 
 namespace CatGuard.Meta.Quests
@@ -471,7 +472,14 @@ namespace CatGuard.Meta.Quests
 
         public static bool ClaimReward(string questId)
         {
-            return stateMachine?.ClaimReward(questId) == true;
+            var quest = catalog?.FindById(questId);
+            if (quest == null || stateMachine?.ClaimReward(questId) != true)
+            {
+                return false;
+            }
+
+            MetaProgressionService.GrantQuestExperience(quest.Reward.PlayerExperience);
+            return true;
         }
 
         public static bool IsEligible(QuestConfig quest)

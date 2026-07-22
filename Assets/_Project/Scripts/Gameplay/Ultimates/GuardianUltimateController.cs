@@ -5,6 +5,7 @@ using CatGuard.Gameplay.Enemies;
 using CatGuard.Gameplay.Levels;
 using CatGuard.Gameplay.Towers;
 using CatGuard.Meta.Progression;
+using CatGuard.Meta.GuardianGrowth;
 using CatGuard.SDK.Analytics;
 using CatGuard.Utils;
 using UnityEngine;
@@ -74,9 +75,22 @@ namespace CatGuard.Gameplay.Ultimates
                 return false;
             }
 
+            var equippedIds = new HashSet<string>(MetaProgressionService.GetEquippedUltimateIds(), StringComparer.Ordinal);
             foreach (var config in catalog.Ultimates)
             {
-                states.Add(new UltimateRuntimeState(config));
+                if (equippedIds.Count > 0 && !equippedIds.Contains(config.UltimateId))
+                {
+                    continue;
+                }
+
+                var state = new UltimateRuntimeState(config);
+                state.AddCharge(config.ChargeRequired * MetaProgressionService.GetStartingUltimateCharge01());
+                states.Add(state);
+            }
+
+            if (states.Count == 0 && catalog.Ultimates.Length > 0)
+            {
+                states.Add(new UltimateRuntimeState(catalog.Ultimates[0]));
             }
 
             var poolObject = new GameObject("UltimateVfxPool");

@@ -5,6 +5,7 @@ using CatGuard.Core.Localization;
 using CatGuard.Core.Save;
 using CatGuard.Gameplay.Levels;
 using CatGuard.Meta.DailyRewards;
+using CatGuard.Meta.GuardianGrowth;
 using CatGuard.Meta.Upgrades;
 using CatGuard.SDK.Ads;
 using CatGuard.SDK.Analytics;
@@ -439,17 +440,22 @@ namespace CatGuard.Meta.Progression
 
         public static float GetTowerDamageMultiplier()
         {
-            return 1f + GetSummedUpgradeEffect(UpgradeEffectType.TowerDamageMultiplier);
+            return 1f;
         }
 
         public static float GetTowerRangeMultiplier()
         {
-            return 1f + GetSummedUpgradeEffect(UpgradeEffectType.TowerRangeMultiplier);
+            return 1f;
         }
 
         public static int GetBaseLivesBonus()
         {
-            return (int)GetSummedUpgradeEffect(UpgradeEffectType.BaseLivesBonus);
+            return MetaProgressionService.GetBaseLivesBonus();
+        }
+
+        public static int GetStartingBattleFishBonus()
+        {
+            return MetaProgressionService.GetStartingBattleFishBonus();
         }
 
         private static void EnsureDefaults()
@@ -488,6 +494,11 @@ namespace CatGuard.Meta.Progression
             if (data.processedQuestEventIds == null)
             {
                 data.processedQuestEventIds = new List<string>();
+            }
+
+            if (!GameSaveMigrationService.TryMigrate(data, levelCatalog?.FirstLevel?.LevelId, out _, out var migrationError))
+            {
+                throw new InvalidOperationException($"Save migration failed: {migrationError}");
             }
 
             var firstLevelId = levelCatalog?.FirstLevel?.LevelId;

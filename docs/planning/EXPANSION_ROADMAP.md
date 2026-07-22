@@ -1135,6 +1135,6 @@ Ceilings здесь означают ожидаемую способность d
 
 ## 9. Next Action
 
-`E9 — Post-Round Contracts And Quest Board` завершён; фактический gate находится в [E9_QUEST_BOARD_REPORT.md](E9_QUEST_BOARD_REPORT.md).
+`E10 — Meta Progression And Guardian Growth` завершён; фактический gate находится в [E10_META_PROGRESSION_REPORT.md](E10_META_PROGRESSION_REPORT.md), а схема сохранения и reset/migration paths — в [SAVE_SCHEMA_AND_META_PROGRESSION.md](SAVE_SCHEMA_AND_META_PROGRESSION.md).
 
-Следующий допустимый implementation block: **`E10 — Meta Progression And Guardian Growth`**. Он должен выполняться отдельной самостоятельной задачей с собственным scope, external-art boundary и Block Test Gate; E9-delivery не включает реализацию E10.
+Следующий допустимый implementation block: **`E11 — Achievements And Reward Claims`**. Он должен выполняться отдельной самостоятельной задачей с собственным scope, external-art boundary и Block Test Gate; E10-delivery не включает реализацию E11.

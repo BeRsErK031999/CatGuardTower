@@ -54,6 +54,29 @@ MonoBehaviour:
     spawnDelayOffset: 0
     validationMetadata: E12 authored campaign route.
     allowPointsOutsideWorldBounds: 0
+  - routeId: orchard_boss
+    displayName: Orchard Second Entrance
+    points:
+    - {x: -11, y: -3.1}
+    - {x: -8, y: -2.2}
+    - {x: -5, y: -0.8}
+    - {x: -2, y: 0.2}
+    - {x: 2, y: 0.9}
+    - {x: 5, y: -0.4}
+    - {x: 8, y: -1.4}
+    - {x: 11, y: -2.7}
+    spawnAnchor: {x: -11, y: -3.1}
+    goalAnchor: {x: 11, y: -2.7}
+    visualStyleId: amber
+    visualWidth: 0.58
+    routeWeight: 1
+    tags:
+    - ground
+    - boss
+    - secondary_entrance
+    spawnDelayOffset: 0
+    validationMetadata: E13 predictable second entrance reserved for the biome mini-boss.
+    allowPointsOutsideWorldBounds: 0
   pathPoints:
   - {x: -11, y: 2.7}
   - {x: -8, y: 0.7}

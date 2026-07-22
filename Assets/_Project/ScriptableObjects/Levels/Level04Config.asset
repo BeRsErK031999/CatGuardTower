@@ -60,3 +60,22 @@ MonoBehaviour:
     recommendedMaxActiveEnemies: 96
     externalAssetManifest: Internal code-authored layout; existing Cat Guard prototype
       sprites and animation profiles only; no external asset or license dependency.
+  bossEncounter: {fileID: 11400000, guid: 63d01f4429108a84e92bd6c54da5087f, type: 2}
+  advancedMapRules:
+  - ruleId: orchard_second_entrance
+    ruleType: 0
+    nameLocalizationKey: mapRule.orchardEntrance.name
+    activeCueLocalizationKey: mapRule.orchardEntrance.cue
+    activationDelaySeconds: 7
+    durationSeconds: 0
+    targetRouteId: orchard_boss
+    targetZone:
+      zoneId: 
+      bounds:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 0
+        height: 0
+    towerRangeMultiplier: 1
+    presentationColor: {r: 0.18, g: 0.86, b: 0.46, a: 0.8}

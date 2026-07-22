@@ -359,7 +359,10 @@ public static class E2ProjectSetup
         }
 
         var gridSource = File.ReadAllText("Assets/_Project/Scripts/Gameplay/Grid/TowerGrid.cs");
-        if (!gridSource.Contains("battlefield.BuildCellCenters") || gridSource.Contains("private void Update()"))
+        if (!gridSource.Contains("battlefield.BuildCellCenters")
+            || gridSource.Contains("Input.GetMouseButton")
+            || gridSource.Contains("Input.touchCount")
+            || gridSource.Contains("Touchscreen.current"))
         {
             errors.Add("TowerGrid must use world-space battlefield cells and delegate gestures to BattlefieldInputController.");
         }

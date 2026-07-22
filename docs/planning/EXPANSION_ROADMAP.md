@@ -1135,6 +1135,6 @@ Ceilings здесь означают ожидаемую способность d
 
 ## 9. Next Action
 
-`E12 — Expanded Landscape Campaign` завершён; фактический gate находится в [E12_EXPANDED_CAMPAIGN_REPORT.md](E12_EXPANDED_CAMPAIGN_REPORT.md), authoring и challenge flow — в [CAMPAIGN_CONTENT_WORKFLOW.md](CAMPAIGN_CONTENT_WORKFLOW.md), а schema-v4 migration/reset paths — в [SAVE_SCHEMA_AND_META_PROGRESSION.md](SAVE_SCHEMA_AND_META_PROGRESSION.md).
+`E13 — Bosses And Advanced Map Rules` завершён; фактический Unity/Android gate находится в [E13_BOSSES_ADVANCED_RULES_REPORT.md](E13_BOSSES_ADVANCED_RULES_REPORT.md), а authoring и runtime lifecycle описаны в [BOSS_AND_MAP_RULE_WORKFLOW.md](BOSS_AND_MAP_RULE_WORKFLOW.md).
 
-Следующий допустимый implementation block: **`E13 — Bosses And Advanced Map Rules`**. E12-delivery не подменяет босса обычным врагом: mini-boss/boss phases, telegraphs, resistance и authoritative achievement events остаются отдельным полным блоком.
+Следующий допустимый implementation block: **`E14 — Balance, Performance, Accessibility, And Polish`**. E13 подтверждает deterministic behavior при искусственных 12 FPS, но не объявляет этот результат production performance floor и не заменяет campaign-wide balance/accessibility audit или проверку на реальном Android hardware profile.

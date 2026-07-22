@@ -8,7 +8,7 @@
 
 ## Event flow
 
-Battle achievements receive one `AchievementBattleReport` only after quest and meta-progression processing. It contains the stable battle event id, victory state, lost lives, defeated-enemy total, route count, highest tower tier, distinct ultimates used, and future boss ids. A repeated event id is ignored. If rewarded revive resumes the battle, the state captured before that result is restored and the event id becomes eligible for the final result.
+Battle achievements receive one `AchievementBattleReport` only after quest and meta-progression processing. It contains the stable battle event id, victory state, lost lives, defeated-enemy total, route count, highest tower tier, distinct ultimates used, and authoritative defeated boss ids. A repeated event id is ignored. If rewarded revive resumes a non-boss battle, the state captured before that result is restored and the event id becomes eligible for the final result.
 
 Daily rewards use `daily:<UTC date key>` as their event id. The hidden lantern interaction uses `garden:lantern`. Both therefore advance once even if UI callbacks repeat.
 
@@ -33,7 +33,7 @@ Achievement analytics contains only the stable achievement id, configured catego
 
 ## Boss boundary
 
-E11 includes and validates the `BossesDefeated` rule and `first_boss` presentation, but the current E10 campaign has no boss entity. Runtime passes an empty boss-id collection until E13 adds real boss content and supplies authoritative defeated boss ids. The achievement remains honestly incomplete instead of using an ordinary enemy as a placeholder boss.
+E11 introduced the `BossesDefeated` rule and `first_boss` presentation. E13 now feeds it only from the authoritative boss runtime: a defeated `BossRuntimeController` contributes its stable encounter id through `AchievementBattleReport`. Ordinary enemy ids, boss spawns, and incomplete phase transitions never count.
 
 ## Reset
 

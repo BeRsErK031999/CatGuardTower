@@ -217,3 +217,15 @@ MonoBehaviour:
     entryType: 2
     sourceId: cockroach_runner
     nameLocalizationKey: meta.codex.enemy.cockroach_runner
+  - entryId: enemy:hedgehog_captain
+    entryType: 2
+    sourceId: hedgehog_captain
+    nameLocalizationKey: meta.codex.enemy.hedgehog_captain
+  - entryId: enemy:rooftop_owl
+    entryType: 2
+    sourceId: rooftop_owl
+    nameLocalizationKey: meta.codex.enemy.rooftop_owl
+  - entryId: enemy:rat_king
+    entryType: 2
+    sourceId: rat_king
+    nameLocalizationKey: meta.codex.enemy.rat_king

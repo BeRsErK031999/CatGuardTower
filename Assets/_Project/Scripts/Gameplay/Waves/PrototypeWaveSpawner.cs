@@ -110,6 +110,17 @@ namespace CatGuard.Gameplay.Waves
                     yield break;
                 }
 
+                while (levelController.State == PrototypeLevelState.Running
+                    && !levelController.IsRouteAvailable(route.RouteId))
+                {
+                    yield return null;
+                }
+
+                if (levelController.State != PrototypeLevelState.Running)
+                {
+                    yield break;
+                }
+
                 if (!string.IsNullOrWhiteSpace(levelController.DevelopmentRouteFilter)
                     && route.RouteId != levelController.DevelopmentRouteFilter)
                 {

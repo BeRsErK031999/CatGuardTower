@@ -159,6 +159,21 @@ namespace CatGuard.Gameplay.Ultimates
 
         public void GrantReady(string ultimateId = null)
         {
+            if (Debug.isDebugBuild
+                && !string.IsNullOrWhiteSpace(ultimateId)
+                && FindState(ultimateId) == null)
+            {
+                var catalog = UltimateCatalogConfig.LoadDefault();
+                foreach (var config in catalog?.Ultimates ?? Array.Empty<UltimateConfig>())
+                {
+                    if (config != null && string.Equals(config.UltimateId, ultimateId, StringComparison.Ordinal))
+                    {
+                        states.Add(new UltimateRuntimeState(config));
+                        break;
+                    }
+                }
+            }
+
             foreach (var state in states)
             {
                 if (string.IsNullOrWhiteSpace(ultimateId)

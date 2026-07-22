@@ -1,5 +1,6 @@
 using System;
 using CatGuard.Gameplay.Battlefield;
+using CatGuard.Gameplay.Bosses;
 using CatGuard.Gameplay.Towers;
 using CatGuard.Gameplay.Waves;
 using UnityEngine;
@@ -58,6 +59,10 @@ namespace CatGuard.Gameplay.Levels
         [Header("Expanded Campaign")]
         [SerializeField] private CampaignMapMetadata campaignMetadata;
 
+        [Header("Boss And Advanced Rules")]
+        [SerializeField] private BossEncounterConfig bossEncounter;
+        [SerializeField] private AdvancedMapRuleConfig[] advancedMapRules = Array.Empty<AdvancedMapRuleConfig>();
+
         public string LevelId => string.IsNullOrWhiteSpace(levelId) ? name : levelId;
         public string DisplayName => string.IsNullOrWhiteSpace(displayName) ? LevelId : displayName;
         public int BaseLives => Mathf.Max(1, baseLives);
@@ -83,6 +88,9 @@ namespace CatGuard.Gameplay.Levels
         public bool HasTutorialText => !string.IsNullOrWhiteSpace(TutorialTextKey);
         public CampaignMapMetadata CampaignMetadata => campaignMetadata;
         public bool HasCampaignMetadata => campaignMetadata != null && campaignMetadata.IsValid();
+        public BossEncounterConfig BossEncounter => bossEncounter;
+        public AdvancedMapRuleConfig[] AdvancedMapRules => advancedMapRules ?? Array.Empty<AdvancedMapRuleConfig>();
+        public bool HasBossEncounter => bossEncounter != null;
 
         public bool IsValidForCore()
         {
@@ -123,7 +131,25 @@ namespace CatGuard.Gameplay.Levels
                 return false;
             }
 
-            return waveConfig != null && waveConfig.IsValid(battlefield, out _);
+            if (waveConfig == null || !waveConfig.IsValid(battlefield, out _))
+            {
+                return false;
+            }
+
+            if (bossEncounter != null && !bossEncounter.IsValid(battlefield, out _))
+            {
+                return false;
+            }
+
+            foreach (var rule in AdvancedMapRules)
+            {
+                if (rule == null || !rule.IsValid(battlefield, out _))
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         public BattlefieldDefinition ResolveBattlefield()
@@ -141,6 +167,16 @@ namespace CatGuard.Gameplay.Levels
         public void ConfigureCampaignMetadata(CampaignMapMetadata metadata)
         {
             campaignMetadata = metadata;
+        }
+
+        public void ConfigureBossEncounter(BossEncounterConfig encounter)
+        {
+            bossEncounter = encounter;
+        }
+
+        public void ConfigureAdvancedMapRules(AdvancedMapRuleConfig[] rules)
+        {
+            advancedMapRules = rules ?? Array.Empty<AdvancedMapRuleConfig>();
         }
 
         public void Configure(

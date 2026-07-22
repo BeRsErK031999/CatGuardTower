@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8bc046b67e3063a45bf572e17f58624d, type: 3}
+  m_Name: HedgehogCaptainEnemy
+  m_EditorClassIdentifier: Assembly-CSharp::CatGuard.Gameplay.Enemies.EnemyConfig
+  enemyId: hedgehog_captain
+  displayName: Captain Bramble
+  health: 190
+  speed: 0.42
+  baseDamage: 4
+  battleFishReward: 80
+  visualScale: 0.92
+  visualColor: {r: 0.56, g: 0.38, b: 0.18, a: 1}
+  visualSprite: {fileID: 21300000, guid: 5f9acaf54859ffe4cb148446c809df99, type: 3}
+  animationProfile: {fileID: 11400000, guid: 131d12a8cbb623a4f8c214650925a343, type: 2}
+  boss: 1
+  ultimateDamageMultiplier: 1
+  ultimateSlowDurationMultiplier: 1
+  ultimateStunDurationMultiplier: 1
+  ultimateControlImmune: 0

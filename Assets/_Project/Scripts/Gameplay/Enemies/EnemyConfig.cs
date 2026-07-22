@@ -21,6 +21,7 @@ namespace CatGuard.Gameplay.Enemies
         [SerializeField] private Color visualColor = new(1f, 0.3f, 0.22f);
         [SerializeField] private Sprite visualSprite;
         [SerializeField] private UnitAnimationConfig animationProfile;
+        [SerializeField] private bool boss;
 
         [Header("Guardian Ultimate Resistance")]
         [Range(0f, 2f)]
@@ -41,6 +42,7 @@ namespace CatGuard.Gameplay.Enemies
         public Color VisualColor => visualColor;
         public Sprite VisualSprite => visualSprite;
         public UnitAnimationConfig AnimationProfile => animationProfile;
+        public bool IsBoss => boss;
         public float UltimateDamageMultiplier => Mathf.Clamp(ultimateDamageMultiplier, 0f, 2f);
         public float UltimateSlowDurationMultiplier => ultimateControlImmune ? 0f : Mathf.Clamp01(ultimateSlowDurationMultiplier);
         public float UltimateStunDurationMultiplier => ultimateControlImmune ? 0f : Mathf.Clamp01(ultimateStunDurationMultiplier);
@@ -81,6 +83,11 @@ namespace CatGuard.Gameplay.Enemies
         public void ConfigureAnimationProfile(UnitAnimationConfig profile)
         {
             animationProfile = profile;
+        }
+
+        public void ConfigureBossIdentity(bool isBoss)
+        {
+            boss = isBoss;
         }
 
         public void ConfigureUltimateResistance(

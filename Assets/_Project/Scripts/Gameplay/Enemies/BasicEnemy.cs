@@ -1,4 +1,5 @@
 using CatGuard.Gameplay.Battlefield;
+using CatGuard.Gameplay.Bosses;
 using CatGuard.Gameplay.Levels;
 using CatGuard.Gameplay.Presentation;
 using CatGuard.Utils;
@@ -17,6 +18,7 @@ namespace CatGuard.Gameplay.Enemies
         private float baseSpeed;
         private float speed;
         private float waveSpeedMultiplier = 1f;
+        private float bossPhaseSpeedMultiplier = 1f;
         private float combatSlowMultiplier = 1f;
         private float combatSlowUntil;
         private float ultimateSlowMultiplier = 1f;
@@ -29,6 +31,7 @@ namespace CatGuard.Gameplay.Enemies
         private int nextPathIndex;
         private bool completed;
         private UnitStatusModifier statusModifier;
+        private BossRuntimeController bossRuntime;
 
         public bool IsAlive => !completed && currentHealth > 0f;
         public float HealthPercent => maxHealth <= 0f ? 0f : Mathf.Clamp01(currentHealth / maxHealth);
@@ -44,7 +47,9 @@ namespace CatGuard.Gameplay.Enemies
         public UnitAnimationState PresentationState => animationPresenter == null ? UnitAnimationState.Idle : animationPresenter.CurrentState;
         public UnitStatusModifier PresentationStatus => statusModifier;
         public float ActualMoveSpeed => speed;
-        public bool IsHeavyTarget => maxHealth >= 8f || baseDamage >= 3;
+        public bool IsHeavyTarget => IsBoss || maxHealth >= 8f || baseDamage >= 3;
+        public bool IsBoss => bossRuntime != null;
+        public BossRuntimeController BossRuntime => bossRuntime;
 
         public void Initialize(
             PrototypeLevelController owner,
@@ -66,21 +71,43 @@ namespace CatGuard.Gameplay.Enemies
             nextPathIndex = 1;
             completed = false;
             NormalizedProgress = 0f;
+            bossPhaseSpeedMultiplier = 1f;
 
             transform.position = route.Points[0];
             EnsureVisual();
+            var bossEncounter = owner.ResolveBossEncounter(enemyConfig);
+            if (bossEncounter != null)
+            {
+                bossRuntime = gameObject.AddComponent<BossRuntimeController>();
+                bossRuntime.Initialize(owner, this, bossEncounter);
+            }
             UpdateVisual();
         }
 
         public float ApplyDamage(float amount, bool generatesUltimateCharge = true)
+        {
+            return ApplyDamageInternal(amount, false, generatesUltimateCharge);
+        }
+
+        public float ApplyUltimateDamage(float amount)
+        {
+            var configuredAmount = Mathf.Max(0f, amount) * (config?.UltimateDamageMultiplier ?? 1f);
+            return ApplyDamageInternal(configuredAmount, true, false);
+        }
+
+        private float ApplyDamageInternal(float amount, bool ultimate, bool generatesUltimateCharge)
         {
             if (!IsAlive)
             {
                 return 0f;
             }
 
+            var requested = Mathf.Max(0f, amount);
+            var resolved = bossRuntime == null
+                ? requested
+                : bossRuntime.FilterIncomingDamage(requested, ultimate, currentHealth, maxHealth);
             var previousHealth = currentHealth;
-            currentHealth = Mathf.Max(0f, currentHealth - Mathf.Max(0f, amount));
+            currentHealth = Mathf.Max(0f, currentHealth - resolved);
             var dealt = previousHealth - currentHealth;
             if (generatesUltimateCharge && dealt > 0f)
             {
@@ -88,10 +115,12 @@ namespace CatGuard.Gameplay.Enemies
             }
 
             UpdateVisual();
+            bossRuntime?.NotifyHealthChanged(currentHealth, maxHealth);
 
             if (currentHealth <= 0f)
             {
                 completed = true;
+                bossRuntime?.HandleDefeated();
                 levelController.HandleEnemyDefeated(this);
                 return dealt;
             }
@@ -100,15 +129,14 @@ namespace CatGuard.Gameplay.Enemies
             return dealt;
         }
 
-        public float ApplyUltimateDamage(float amount)
-        {
-            return ApplyDamage(Mathf.Max(0f, amount) * (config?.UltimateDamageMultiplier ?? 1f), false);
-        }
-
         public void ApplyUltimateSlow(float slowPercent, float durationSeconds)
         {
             var durationMultiplier = config?.UltimateSlowDurationMultiplier ?? 1f;
             var adjustedDuration = durationSeconds * durationMultiplier;
+            if (bossRuntime != null)
+            {
+                adjustedDuration = bossRuntime.AdjustStatusDuration(adjustedDuration, false);
+            }
             if (!IsAlive || slowPercent <= 0f || adjustedDuration <= 0f)
             {
                 return;
@@ -123,6 +151,10 @@ namespace CatGuard.Gameplay.Enemies
         {
             var durationMultiplier = config?.UltimateStunDurationMultiplier ?? 1f;
             var adjustedDuration = durationSeconds * durationMultiplier;
+            if (bossRuntime != null)
+            {
+                adjustedDuration = bossRuntime.AdjustStatusDuration(adjustedDuration, true);
+            }
             if (!IsAlive || adjustedDuration <= 0f)
             {
                 return;
@@ -138,6 +170,12 @@ namespace CatGuard.Gameplay.Enemies
             RefreshMovementStatus();
         }
 
+        public void SetBossPhaseMovementMultiplier(float speedMultiplier)
+        {
+            bossPhaseSpeedMultiplier = Mathf.Max(0.1f, speedMultiplier);
+            RefreshMovementStatus();
+        }
+
         public void SetControlStatus(UnitStatusModifier modifier)
         {
             controlStatus = modifier & ~(UnitStatusModifier.Slowed | UnitStatusModifier.Hastened);
@@ -146,13 +184,16 @@ namespace CatGuard.Gameplay.Enemies
 
         public void ApplyTemporarySlow(float slowPercent, float durationSeconds)
         {
-            if (!IsAlive || slowPercent <= 0f || durationSeconds <= 0f)
+            var adjustedDuration = bossRuntime == null
+                ? durationSeconds
+                : bossRuntime.AdjustStatusDuration(durationSeconds, false);
+            if (!IsAlive || slowPercent <= 0f || adjustedDuration <= 0f)
             {
                 return;
             }
 
             combatSlowMultiplier = Mathf.Min(combatSlowMultiplier, 1f - Mathf.Clamp(slowPercent, 0f, 0.85f));
-            combatSlowUntil = Mathf.Max(combatSlowUntil, Time.time + durationSeconds);
+            combatSlowUntil = Mathf.Max(combatSlowUntil, Time.time + adjustedDuration);
             RefreshMovementStatus();
         }
 
@@ -263,13 +304,13 @@ namespace CatGuard.Gameplay.Enemies
             var combatSlow = combatSlowUntil > Time.time ? combatSlowMultiplier : 1f;
             var ultimateSlow = ultimateSlowUntil > Time.time ? ultimateSlowMultiplier : 1f;
             var effectiveSlow = Mathf.Min(combatSlow, ultimateSlow);
-            speed = Mathf.Max(0.1f, baseSpeed) * waveSpeedMultiplier * effectiveSlow;
+            speed = Mathf.Max(0.1f, baseSpeed) * waveSpeedMultiplier * bossPhaseSpeedMultiplier * effectiveSlow;
             statusModifier = controlStatus;
             if (ultimateStunUntil > Time.time)
             {
                 statusModifier |= UnitStatusModifier.Stunned;
             }
-            var effectiveMultiplier = waveSpeedMultiplier * effectiveSlow;
+            var effectiveMultiplier = waveSpeedMultiplier * bossPhaseSpeedMultiplier * effectiveSlow;
             if (effectiveMultiplier < 0.95f)
             {
                 statusModifier |= UnitStatusModifier.Slowed;

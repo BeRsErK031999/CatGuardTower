@@ -1,7 +1,9 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using CatGuard.Core.Audio;
 using CatGuard.Gameplay.Battlefield;
+using CatGuard.Gameplay.Bosses;
 using CatGuard.Gameplay.CameraControl;
 using CatGuard.Gameplay.Enemies;
 using CatGuard.Gameplay.Grid;
@@ -42,6 +44,8 @@ namespace CatGuard.Gameplay.Levels
         private readonly Dictionary<string, int> towerPlacementsByFamily = new(System.StringComparer.Ordinal);
         private readonly HashSet<int> controlledEnemyIds = new();
         private readonly HashSet<string> encounteredEnemyIds = new(System.StringComparer.Ordinal);
+        private readonly HashSet<string> defeatedBossIds = new(System.StringComparer.Ordinal);
+        private readonly HashSet<string> enteredBossPhaseIds = new(System.StringComparer.Ordinal);
         private int selectedTowerIndex;
         private bool waveCompleted;
         private bool resultApplied;
@@ -52,6 +56,8 @@ namespace CatGuard.Gameplay.Levels
         private BattlefieldCameraController battlefieldCameraController;
         private BattlefieldInputController battlefieldInputController;
         private GuardianUltimateController guardianUltimates;
+        private AdvancedMapRuleController mapRules;
+        private BossRuntimeController activeBoss;
         private Transform unitsLayer;
         private Transform vfxLayer;
         private int expectedEnemyCount;
@@ -60,6 +66,9 @@ namespace CatGuard.Gameplay.Levels
         private int towersPlacedTotal;
         private int towersSoldTotal;
         private int livesLostTotal;
+        private bool battleRuntimeEnded;
+        private string lastBossResistanceLocalizationKey = string.Empty;
+        private float lastBossResistanceCueUntil;
 
         public PrototypeLevelState State { get; private set; } = PrototypeLevelState.NotStarted;
         public int Lives { get; private set; }
@@ -73,6 +82,8 @@ namespace CatGuard.Gameplay.Levels
         public BattlefieldCameraController BattlefieldCamera => battlefieldCameraController;
         public BattlefieldInputController BattlefieldInput => battlefieldInputController;
         public GuardianUltimateController GuardianUltimates => guardianUltimates;
+        public AdvancedMapRuleController MapRules => mapRules;
+        public BossRuntimeController ActiveBoss => activeBoss;
         public int SelectedTowerIndex => selectedTowerIndex;
         public int TotalEnemies => expectedEnemyCount;
         public int ActiveEnemyCount => activeEnemies.Count;
@@ -87,6 +98,18 @@ namespace CatGuard.Gameplay.Levels
         public bool CanStartWave => State == PrototypeLevelState.Preparing && waveSpawner != null;
         public LevelCompletionResult CompletionResult { get; private set; }
         public CampaignChallengeConfig ActiveChallenge { get; private set; }
+        public IReadOnlyCollection<string> DefeatedBossIds => defeatedBossIds;
+        public IReadOnlyCollection<string> EnteredBossPhaseIds => enteredBossPhaseIds;
+        public int BossAbilityExecutionCount { get; private set; }
+        public int BossResistanceFeedbackCount { get; private set; }
+        public int BossDefeatCount => defeatedBossIds.Count;
+        public string LastBossResistanceLocalizationKey => Time.unscaledTime <= lastBossResistanceCueUntil
+            ? lastBossResistanceLocalizationKey
+            : string.Empty;
+        public float CurrentTowerRangeMultiplier => mapRules?.TowerRangeMultiplier ?? 1f;
+        public bool BattleRuntimeCleanupComplete => battleRuntimeEnded
+            && (mapRules == null || mapRules.IsClean)
+            && activeBoss == null;
         public bool CanClaimVictoryDoubleReward => State == PrototypeLevelState.Won
             && CompletionResult != null
             && CompletionResult.EarnedFishCoins > 0
@@ -94,6 +117,7 @@ namespace CatGuard.Gameplay.Levels
             && ProgressionService.IsRewardedPlacementAvailable(RewardedAdPlacementIds.VictoryRewardDouble);
         public bool CanReviveWithRewardedAd => State == PrototypeLevelState.Lost
             && !reviveUsed
+            && config?.HasBossEncounter != true
             && HasRemainingThreats()
             && ProgressionService.IsRewardedPlacementAvailable(RewardedAdPlacementIds.Revive);
 
@@ -153,6 +177,7 @@ namespace CatGuard.Gameplay.Levels
 
             State = PrototypeLevelState.Running;
             ClearPlacedTowerSelection();
+            mapRules?.BeginTimeline();
             waveSpawner.Begin();
             return true;
         }
@@ -161,7 +186,8 @@ namespace CatGuard.Gameplay.Levels
         {
             BasicEnemy selected = null;
             EnemyTargetingMetrics selectedMetrics = default;
-            var maximumDistance = range * range;
+            var effectiveRange = range * CurrentTowerRangeMultiplier;
+            var maximumDistance = effectiveRange * effectiveRange;
 
             foreach (var enemy in activeEnemies)
             {
@@ -230,7 +256,8 @@ namespace CatGuard.Gameplay.Levels
 
                     var distanceToLine = DistanceToSegment(enemy.transform.position, origin, targetPosition);
                     var distanceFromTower = ((Vector2)enemy.transform.position - origin).sqrMagnitude;
-                    if (distanceToLine <= 0.3f && distanceFromTower <= stats.Range * stats.Range)
+                    var effectiveRange = stats.Range * CurrentTowerRangeMultiplier;
+                    if (distanceToLine <= 0.3f && distanceFromTower <= effectiveRange * effectiveRange)
                     {
                         attackTargets.Add(enemy);
                         if (attackTargets.Count >= stats.PierceTargets + 1)
@@ -249,7 +276,8 @@ namespace CatGuard.Gameplay.Levels
                     if (enemy != null
                         && enemy.IsAlive
                         && !attackTargets.Contains(enemy)
-                        && (enemy.transform.position - source.transform.position).sqrMagnitude <= stats.Range * stats.Range)
+                        && (enemy.transform.position - source.transform.position).sqrMagnitude
+                            <= stats.Range * CurrentTowerRangeMultiplier * stats.Range * CurrentTowerRangeMultiplier)
                     {
                         attackCandidates.Add(enemy);
                     }
@@ -522,6 +550,137 @@ namespace CatGuard.Gameplay.Levels
             AnalyticsService.TrackEnemySpawn(config, enemyConfig, route, spawnOrder);
         }
 
+        public BossEncounterConfig ResolveBossEncounter(EnemyConfig enemyConfig)
+        {
+            var encounter = config?.BossEncounter;
+            return encounter != null && encounter.BossEnemy == enemyConfig ? encounter : null;
+        }
+
+        public void RegisterBoss(BossRuntimeController boss)
+        {
+            if (boss != null)
+            {
+                activeBoss = boss;
+            }
+        }
+
+        public void UnregisterBoss(BossRuntimeController boss, string reason)
+        {
+            if (activeBoss == boss)
+            {
+                activeBoss = null;
+            }
+        }
+
+        public void NotifyBossPhaseStarted(BossRuntimeController boss)
+        {
+            var phase = boss?.CurrentPhase;
+            if (phase != null)
+            {
+                enteredBossPhaseIds.Add($"{boss.BossId}:{phase.PhaseId}");
+            }
+        }
+
+        public void NotifyBossAbilityExecuted(BossRuntimeController boss)
+        {
+            if (boss?.CurrentPhase != null)
+            {
+                BossAbilityExecutionCount++;
+            }
+        }
+
+        public void NotifyBossResistance(
+            BossEncounterConfig encounter,
+            BossPhaseConfig phase,
+            string resistanceType)
+        {
+            BossResistanceFeedbackCount++;
+            lastBossResistanceLocalizationKey = phase?.ResistanceLocalizationKey ?? string.Empty;
+            lastBossResistanceCueUntil = Time.unscaledTime + 2.5f;
+        }
+
+        public void NotifyBossDefeated(BossRuntimeController boss)
+        {
+            if (boss != null && !string.IsNullOrWhiteSpace(boss.BossId))
+            {
+                defeatedBossIds.Add(boss.BossId);
+            }
+
+            if (activeBoss == boss)
+            {
+                activeBoss = null;
+            }
+        }
+
+        public void NotifyMapRuleStateChanged(AdvancedMapRuleConfig rule, bool active)
+        {
+            if (rule?.RuleType == AdvancedMapRuleType.SecondaryEntrance && active)
+            {
+                RegisterIncomingRoute(rule.TargetRouteId, 3.5f);
+            }
+        }
+
+        public bool IsRouteAvailable(string routeId)
+        {
+            return mapRules?.IsRouteAvailable(routeId) != false;
+        }
+
+        public void QueueBossSupport(BossSupportGroupConfig[] supportGroups)
+        {
+            if (State != PrototypeLevelState.Running || supportGroups == null)
+            {
+                return;
+            }
+
+            foreach (var group in supportGroups)
+            {
+                if (group == null || !group.IsValid(Battlefield))
+                {
+                    continue;
+                }
+
+                expectedEnemyCount += group.Count;
+                StartCoroutine(SpawnBossSupportGroup(group));
+            }
+        }
+
+        public void AbortDevelopmentBattle(string reason)
+        {
+            if (!Debug.isDebugBuild)
+            {
+                return;
+            }
+
+            StopAllCoroutines();
+            guardianUltimates?.EndBattle(reason ?? "development_abort");
+            EndBattleRuntime(reason ?? "development_abort");
+        }
+
+        private IEnumerator SpawnBossSupportGroup(BossSupportGroupConfig group)
+        {
+            for (var index = 0; index < group.Count; index++)
+            {
+                while (State == PrototypeLevelState.Running && !IsRouteAvailable(group.RouteId))
+                {
+                    yield return null;
+                }
+
+                if (State != PrototypeLevelState.Running
+                    || !Battlefield.TryGetRoute(group.RouteId, out var route))
+                {
+                    yield break;
+                }
+
+                RegisterIncomingRoute(route.RouteId, 2.2f);
+                SpawnEnemy(
+                    group.EnemyConfig,
+                    route,
+                    group.HealthMultiplier,
+                    group.SpeedMultiplier);
+                yield return new WaitForSeconds(group.SpawnInterval);
+            }
+        }
+
         public void HandleEnemyDefeated(BasicEnemy enemy)
         {
             var position = enemy == null ? Vector3.zero : enemy.transform.position;
@@ -771,9 +930,16 @@ namespace CatGuard.Gameplay.Levels
             towerPlacementsByFamily.Clear();
             controlledEnemyIds.Clear();
             encounteredEnemyIds.Clear();
+            defeatedBossIds.Clear();
+            enteredBossPhaseIds.Clear();
             towersPlacedTotal = 0;
             towersSoldTotal = 0;
             livesLostTotal = 0;
+            BossAbilityExecutionCount = 0;
+            BossResistanceFeedbackCount = 0;
+            lastBossResistanceLocalizationKey = string.Empty;
+            lastBossResistanceCueUntil = 0f;
+            battleRuntimeEnded = false;
             questBattleEventId = Guid.NewGuid().ToString("N");
             foreach (var route in Battlefield.Routes)
             {
@@ -784,6 +950,12 @@ namespace CatGuard.Gameplay.Levels
             }
             State = PrototypeLevelState.Preparing;
 
+            mapRules = GetComponent<AdvancedMapRuleController>();
+            if (mapRules == null)
+            {
+                mapRules = gameObject.AddComponent<AdvancedMapRuleController>();
+            }
+            mapRules.Initialize(this, Battlefield, config.AdvancedMapRules, vfxLayer != null ? vfxLayer : runtimeRoot);
             towerGrid.Initialize(this, Battlefield);
             battlefieldInputController.Initialize(this, towerGrid, battlefieldCameraController);
             waveSpawner.Initialize(this, config.WaveConfig);
@@ -833,6 +1005,7 @@ namespace CatGuard.Gameplay.Levels
             {
                 State = PrototypeLevelState.Lost;
                 guardianUltimates?.EndBattle("defeat");
+                EndBattleRuntime("defeat");
                 resultApplied = true;
                 var questProgress = ProcessQuestBattleResult(false);
                 var metaProgress = ProcessMetaBattleResult(false);
@@ -854,6 +1027,7 @@ namespace CatGuard.Gameplay.Levels
             {
                 State = PrototypeLevelState.Won;
                 guardianUltimates?.EndBattle("victory");
+                EndBattleRuntime("victory");
                 ApplyWinProgression();
             }
         }
@@ -930,7 +1104,26 @@ namespace CatGuard.Gameplay.Levels
                 Battlefield?.Routes?.Length ?? 0,
                 highestTier,
                 guardianUltimates?.ActivatedUltimateIds,
-                Array.Empty<string>()));
+                defeatedBossIds));
+        }
+
+        private void EndBattleRuntime(string reason)
+        {
+            if (battleRuntimeEnded)
+            {
+                return;
+            }
+
+            battleRuntimeEnded = true;
+            mapRules?.EndBattle(reason);
+            var boss = activeBoss;
+            activeBoss = null;
+            boss?.EndRuntime(reason);
+        }
+
+        private void OnDisable()
+        {
+            EndBattleRuntime("scene_unload");
         }
 
         private bool HasRemainingThreats()
@@ -1287,6 +1480,7 @@ namespace CatGuard.Gameplay.Levels
         {
             activeEnemies.Clear();
             towers.Clear();
+            activeBoss = null;
 
             if (gameplayBackgroundSprite != null)
             {

@@ -1,6 +1,8 @@
 ﻿param(
     [string]$LevelId = "level_10",
     [string]$ChallengeId = "",
+    [ValidateSet("", "en", "ru")]
+    [string]$LanguageCode = "",
     [string[]]$TowerIds = @(
         "cat_dart",
         "yarn_cannon",
@@ -25,6 +27,11 @@
     [switch]$SellAfterUpgrade,
     [string[]]$UltimateIds = @(),
     [switch]$ExerciseUltimateTargeting,
+    [switch]$WriteLiveSnapshots,
+    [int]$InterruptAtBossPhase = 0,
+    [ValidateSet("", "restart", "quit")]
+    [string]$InterruptAction = "",
+    [int]$TargetFrameRate = 0,
     [string]$ApkPath = "Builds\Android\CatGuardTowerDefense-emulator.apk",
     [string]$PackageName = "com.catguard.towerdefense.qa",
     [string]$DeviceSerial = "",
@@ -38,7 +45,12 @@
     [switch]$RequirePerformance,
     [switch]$RequireBattleUpgrades,
     [switch]$RequireUltimates,
-    [switch]$RequireWardBlock
+    [switch]$RequireWardBlock,
+    [switch]$RequireBoss,
+    [int]$ExpectedBossPhases = 0,
+    [switch]$RequireMapRules,
+    [switch]$RequireBossCleanup,
+    [string]$ExpectedState = ""
 )
 
 Set-StrictMode -Version Latest
@@ -256,6 +268,7 @@ $externalFilesPath = "/sdcard/Android/data/$PackageName/files"
     scenarioId = $effectiveScenarioId
     levelId = $LevelId
     challengeId = $ChallengeId
+    languageCode = $LanguageCode
     towerIds = $TowerIds
     routeIdFilter = $RouteIdFilter
     startingLives = $StartingLives
@@ -266,6 +279,10 @@ $externalFilesPath = "/sdcard/Android/data/$PackageName/files"
     sellAfterUpgrade = [bool]$SellAfterUpgrade
     ultimateIds = $UltimateIds
     exerciseUltimateTargeting = [bool]$ExerciseUltimateTargeting
+    writeLiveSnapshots = [bool]$WriteLiveSnapshots
+    interruptAtBossPhase = $InterruptAtBossPhase
+    interruptAction = $InterruptAction
+    targetFrameRate = $TargetFrameRate
 } | ConvertTo-Json -Depth 3 | Set-Content -LiteralPath $commandPath -Encoding UTF8
 
 Invoke-TargetAdb -Arguments @("shell", "am", "force-stop", $PackageName) -AllowFailure | Out-Null
@@ -351,6 +368,7 @@ $summary = [pscustomobject]@{
     scenarioId = $effectiveScenarioId
     levelId = $LevelId
     challengeId = $ChallengeId
+    languageCode = $LanguageCode
     result = $scenarioResult
     fatalPatternCount = $fatalLines.Count
     landscapeConfirmed = $landscapeConfirmed
@@ -372,6 +390,8 @@ $failed = $scenarioResult.state -eq "error" `
     -or $fatalLines.Count -gt 0 `
     -or -not $landscapeConfirmed `
     -or ($ChallengeId -and $scenarioResult.challengeId -ne $ChallengeId) `
+    -or ($ExpectedState -and $scenarioResult.state -ne $ExpectedState) `
+    -or ($TargetFrameRate -gt 0 -and $scenarioResult.targetFrameRate -ne $TargetFrameRate) `
     -or ($RequireVictory -and $scenarioResult.state -ne "won") `
     -or ($RequirePerformance -and -not $performancePassed) `
     -or ($RequireBattleUpgrades -and (
@@ -391,7 +411,22 @@ $failed = $scenarioResult.state -eq "error" `
         -or ($ExerciseUltimateTargeting -and (
             $scenarioResult.ultimateTargetCancels -lt 1 `
             -or $scenarioResult.ultimateInvalidTargets -lt 1)))) `
-    -or ($RequireWardBlock -and $scenarioResult.wardBlocks -lt 1)
+    -or ($RequireWardBlock -and $scenarioResult.wardBlocks -lt 1) `
+    -or ($RequireBoss -and (
+        -not $scenarioResult.bossId `
+        -or $scenarioResult.defeatedBossIds -notcontains $scenarioResult.bossId `
+        -or $scenarioResult.enteredBossPhaseIds.Count -lt [Math]::Max(2, $ExpectedBossPhases) `
+        -or $scenarioResult.bossAbilityExecutions -lt [Math]::Max(2, $ExpectedBossPhases) `
+        -or $scenarioResult.bossResistanceFeedback -lt 1 `
+        -or -not $scenarioResult.battleRuntimeCleanupComplete)) `
+    -or ($RequireMapRules -and (
+        $scenarioResult.mapRuleActivations -lt 1 `
+        -or $scenarioResult.mapRuleDeactivations -lt 1 `
+        -or -not $scenarioResult.battleRuntimeCleanupComplete)) `
+    -or ($RequireBossCleanup -and (
+        -not $scenarioResult.bossId `
+        -or $scenarioResult.enteredBossPhaseIds.Count -lt 1 `
+        -or -not $scenarioResult.battleRuntimeCleanupComplete))
 if ($failed) {
     exit 1
 }

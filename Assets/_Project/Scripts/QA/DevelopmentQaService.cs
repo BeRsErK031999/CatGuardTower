@@ -135,6 +135,11 @@ namespace CatGuard.QA
         private static bool TrySelectRequestedLevel(LevelConfig level, DevelopmentQaCommand command)
         {
             var save = ProgressionService.EnsureSave();
+            if (!string.IsNullOrWhiteSpace(command.languageCode))
+            {
+                ProgressionService.SetLanguage(command.languageCode);
+            }
+
             if (!save.unlockedLevelIds.Contains(level.LevelId))
             {
                 save.unlockedLevelIds.Add(level.LevelId);
@@ -208,6 +213,7 @@ namespace CatGuard.QA
         public string scenarioId;
         public string levelId;
         public string challengeId;
+        public string languageCode;
         public string[] towerIds = Array.Empty<string>();
         public bool manualInput;
         public string routeIdFilter;
@@ -219,6 +225,10 @@ namespace CatGuard.QA
         public bool sellAfterUpgrade;
         public string[] ultimateIds = Array.Empty<string>();
         public bool exerciseUltimateTargeting;
+        public bool writeLiveSnapshots;
+        public int interruptAtBossPhase;
+        public string interruptAction;
+        public int targetFrameRate;
     }
 
     [Serializable]
@@ -254,6 +264,10 @@ namespace CatGuard.QA
         public DevelopmentQaCellSnapshot[] cells = Array.Empty<DevelopmentQaCellSnapshot>();
         public string[] configuredRouteIds = Array.Empty<string>();
         public string[] incomingRouteIds = Array.Empty<string>();
+        public string bossId;
+        public int bossPhase;
+        public bool bossTransitioning;
+        public string[] activeMapRuleIds = Array.Empty<string>();
     }
 
     [Serializable]
@@ -304,6 +318,15 @@ namespace CatGuard.QA
         public int wardBlocks;
         public int pooledUltimateVfxCreated;
         public bool ultimateBattleStateExcludedFromSave;
+        public string bossId;
+        public string[] defeatedBossIds = Array.Empty<string>();
+        public string[] enteredBossPhaseIds = Array.Empty<string>();
+        public int bossAbilityExecutions;
+        public int bossResistanceFeedback;
+        public int mapRuleActivations;
+        public int mapRuleDeactivations;
+        public bool battleRuntimeCleanupComplete;
+        public int targetFrameRate;
     }
 
     public sealed class DevelopmentQaScenarioRunner : MonoBehaviour
@@ -341,6 +364,7 @@ namespace CatGuard.QA
         private int nextUltimateIndex;
         private float nextUltimateAt;
         private bool targetingGateExercised;
+        private int previousTargetFrameRate;
 
         public void Initialize(
             PrototypeLevelController levelController,
@@ -354,6 +378,12 @@ namespace CatGuard.QA
             permanentUpgradeFingerprint = GetPermanentUpgradeFingerprint();
             analyticsEventStartIndex = (AnalyticsService.Current as FakeAnalyticsService)?.Events.Count ?? 0;
             nextUltimateAt = Time.unscaledTime + 1f;
+            previousTargetFrameRate = Application.targetFrameRate;
+            if (command.targetFrameRate > 0)
+            {
+                QualitySettings.vSyncCount = 0;
+                Application.targetFrameRate = command.targetFrameRate;
+            }
 
             if (!controller.ConfigureDevelopmentScenario(
                     command.routeIdFilter,
@@ -402,11 +432,20 @@ namespace CatGuard.QA
                 return;
             }
 
+            if (command.writeLiveSnapshots && Time.unscaledTime >= nextSnapshotAt)
+            {
+                WriteManualSnapshot();
+            }
+
             if (controller.State == PrototypeLevelState.Running)
             {
                 PlaceAffordableTowers();
                 TrySellRequestedTower();
                 TryUseRequestedUltimate();
+                if (TryInterruptBossTransition())
+                {
+                    return;
+                }
             }
 
             if (controller.State is PrototypeLevelState.Won or PrototypeLevelState.Lost)
@@ -448,6 +487,15 @@ namespace CatGuard.QA
                     ultimateBattleStateExcludedFromSave = !typeof(CatGuard.Core.Save.GameSaveData)
                         .GetFields()
                         .Any(field => field.Name.Contains("ultimateCharge", StringComparison.OrdinalIgnoreCase)),
+                    bossId = controller.Config.BossEncounter?.BossId ?? string.Empty,
+                    defeatedBossIds = controller.DefeatedBossIds.ToArray(),
+                    enteredBossPhaseIds = controller.EnteredBossPhaseIds.ToArray(),
+                    bossAbilityExecutions = controller.BossAbilityExecutionCount,
+                    bossResistanceFeedback = controller.BossResistanceFeedbackCount,
+                    mapRuleActivations = controller.MapRules?.ActivationCount ?? 0,
+                    mapRuleDeactivations = controller.MapRules?.DeactivationCount ?? 0,
+                    battleRuntimeCleanupComplete = controller.BattleRuntimeCleanupComplete,
+                    targetFrameRate = command.targetFrameRate,
                     analyticsPayloadValid = HasValidBattleUpgradeAnalytics() && HasValidUltimateAnalytics(),
                     error = string.Empty
                 });
@@ -482,6 +530,69 @@ namespace CatGuard.QA
                 ConfigurePlacedTower(nextTowerIndex);
                 nextTowerIndex++;
             }
+        }
+
+        private void OnDestroy()
+        {
+            if (command?.targetFrameRate > 0)
+            {
+                Application.targetFrameRate = previousTargetFrameRate;
+            }
+        }
+
+        private bool TryInterruptBossTransition()
+        {
+            var boss = controller.ActiveBoss;
+            if (command.interruptAtBossPhase <= 0
+                || boss == null
+                || !boss.IsTransitioning
+                || boss.PhaseNumber < command.interruptAtBossPhase)
+            {
+                return false;
+            }
+
+            completed = true;
+            var action = string.Equals(command.interruptAction, "restart", StringComparison.OrdinalIgnoreCase)
+                ? "restart"
+                : "quit";
+            controller.AbortDevelopmentBattle($"qa_{action}_during_transition");
+            DevelopmentQaService.Complete(new DevelopmentQaResult
+            {
+                scenarioId = command.scenarioId ?? string.Empty,
+                levelId = controller.Config.LevelId,
+                challengeId = controller.ActiveChallenge?.ChallengeId ?? string.Empty,
+                battlefieldId = controller.Battlefield.BattlefieldId,
+                cameraMode = controller.Battlefield.CameraMode.ToString(),
+                state = $"interrupted_{action}",
+                lives = controller.Lives,
+                defeatedEnemies = controller.DefeatedEnemies,
+                escapedEnemies = controller.EscapedEnemies,
+                towerCount = controller.TowerCount,
+                battleFish = controller.BattleFish,
+                durationSeconds = Time.unscaledTime - startedAt,
+                bossId = controller.Config.BossEncounter?.BossId ?? string.Empty,
+                defeatedBossIds = controller.DefeatedBossIds.ToArray(),
+                enteredBossPhaseIds = controller.EnteredBossPhaseIds.ToArray(),
+                bossAbilityExecutions = controller.BossAbilityExecutionCount,
+                bossResistanceFeedback = controller.BossResistanceFeedbackCount,
+                mapRuleActivations = controller.MapRules?.ActivationCount ?? 0,
+                mapRuleDeactivations = controller.MapRules?.DeactivationCount ?? 0,
+                battleRuntimeCleanupComplete = controller.BattleRuntimeCleanupComplete,
+                targetFrameRate = command.targetFrameRate,
+                error = string.Empty
+            });
+
+            if (action == "restart")
+            {
+                HomeHubNavigationService.BeginBattle(controller.Config);
+                SceneLoader.LoadLevel();
+            }
+            else
+            {
+                SceneLoader.LoadMainMenu();
+            }
+
+            return true;
         }
 
         private void ConfigurePlacedTower(int requestIndex)
@@ -802,8 +913,32 @@ namespace CatGuard.QA
                 cameraMaxFocusY = limits.yMax,
                 cells = cells,
                 configuredRouteIds = GetConfiguredRouteIds(),
-                incomingRouteIds = incomingRoutes.ToArray()
+                incomingRouteIds = incomingRoutes.ToArray(),
+                bossId = controller.Config.BossEncounter?.BossId ?? string.Empty,
+                bossPhase = controller.ActiveBoss?.PhaseNumber ?? 0,
+                bossTransitioning = controller.ActiveBoss?.IsTransitioning == true,
+                activeMapRuleIds = GetActiveMapRuleIds()
             });
+        }
+
+        private string[] GetActiveMapRuleIds()
+        {
+            var result = new List<string>();
+            var states = controller.MapRules?.States;
+            if (states == null)
+            {
+                return result.ToArray();
+            }
+
+            foreach (var state in states)
+            {
+                if (state.Active)
+                {
+                    result.Add(state.Config.RuleId);
+                }
+            }
+
+            return result.ToArray();
         }
 
         private string[] GetConfiguredRouteIds()

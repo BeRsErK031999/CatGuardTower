@@ -405,7 +405,8 @@ public static class E3ProjectSetup
                 if (route.HasTag("boss"))
                 {
                     bossRouteReferences++;
-                    if (group.EnemyConfig.EnemyId != "snail_tank")
+                    var isOriginalE3Route = route.RouteId == "well_boss" || route.RouteId == "chimney_boss";
+                    if (isOriginalE3Route && group.EnemyConfig.EnemyId != "snail_tank")
                     {
                         errors.Add($"Boss-only route {route.RouteId} must only reference snail_tank in the E3 slice.");
                     }

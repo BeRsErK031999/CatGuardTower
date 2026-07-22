@@ -60,3 +60,22 @@ MonoBehaviour:
     recommendedMaxActiveEnemies: 96
     externalAssetManifest: Internal code-authored layout; existing Cat Guard prototype
       sprites and animation profiles only; no external asset or license dependency.
+  bossEncounter: {fileID: 11400000, guid: 75389ec1196665f4e90aa1c5d5e5a8e2, type: 2}
+  advancedMapRules:
+  - ruleId: chimney_flood
+    ruleType: 1
+    nameLocalizationKey: mapRule.chimneyFlood.name
+    activeCueLocalizationKey: mapRule.chimneyFlood.cue
+    activationDelaySeconds: 8
+    durationSeconds: 14
+    targetRouteId: 
+    targetZone:
+      zoneId: chimney_flood_pocket
+      bounds:
+        serializedVersion: 2
+        x: -4.6
+        y: 1.55
+        width: 4.5
+        height: 1.65
+    towerRangeMultiplier: 1
+    presentationColor: {r: 0.1, g: 0.48, b: 0.9, a: 0.42}

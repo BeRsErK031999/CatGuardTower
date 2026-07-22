@@ -41,4 +41,13 @@ MonoBehaviour:
     routeSelectionRule: 0
     routeIds:
     - amber
+  - enemyConfig: {fileID: 11400000, guid: 62f36f5744456464786a77367232dd90, type: 2}
+    count: 1
+    spawnInterval: 1
+    delayBeforeGroup: 2.2
+    healthMultiplier: 1
+    speedMultiplier: 1
+    routeSelectionRule: 0
+    routeIds:
+    - blue
   concurrentGroups: 1

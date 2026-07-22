@@ -3,6 +3,7 @@ using CatGuard.Core.Audio;
 using CatGuard.Core.Localization;
 using CatGuard.Core.SceneLoading;
 using CatGuard.Gameplay.Levels;
+using CatGuard.Gameplay.Battlefield;
 using CatGuard.Gameplay.Towers;
 using CatGuard.Gameplay.Towers.Upgrades;
 using CatGuard.Meta.HomeHub;
@@ -116,6 +117,7 @@ namespace CatGuard.UI.HUD
                 if (levelController.State is PrototypeLevelState.Preparing or PrototypeLevelState.Running)
                 {
                     DrawWorldIndicators(layout);
+                    DrawBossAndRuleHud(layout);
                     DrawUltimateBar(GetUltimateBarRect(layout));
                     DrawBottomHud(GetBottomTrayRect(layout));
                     if (levelController.SelectedPlacedTower != null)
@@ -132,6 +134,99 @@ namespace CatGuard.UI.HUD
             {
                 GUI.enabled = true;
                 LandscapeLayout.End(previousMatrix);
+            }
+        }
+
+        private void DrawBossAndRuleHud(LandscapeLayout.Context layout)
+        {
+            var boss = levelController.ActiveBoss;
+            var rules = levelController.MapRules?.States;
+            var hasRuleCue = false;
+            if (rules != null)
+            {
+                foreach (var state in rules)
+                {
+                    hasRuleCue |= state.Active
+                        || (state.Config.RuleType == AdvancedMapRuleType.SecondaryEntrance
+                            && levelController.MapRules.GetActivationCountdown(state) > 0f);
+                }
+            }
+
+            if (boss == null && !hasRuleCue)
+            {
+                return;
+            }
+
+            var battlefieldRect = GetBattlefieldRect(layout);
+            var width = Mathf.Min(920f, battlefieldRect.width - 120f);
+            var panelHeight = boss == null ? 52f : hasRuleCue ? 124f : 92f;
+            var panelRect = new Rect(
+                battlefieldRect.center.x - width * 0.5f,
+                battlefieldRect.y + 8f,
+                width,
+                panelHeight);
+            GUI.Box(panelRect, GUIContent.none, strongPanelStyle);
+            var y = panelRect.y + 8f;
+
+            if (boss != null)
+            {
+                var encounter = boss.Encounter;
+                var phase = boss.CurrentPhase;
+                var title = string.Format(
+                    LocalizationService.Text("boss.hudTitle"),
+                    LocalizationService.Text(encounter.NameLocalizationKey),
+                    boss.PhaseNumber,
+                    boss.PhaseCount,
+                    LocalizationService.Text(phase.NameLocalizationKey));
+                GUI.Label(new Rect(panelRect.x + 16f, y, panelRect.width - 32f, 28f), title, statsStyle);
+                y += 30f;
+
+                var healthRect = new Rect(panelRect.x + 18f, y, panelRect.width - 36f, 18f);
+                var previousColor = GUI.color;
+                GUI.color = new Color(0.08f, 0.07f, 0.06f, 0.94f);
+                GUI.DrawTexture(healthRect, Texture2D.whiteTexture);
+                GUI.color = encounter.PresentationColor;
+                GUI.DrawTexture(
+                    new Rect(healthRect.x + 2f, healthRect.y + 2f, (healthRect.width - 4f) * boss.HealthPercent, healthRect.height - 4f),
+                    Texture2D.whiteTexture);
+                GUI.color = previousColor;
+                y += 22f;
+
+                var cue = boss.IsTransitioning
+                    ? string.Format(
+                        LocalizationService.Text("boss.telegraphCountdown"),
+                        LocalizationService.Text(phase.TelegraphLocalizationKey),
+                        Mathf.CeilToInt(boss.TelegraphRemainingSeconds))
+                    : LocalizationService.Text(phase.ResistanceLocalizationKey);
+                if (!string.IsNullOrWhiteSpace(levelController.LastBossResistanceLocalizationKey))
+                {
+                    cue = LocalizationService.Text(levelController.LastBossResistanceLocalizationKey);
+                }
+                GUI.Label(new Rect(panelRect.x + 18f, y, panelRect.width - 36f, 28f), cue, instructionStyle);
+                y += 30f;
+            }
+
+            if (!hasRuleCue || rules == null)
+            {
+                return;
+            }
+
+            foreach (var state in rules)
+            {
+                var countdown = levelController.MapRules.GetActivationCountdown(state);
+                if (!state.Active && countdown <= 0f)
+                {
+                    continue;
+                }
+
+                var cue = state.Active
+                    ? LocalizationService.Text(state.Config.ActiveCueLocalizationKey)
+                    : string.Format(
+                        LocalizationService.Text("mapRule.countdown"),
+                        LocalizationService.Text(state.Config.NameLocalizationKey),
+                        Mathf.CeilToInt(countdown));
+                GUI.Label(new Rect(panelRect.x + 18f, y, panelRect.width - 36f, 26f), cue, instructionStyle);
+                break;
             }
         }
 
@@ -287,7 +382,9 @@ namespace CatGuard.UI.HUD
             GUI.Box(panelRect, GUIContent.none, strongPanelStyle);
             const float inset = 12f;
             const float gap = 10f;
-            var actionWidth = ultimates.IsTargeting ? 330f : 190f;
+            var actionWidth = ultimates.IsTargeting
+                ? 330f
+                : Mathf.Clamp(panelRect.width * 0.19f, 240f, 320f);
             var buttonAreaWidth = panelRect.width - actionWidth - inset * 2f - gap;
             var buttonWidth = (buttonAreaWidth - gap * (ultimates.States.Count - 1)) / ultimates.States.Count;
             var buttonHeight = panelRect.height - inset * 2f;
@@ -695,17 +792,30 @@ namespace CatGuard.UI.HUD
         {
             var screenPosition = camera.WorldToScreenPoint(worldPosition);
             var logicalPosition = layout.ScreenToLogical(screenPosition);
+            const float indicatorHalfWidth = 38f;
+            const float indicatorHalfHeight = 18f;
+            var minimumX = battlefieldRect.xMin + indicatorHalfWidth;
+            var maximumX = battlefieldRect.xMax - indicatorHalfWidth;
+            var minimumY = battlefieldRect.yMin + indicatorHalfHeight;
+            var maximumY = battlefieldRect.yMax - indicatorHalfHeight;
             var clamped = new Vector2(
-                Mathf.Clamp(logicalPosition.x, battlefieldRect.xMin, battlefieldRect.xMax),
-                Mathf.Clamp(logicalPosition.y, battlefieldRect.yMin, battlefieldRect.yMax));
-            var suffix = logicalPosition.x < battlefieldRect.xMin
+                Mathf.Clamp(logicalPosition.x, minimumX, maximumX),
+                Mathf.Clamp(logicalPosition.y, minimumY, maximumY));
+            var suffix = logicalPosition.x < minimumX
                 ? $"< {label}"
-                : logicalPosition.x > battlefieldRect.xMax
+                : logicalPosition.x > maximumX
                     ? $"{label} >"
                     : label;
             var previousColor = GUI.backgroundColor;
             GUI.backgroundColor = color;
-            GUI.Box(new Rect(clamped.x - 38f, clamped.y - 18f, 76f, 36f), suffix, indicatorStyle);
+            GUI.Box(
+                new Rect(
+                    clamped.x - indicatorHalfWidth,
+                    clamped.y - indicatorHalfHeight,
+                    indicatorHalfWidth * 2f,
+                    indicatorHalfHeight * 2f),
+                suffix,
+                indicatorStyle);
             GUI.backgroundColor = previousColor;
         }
 

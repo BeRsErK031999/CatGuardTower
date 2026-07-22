@@ -628,6 +628,11 @@ public static class Phase9ProjectSetup
                 continue;
             }
 
+            if (group.EnemyConfig.IsBoss)
+            {
+                continue;
+            }
+
             enemies.Add(group.EnemyConfig);
             threat += group.EnemyConfig.Health
                 * group.HealthMultiplier

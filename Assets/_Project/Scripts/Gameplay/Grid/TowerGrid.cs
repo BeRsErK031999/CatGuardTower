@@ -28,6 +28,7 @@ namespace CatGuard.Gameplay.Grid
         private PrototypeLevelController levelController;
         private BattlefieldDefinition battlefield;
         private Camera mainCamera;
+        private int mapRuleRevision = -1;
 
         public int PlacedTowerCount => occupiedCells.Count;
         public IReadOnlyList<Vector2> CellCenters => cellCenters;
@@ -37,6 +38,7 @@ namespace CatGuard.Gameplay.Grid
             levelController = owner;
             battlefield = definition;
             mainCamera = Camera.main;
+            mapRuleRevision = -1;
 
             ClearCells();
             CreateCells();
@@ -55,6 +57,11 @@ namespace CatGuard.Gameplay.Grid
             }
 
             if (occupiedCells.Contains(cellIndex))
+            {
+                return false;
+            }
+
+            if (levelController.MapRules?.IsPlacementBlocked(cellCenters[cellIndex]) == true)
             {
                 return false;
             }
@@ -79,6 +86,13 @@ namespace CatGuard.Gameplay.Grid
         public bool IsOccupied(int cellIndex)
         {
             return occupiedCells.Contains(cellIndex);
+        }
+
+        public bool IsDynamicallyBlocked(int cellIndex)
+        {
+            return cellIndex >= 0
+                && cellIndex < cellCenters.Count
+                && levelController?.MapRules?.IsPlacementBlocked(cellCenters[cellIndex]) == true;
         }
 
         public bool TryReleaseAtWorld(Vector2 worldPosition)
@@ -157,6 +171,21 @@ namespace CatGuard.Gameplay.Grid
             }
         }
 
+        private void Update()
+        {
+            var revision = levelController?.MapRules?.Revision ?? 0;
+            if (revision == mapRuleRevision)
+            {
+                return;
+            }
+
+            mapRuleRevision = revision;
+            for (var index = 0; index < cellCenters.Count; index++)
+            {
+                UpdateCellVisual(index);
+            }
+        }
+
         private void ClearCells()
         {
             cellRenderers.Clear();
@@ -197,10 +226,15 @@ namespace CatGuard.Gameplay.Grid
             }
 
             var occupied = occupiedCells.Contains(cellIndex);
-            visual.Border.color = occupied
+            var dynamicallyBlocked = IsDynamicallyBlocked(cellIndex);
+            visual.Border.color = dynamicallyBlocked
+                ? new Color(0.15f, 0.58f, 0.85f, 0.82f)
+                : occupied
                 ? new Color(0.1f, 0.42f, 0.37f, 0.72f)
                 : new Color(0.07f, 0.26f, 0.24f, 0.5f);
-            visual.Fill.color = occupied
+            visual.Fill.color = dynamicallyBlocked
+                ? new Color(0.12f, 0.42f, 0.72f, 0.48f)
+                : occupied
                 ? new Color(0.17f, 0.5f, 0.42f, 0.34f)
                 : new Color(0.15f, 0.38f, 0.31f, 0.18f);
         }

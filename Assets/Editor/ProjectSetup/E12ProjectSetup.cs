@@ -476,6 +476,10 @@ public static class E12ProjectSetup
             var threat = 0f;
             foreach (var group in level.WaveConfig.Groups)
             {
+                if (group.EnemyConfig.IsBoss)
+                {
+                    continue;
+                }
                 enemies.Add(group.EnemyConfig.EnemyId);
                 threat += group.EnemyConfig.Health * group.HealthMultiplier * group.SpeedMultiplier * group.Count;
             }
@@ -506,9 +510,9 @@ public static class E12ProjectSetup
         }
 
         var meta = AssetDatabase.LoadAssetAtPath<MetaProgressionCatalogConfig>(MetaCatalogPath);
-        if (meta?.CodexEntries.Length != 25
+        if (meta?.CodexEntries.Length < 25
             || meta.CodexEntries.Count(entry => entry.EntryType == CodexEntryType.Map) != 12
-            || meta.CodexEntries.Count(entry => entry.EntryType == CodexEntryType.Enemy) != 8)
+            || meta.CodexEntries.Count(entry => entry.EntryType == CodexEntryType.Enemy) < 8)
         {
             errors.Add("Expanded codex must contain 12 maps, five towers, and eight enemies (25 entries). ");
         }

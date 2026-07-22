@@ -2,7 +2,7 @@
 
 ## Source of truth
 
-`GameSaveData.schemaVersion` and `GameSaveMigrationService.CurrentSchemaVersion` define the local-save contract. E10 uses schema version `2`. A missing version is legacy version `0`; migrations run sequentially (`0 -> 1 -> 2`) and are safe to repeat because a completed step advances the stored version exactly once.
+`GameSaveData.schemaVersion` and `GameSaveMigrationService.CurrentSchemaVersion` define the local-save contract. E11 uses schema version `3`. A missing version is legacy version `0`; migrations run sequentially (`0 -> 1 -> 2 -> 3`) and are safe to repeat because a completed step advances the stored version exactly once.
 
 ## Load and backup policy
 
@@ -30,8 +30,17 @@ Legacy global damage and range multipliers are no longer applied after E10. This
 
 Battle upgrades remain runtime-only. Rewarded revive rolls back rank, mastery, codex, loadout unlocks, and the processed event id before the battle resumes.
 
+## E11 achievement fields
+
+- per-achievement progress, completion date key, and claimed flag;
+- distinct Guardian ultimate ids observed in completed battle results;
+- distinct future boss ids supplied by the authoritative battle contract;
+- a bounded list of processed battle, daily, and garden achievement event ids.
+
+The `2 -> 3` migration initializes these collections without fabricating historical counters. Completed maps, completed contracts, and initial-enemy codex discoveries are synchronized after the production catalogs load because those sources are already authoritative. Rewarded revive restores the achievement snapshot captured before the provisional result.
+
 ## Reset and recovery
 
 Reset deletes the primary local save and creates a clean current-schema save. It intentionally clears all progression layers. Backups created by migration/recovery are diagnostic safety copies and are not automatically restored over the active profile. Manual restoration requires closing the game, retaining the current file separately, and copying a compatible backup to `catguard-save.json`.
 
-The project has no cloud account or backend in E10. Local backup guarantees therefore remain limited by Android app-data deletion and uninstall behavior.
+The project has no cloud account or backend in E11. Local backup guarantees therefore remain limited by Android app-data deletion and uninstall behavior.

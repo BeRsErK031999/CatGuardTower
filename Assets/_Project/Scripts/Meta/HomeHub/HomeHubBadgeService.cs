@@ -2,6 +2,7 @@ using CatGuard.Gameplay.Levels;
 using CatGuard.Meta.DailyRewards;
 using CatGuard.Meta.Progression;
 using CatGuard.Meta.GuardianGrowth;
+using CatGuard.Meta.Achievements;
 using CatGuard.Meta.Quests;
 using CatGuard.Meta.Upgrades;
 
@@ -112,7 +113,7 @@ namespace CatGuard.Meta.HomeHub
                 campaignCount,
                 workshopCount,
                 questCount,
-                0,
+                AchievementService.ClaimableCount,
                 0,
                 dailyCount,
                 0);

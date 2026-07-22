@@ -23,5 +23,7 @@ namespace CatGuard.SDK.Analytics
         public const string UltimateReady = "ultimate_ready";
         public const string UltimateUse = "ultimate_use";
         public const string UltimateResult = "ultimate_result";
+        public const string AchievementCompleted = "achievement_completed";
+        public const string AchievementClaim = "achievement_claim";
     }
 }

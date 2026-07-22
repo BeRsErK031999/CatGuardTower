@@ -6,6 +6,7 @@ using CatGuard.Gameplay.Towers;
 using CatGuard.Gameplay.Towers.Upgrades;
 using CatGuard.Gameplay.Ultimates;
 using CatGuard.Meta.DailyRewards;
+using CatGuard.Meta.Achievements;
 using CatGuard.Meta.Progression;
 using CatGuard.Meta.Upgrades;
 using CatGuard.SDK.Firebase;
@@ -223,6 +224,19 @@ namespace CatGuard.SDK.Analytics
             TrackEvent(AnalyticsEventNames.UltimateResult, parameters);
         }
 
+        public static void TrackAchievementCompleted(AchievementConfig achievement)
+        {
+            TrackEvent(AnalyticsEventNames.AchievementCompleted, CreateAchievementParameters(achievement));
+        }
+
+        public static void TrackAchievementClaim(AchievementConfig achievement, AchievementClaimResult result)
+        {
+            var parameters = CreateAchievementParameters(achievement);
+            parameters[AnalyticsParameterNames.EarnedFishCoins] = result?.FishCoins ?? 0;
+            parameters[AnalyticsParameterNames.EarnedPlayerExperience] = result?.PlayerExperience ?? 0;
+            TrackEvent(AnalyticsEventNames.AchievementClaim, parameters);
+        }
+
         private static IAnalyticsService CreateDefaultImplementation()
         {
 #if CATGUARD_FIREBASE_ANALYTICS
@@ -355,6 +369,20 @@ namespace CatGuard.SDK.Analytics
                 ? "unknown"
                 : ultimate.TargetingMode.ToString().ToLowerInvariant();
             return parameters;
+        }
+
+        private static Dictionary<string, object> CreateAchievementParameters(AchievementConfig achievement)
+        {
+            return new Dictionary<string, object>
+            {
+                [AnalyticsParameterNames.AchievementId] = achievement?.AchievementId ?? "unknown",
+                [AnalyticsParameterNames.AchievementCategory] = achievement == null
+                    ? "unknown"
+                    : achievement.Category.ToString().ToLowerInvariant(),
+                [AnalyticsParameterNames.AchievementTier] = achievement == null
+                    ? "unknown"
+                    : achievement.PresentationTier.ToString().ToLowerInvariant()
+            };
         }
 
         private static string NormalizePlacementId(string placementId)

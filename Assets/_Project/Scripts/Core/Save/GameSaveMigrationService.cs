@@ -5,7 +5,7 @@ namespace CatGuard.Core.Save
 {
     public static class GameSaveMigrationService
     {
-        public const int CurrentSchemaVersion = 2;
+        public const int CurrentSchemaVersion = 3;
 
         public static bool TryMigrate(GameSaveData data, string firstLevelId, out bool changed, out string error)
         {
@@ -35,6 +35,11 @@ namespace CatGuard.Core.Save
                     case 1:
                         MigrateVersion1ToVersion2(data);
                         data.schemaVersion = 2;
+                        changed = true;
+                        break;
+                    case 2:
+                        MigrateVersion2ToVersion3(data);
+                        data.schemaVersion = 3;
                         changed = true;
                         break;
                     default:
@@ -97,6 +102,14 @@ namespace CatGuard.Core.Save
             data.workshopResearch.Add(new ResearchSaveEntry(researchId, legacyLevel));
         }
 
+        private static void MigrateVersion2ToVersion3(GameSaveData data)
+        {
+            data.achievements ??= new List<AchievementProgressSaveEntry>();
+            data.achievementUltimateIds ??= new List<string>();
+            data.achievementBossIds ??= new List<string>();
+            data.processedAchievementEventIds ??= new List<string>();
+        }
+
         private static void NormalizeCollections(GameSaveData data, string firstLevelId)
         {
             data.unlockedLevelIds ??= new List<string>();
@@ -113,6 +126,10 @@ namespace CatGuard.Core.Save
             data.equippedUltimateIds ??= new List<string>();
             data.discoveredCodexEntryIds ??= new List<string>();
             data.processedMetaBattleEventIds ??= new List<string>();
+            data.achievements ??= new List<AchievementProgressSaveEntry>();
+            data.achievementUltimateIds ??= new List<string>();
+            data.achievementBossIds ??= new List<string>();
+            data.processedAchievementEventIds ??= new List<string>();
             data.selectedLevelId ??= string.Empty;
             data.lastDailyRewardClaimDateKey ??= string.Empty;
             data.dailyMissionDateKey ??= string.Empty;

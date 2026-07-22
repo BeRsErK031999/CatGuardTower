@@ -200,7 +200,7 @@ public static class E10ProjectSetup
         }
 
         Debug.Log(
-            "E10 validation passed: schema v2 backup/migration and corrupt/future recovery preserve legacy progress; rank, five tower masteries, capped workshop research, two-slot guardian loadout, perks, and 20-entry codex progress persist with duplicate-event and rewarded-revive rollback guards and without battle-upgrade leakage.");
+            "E10 validation passed: current-schema backup/migration and corrupt/future recovery preserve legacy progress; rank, five tower masteries, capped workshop research, two-slot guardian loadout, perks, and 20-entry codex progress persist with duplicate-event and rewarded-revive rollback guards and without battle-upgrade leakage.");
         EditorApplication.Exit(0);
     }
 

@@ -47,5 +47,9 @@ namespace CatGuard.SDK.Analytics
         public const string HitCount = "hit_count";
         public const string DamageDealt = "damage_dealt";
         public const string WardBlocks = "ward_blocks";
+        public const string AchievementId = "achievement_id";
+        public const string AchievementCategory = "achievement_category";
+        public const string AchievementTier = "achievement_tier";
+        public const string EarnedPlayerExperience = "earned_player_experience";
     }
 }

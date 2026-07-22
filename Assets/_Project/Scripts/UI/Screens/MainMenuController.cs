@@ -7,6 +7,7 @@ using CatGuard.Gameplay.Ultimates;
 using CatGuard.Meta.DailyRewards;
 using CatGuard.Meta.HomeHub;
 using CatGuard.Meta.GuardianGrowth;
+using CatGuard.Meta.Achievements;
 using CatGuard.Meta.Progression;
 using CatGuard.Meta.Quests;
 using CatGuard.Meta.Upgrades;
@@ -55,6 +56,7 @@ namespace CatGuard.UI.Screens
         private GUIStyle pillStyle;
         private GUIStyle buttonStyle;
         private GUIStyle compactButtonStyle;
+        private GUIStyle achievementButtonStyle;
         private GUIStyle levelButtonStyle;
         private GUIStyle primaryButtonStyle;
         private GUIStyle dangerButtonStyle;
@@ -67,6 +69,7 @@ namespace CatGuard.UI.Screens
         private Vector2 upgradesScrollPosition;
         private Vector2 masteryScrollPosition;
         private Vector2 codexScrollPosition;
+        private Vector2 achievementScrollPosition;
         private Vector2 missionsScrollPosition;
         private Vector2 activeQuestScrollPosition;
         private Vector2 completedQuestScrollPosition;
@@ -74,6 +77,7 @@ namespace CatGuard.UI.Screens
         private Vector2 privacyScrollPosition;
         private string dailyMessage = string.Empty;
         private string freeCoinsMessage = string.Empty;
+        private string achievementMessage = string.Empty;
         private bool resetConfirmationArmed;
         private float resetConfirmationExpiresAt;
         private bool privacyPolicyOpen;
@@ -141,6 +145,11 @@ namespace CatGuard.UI.Screens
             if (!QuestService.Initialize(QuestCatalogConfig.LoadDefault(), levelCatalog))
             {
                 Debug.LogWarning("Quest Board contracts are unavailable because the default E9 catalog is invalid.");
+            }
+
+            if (!AchievementService.Initialize(AchievementCatalogConfig.LoadDefault(), QuestService.Catalog))
+            {
+                Debug.LogWarning("E11 achievements are unavailable because the production catalog is invalid.");
             }
 
             currentRoute = HomeHubRoute.Home;
@@ -340,7 +349,10 @@ namespace CatGuard.UI.Screens
             var inner = LandscapeLayout.Inset(rect, 22f, 18f);
             var hasQuestProgress = battleSummary?.QuestProgress?.HasUpdates == true;
             var hasMetaProgress = battleSummary?.MetaProgress?.HasUpdates == true;
-            var bannerHeight = battleSummary == null ? 106f : hasQuestProgress || hasMetaProgress ? 190f : 136f;
+            var hasAchievementProgress = battleSummary?.AchievementProgress?.HasUpdates == true;
+            var bannerHeight = battleSummary == null
+                ? 106f
+                : hasQuestProgress || hasMetaProgress || hasAchievementProgress ? 230f : 136f;
             var bannerRect = new Rect(inner.x, inner.y, inner.width, bannerHeight);
             GUI.Box(bannerRect, GUIContent.none, panelStyle);
 
@@ -378,6 +390,16 @@ namespace CatGuard.UI.Screens
             DrawZoneCard(new Rect(lowerX, lowerY, cardWidth, cardHeight), HomeHubRoute.GuardianLodge, badges);
             DrawZoneCard(new Rect(lowerX + cardWidth + columnGap, lowerY, cardWidth, cardHeight), HomeHubRoute.DailyBasket, badges);
             DrawZoneCard(new Rect(lowerX + ((cardWidth + columnGap) * 2f), lowerY, cardWidth, cardHeight), HomeHubRoute.SettingsCorner, badges);
+
+            if (battleSummary == null && !AchievementService.IsCompleted(AchievementService.GardenSecretAchievementId))
+            {
+                var secretRect = new Rect(bannerRect.xMax - 52f, bannerRect.y + 14f, 34f, 34f);
+                if (GUI.Button(secretRect, "?", compactButtonStyle))
+                {
+                    AchievementService.RecordGardenInteraction();
+                    ProceduralAudioService.Play(ProceduralSoundId.MenuClick);
+                }
+            }
         }
 
         private void DrawBattleSummary(Rect rect)
@@ -411,7 +433,19 @@ namespace CatGuard.UI.Screens
 
             var questProgress = battleSummary.QuestProgress;
             var metaProgress = battleSummary.MetaProgress;
+            var achievementProgress = battleSummary.AchievementProgress;
             var summaryLineY = rect.yMax - 54f;
+            if (achievementProgress?.HasUpdates == true)
+            {
+                var precedingLines = (questProgress?.HasUpdates == true ? 1 : 0) + (metaProgress?.HasUpdates == true ? 1 : 0);
+                GUI.Label(
+                    new Rect(rect.x + 30f, summaryLineY - (precedingLines * 34f), rect.width - 230f, 32f),
+                    string.Format(
+                        LocalizationService.Text("achievement.postRoundSummary"),
+                        achievementProgress.Updates.Length,
+                        achievementProgress.CompletedCount),
+                    eyebrowStyle);
+            }
             if (metaProgress?.HasUpdates == true)
             {
                 GUI.Label(
@@ -540,7 +574,7 @@ namespace CatGuard.UI.Screens
                     DrawQuestBoard(contentRect);
                     break;
                 case HomeHubRoute.AchievementWall:
-                    DrawCodex(contentRect);
+                    DrawAchievements(contentRect);
                     break;
                 case HomeHubRoute.GuardianLodge:
                     DrawGuardianLodge(contentRect);
@@ -1093,14 +1127,132 @@ namespace CatGuard.UI.Screens
             GUI.EndScrollView();
         }
 
-        private void DrawCodex(Rect contentRect)
+        private void DrawAchievements(Rect contentRect)
         {
             GUI.Box(contentRect, GUIContent.none, strongPanelStyle);
-            var inner = LandscapeLayout.Inset(contentRect, 24f, 20f);
-            var snapshot = MetaProgressionService.CreateSnapshot();
-            GUI.Label(new Rect(inner.x, inner.y, inner.width, 40f), LocalizationService.Text("meta.codex.title"), headingStyle);
+            var inner = LandscapeLayout.Inset(contentRect, 22f, 18f);
+            const float gap = 16f;
+            var achievementRect = new Rect(inner.x, inner.y, inner.width * 0.68f, inner.height);
+            var codexRect = new Rect(achievementRect.xMax + gap, inner.y, inner.xMax - achievementRect.xMax - gap, inner.height);
+            GUI.Box(achievementRect, GUIContent.none, panelStyle);
+            GUI.Box(codexRect, GUIContent.none, panelStyle);
+
+            var snapshot = AchievementService.CreateSnapshot();
             GUI.Label(
-                new Rect(inner.x, inner.y + 42f, inner.width, 32f),
+                new Rect(achievementRect.x + 20f, achievementRect.y + 12f, achievementRect.width * 0.56f, 38f),
+                LocalizationService.Text("achievement.wall.title"),
+                headingStyle);
+            GUI.Label(
+                new Rect(achievementRect.x + 22f, achievementRect.y + 50f, achievementRect.width * 0.62f, 30f),
+                string.Format(
+                    LocalizationService.Text("achievement.wall.progress"),
+                    snapshot.CompletedCount,
+                    snapshot.States.Length,
+                    snapshot.ClaimableCount),
+                smallLabelStyle);
+            if (!string.IsNullOrWhiteSpace(achievementMessage))
+            {
+                GUI.Label(
+                    new Rect(achievementRect.center.x, achievementRect.y + 24f, achievementRect.width * 0.47f - 18f, 48f),
+                    achievementMessage,
+                    eyebrowStyle);
+            }
+
+            var viewport = new Rect(achievementRect.x + 16f, achievementRect.y + 90f, achievementRect.width - 32f, achievementRect.height - 106f);
+            const float cardGap = 12f;
+            const float cardHeight = 168f;
+            var columns = viewport.width >= 900f ? 2 : 1;
+            var cardWidth = (viewport.width - 22f - ((columns - 1) * cardGap)) / columns;
+            var rows = Mathf.CeilToInt(snapshot.States.Length / (float)columns);
+            var contentHeight = Mathf.Max(viewport.height, rows * (cardHeight + cardGap));
+            achievementScrollPosition = GUI.BeginScrollView(
+                viewport,
+                achievementScrollPosition,
+                new Rect(0f, 0f, viewport.width - 20f, contentHeight),
+                false,
+                contentHeight > viewport.height);
+
+            for (var index = 0; index < snapshot.States.Length; index++)
+            {
+                var state = snapshot.States[index];
+                var column = index % columns;
+                var row = index / columns;
+                var card = new Rect(column * (cardWidth + cardGap), row * (cardHeight + cardGap), cardWidth, cardHeight);
+                DrawAchievementCard(card, state);
+            }
+
+            GUI.EndScrollView();
+            DrawCodexPanel(codexRect);
+        }
+
+        private void DrawAchievementCard(Rect card, AchievementViewState state)
+        {
+            GUI.Box(card, GUIContent.none, strongPanelStyle);
+            var accent = state.Config.PresentationTier switch
+            {
+                AchievementPresentationTier.Gold => new Color(1f, 0.72f, 0.2f, 1f),
+                AchievementPresentationTier.Silver => new Color(0.72f, 0.82f, 0.84f, 1f),
+                _ => new Color(0.78f, 0.48f, 0.28f, 1f)
+            };
+            var previousColor = GUI.color;
+            GUI.color = accent;
+            GUI.DrawTexture(new Rect(card.x + 2f, card.y + 2f, card.width - 4f, 6f), accentTexture, ScaleMode.StretchToFill);
+            GUI.color = previousColor;
+
+            var title = state.Concealed
+                ? LocalizationService.Text("achievement.hidden.title")
+                : LocalizationService.Text(state.Config.TitleLocalizationKey);
+            var description = state.Concealed
+                ? LocalizationService.Text("achievement.hidden.description")
+                : LocalizationService.Text(state.Config.DescriptionLocalizationKey);
+            var category = state.Concealed
+                ? LocalizationService.Text("achievement.hidden.category")
+                : LocalizationService.Text(GetAchievementCategoryKey(state.Config.Category));
+            GUI.Label(new Rect(card.x + 16f, card.y + 14f, card.width - 32f, 28f), category, eyebrowStyle);
+            GUI.Label(new Rect(card.x + 16f, card.y + 43f, card.width - 32f, 34f), title, labelStyle);
+            GUI.Label(new Rect(card.x + 18f, card.y + 76f, card.width - 36f, 42f), description, smallLabelStyle);
+
+            var progressLabel = state.Completed
+                ? string.Format(LocalizationService.Text("achievement.completed"), state.CompletedDateKey)
+                : string.Format(LocalizationService.Text("achievement.progress"), state.DisplayProgress, state.Config.ProgressTarget);
+            GUI.Label(new Rect(card.x + 18f, card.yMax - 42f, card.width - 244f, 28f), progressLabel, eyebrowStyle);
+
+            var actionLabel = state.Claimed
+                ? LocalizationService.Text("common.done")
+                : state.CanClaim
+                    ? string.Format(
+                        LocalizationService.Text("achievement.claimReward"),
+                        state.Config.Reward.FishCoins,
+                        state.Config.Reward.PlayerExperience)
+                    : string.Format(LocalizationService.Text("achievement.rewardPreview"), state.Config.Reward.FishCoins, state.Config.Reward.PlayerExperience);
+            var actionRect = new Rect(card.xMax - 220f, card.yMax - 50f, 204f, 38f);
+            GUI.enabled = uiInteractionEnabled && state.CanClaim;
+            if (state.CanClaim && GUI.Button(actionRect, actionLabel, achievementButtonStyle))
+            {
+                var result = AchievementService.ClaimReward(state.Config.AchievementId);
+                if (result.Claimed)
+                {
+                    achievementMessage = string.Format(
+                        LocalizationService.Text("achievement.claimedMessage"),
+                        result.FishCoins,
+                        result.PlayerExperience);
+                    ProceduralAudioService.Play(ProceduralSoundId.MenuClick);
+                }
+            }
+            else if (!state.CanClaim)
+            {
+                GUI.Label(actionRect, actionLabel, eyebrowStyle);
+            }
+
+            GUI.enabled = uiInteractionEnabled;
+        }
+
+        private void DrawCodexPanel(Rect rect)
+        {
+            var snapshot = MetaProgressionService.CreateSnapshot();
+            GUI.Label(new Rect(rect.x + 18f, rect.y + 12f, rect.width - 36f, 36f), LocalizationService.Text("meta.codex.title"), labelStyle);
+            GUI.Label(
+                new Rect(rect.x + 20f, rect.y + 48f, rect.width - 40f, 46f),
                 string.Format(LocalizationService.Text("meta.codex.progress"), snapshot.DiscoveredCodexEntries, snapshot.TotalCodexEntries),
                 smallLabelStyle);
 
@@ -1109,32 +1261,47 @@ namespace CatGuard.UI.Screens
             var discovered = new System.Collections.Generic.HashSet<string>(
                 MetaProgressionService.GetDiscoveredCodexEntries().Select(item => item.EntryId),
                 System.StringComparer.Ordinal);
-            var viewport = new Rect(inner.x, inner.y + 88f, inner.width, inner.height - 88f);
-            const float gap = 12f;
-            const float rowHeight = 88f;
-            var columns = viewport.width >= 1000f ? 3 : 2;
-            var cardWidth = (viewport.width - 22f - gap * (columns - 1)) / columns;
-            var rows = Mathf.CeilToInt(entries.Length / (float)columns);
-            var contentHeight = Mathf.Max(viewport.height, rows * (rowHeight + gap));
-            codexScrollPosition = GUI.BeginScrollView(viewport, codexScrollPosition, new Rect(0f, 0f, viewport.width - 20f, contentHeight), false, contentHeight > viewport.height);
+            var viewport = new Rect(rect.x + 14f, rect.y + 102f, rect.width - 28f, rect.height - 116f);
+            const float rowHeight = 62f;
+            var contentHeight = Mathf.Max(viewport.height, entries.Length * (rowHeight + 8f));
+            codexScrollPosition = GUI.BeginScrollView(
+                viewport,
+                codexScrollPosition,
+                new Rect(0f, 0f, viewport.width - 20f, contentHeight),
+                false,
+                contentHeight > viewport.height);
             for (var index = 0; index < entries.Length; index++)
             {
                 var entry = entries[index];
-                var column = index % columns;
-                var row = index / columns;
-                var card = new Rect(column * (cardWidth + gap), row * (rowHeight + gap), cardWidth, rowHeight);
-                GUI.Box(card, GUIContent.none, panelStyle);
+                var card = new Rect(0f, index * (rowHeight + 8f), viewport.width - 22f, rowHeight);
+                GUI.Box(card, GUIContent.none, strongPanelStyle);
                 var isDiscovered = discovered.Contains(entry.EntryId);
                 GUI.Label(
-                    new Rect(card.x + 14f, card.y + 10f, card.width - 28f, 30f),
+                    new Rect(card.x + 12f, card.y + 4f, card.width - 24f, 24f),
                     LocalizationService.Text($"meta.codex.type.{entry.EntryType.ToString().ToLowerInvariant()}"),
                     eyebrowStyle);
                 GUI.Label(
-                    new Rect(card.x + 14f, card.y + 42f, card.width - 28f, 34f),
+                    new Rect(card.x + 12f, card.y + 28f, card.width - 24f, 28f),
                     isDiscovered ? LocalizationService.Text(entry.NameLocalizationKey) : LocalizationService.Text("meta.codex.unknown"),
-                    labelStyle);
+                    smallLabelStyle);
             }
             GUI.EndScrollView();
+        }
+
+        private static string GetAchievementCategoryKey(AchievementCategory category)
+        {
+            return category switch
+            {
+                AchievementCategory.Campaign => "achievement.category.campaign",
+                AchievementCategory.TowerMastery => "achievement.category.towerMastery",
+                AchievementCategory.RouteControl => "achievement.category.routeControl",
+                AchievementCategory.Ultimates => "achievement.category.ultimates",
+                AchievementCategory.PerfectDefense => "achievement.category.perfectDefense",
+                AchievementCategory.Collection => "achievement.category.collection",
+                AchievementCategory.SecretsAndHumor => "achievement.category.secrets",
+                AchievementCategory.LongTermTotals => "achievement.category.longTerm",
+                _ => "achievement.category.campaign"
+            };
         }
 
         private void DrawFutureZone(Rect contentRect, string statusKey, string hintKey)
@@ -1329,6 +1496,7 @@ namespace CatGuard.UI.Screens
                     ProgressionService.ResetProgress();
                     MetaProgressionService.Initialize(MetaProgressionCatalogConfig.LoadDefault(), UltimateCatalogConfig.LoadDefault());
                     QuestService.Initialize(QuestCatalogConfig.LoadDefault(), levelCatalog);
+                    AchievementService.Initialize(AchievementCatalogConfig.LoadDefault(), QuestService.Catalog);
                     battleSummary = null;
                     resetConfirmationArmed = false;
                 }
@@ -1448,6 +1616,7 @@ namespace CatGuard.UI.Screens
             levelButtonStyle.alignment = TextAnchor.MiddleLeft;
             levelButtonStyle.padding = new RectOffset(18, 14, 8, 8);
             primaryButtonStyle = CreateButtonStyle(accentTexture, accentHoverTexture, 21, new Color(0.12f, 0.09f, 0.04f));
+            achievementButtonStyle = CreateButtonStyle(accentTexture, accentHoverTexture, 16, new Color(0.12f, 0.09f, 0.04f));
             dangerButtonStyle = CreateButtonStyle(dangerTexture, dangerHoverTexture, 16, Color.white);
             zoneButtonStyle = CreateButtonStyle(buttonTexture, buttonHoverTexture, 22, Color.white);
             zoneButtonStyle.padding = new RectOffset(26, 26, 20, 20);

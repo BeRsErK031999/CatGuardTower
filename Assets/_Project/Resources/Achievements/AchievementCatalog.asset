@@ -1,0 +1,153 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a1d1bb65724244bd8d0ded6c1df68c25, type: 3}
+  m_Name: AchievementCatalog
+  m_EditorClassIdentifier: Assembly-CSharp::CatGuard.Meta.Achievements.AchievementCatalogConfig
+  achievements:
+  - achievementId: first_clear
+    titleLocalizationKey: achievement.title.first_clear
+    descriptionLocalizationKey: achievement.description.first_clear
+    category: 0
+    presentationTier: 0
+    progressRule: 0
+    progressTarget: 1
+    hidden: 0
+    reward:
+      fishCoins: 20
+      playerExperience: 15
+  - achievementId: ten_maps
+    titleLocalizationKey: achievement.title.ten_maps
+    descriptionLocalizationKey: achievement.description.ten_maps
+    category: 0
+    presentationTier: 2
+    progressRule: 0
+    progressTarget: 10
+    hidden: 0
+    reward:
+      fishCoins: 100
+      playerExperience: 60
+  - achievementId: perfect_defense
+    titleLocalizationKey: achievement.title.perfect_defense
+    descriptionLocalizationKey: achievement.description.perfect_defense
+    category: 4
+    presentationTier: 1
+    progressRule: 1
+    progressTarget: 1
+    hidden: 0
+    reward:
+      fishCoins: 40
+      playerExperience: 25
+  - achievementId: first_tier_three
+    titleLocalizationKey: achievement.title.first_tier_three
+    descriptionLocalizationKey: achievement.description.first_tier_three
+    category: 1
+    presentationTier: 1
+    progressRule: 2
+    progressTarget: 1
+    hidden: 0
+    reward:
+      fishCoins: 45
+      playerExperience: 25
+  - achievementId: guardian_triad
+    titleLocalizationKey: achievement.title.guardian_triad
+    descriptionLocalizationKey: achievement.description.guardian_triad
+    category: 3
+    presentationTier: 2
+    progressRule: 3
+    progressTarget: 3
+    hidden: 0
+    reward:
+      fishCoins: 75
+      playerExperience: 40
+  - achievementId: thousand_enemies
+    titleLocalizationKey: achievement.title.thousand_enemies
+    descriptionLocalizationKey: achievement.description.thousand_enemies
+    category: 7
+    presentationTier: 2
+    progressRule: 4
+    progressTarget: 1000
+    hidden: 0
+    reward:
+      fishCoins: 120
+      playerExperience: 60
+  - achievementId: multi_route_win
+    titleLocalizationKey: achievement.title.multi_route_win
+    descriptionLocalizationKey: achievement.description.multi_route_win
+    category: 2
+    presentationTier: 1
+    progressRule: 5
+    progressTarget: 1
+    hidden: 0
+    reward:
+      fishCoins: 50
+      playerExperience: 30
+  - achievementId: seven_daily
+    titleLocalizationKey: achievement.title.seven_daily
+    descriptionLocalizationKey: achievement.description.seven_daily
+    category: 7
+    presentationTier: 1
+    progressRule: 6
+    progressTarget: 7
+    hidden: 0
+    reward:
+      fishCoins: 70
+      playerExperience: 35
+  - achievementId: ten_contracts
+    titleLocalizationKey: achievement.title.ten_contracts
+    descriptionLocalizationKey: achievement.description.ten_contracts
+    category: 7
+    presentationTier: 1
+    progressRule: 7
+    progressTarget: 10
+    hidden: 0
+    reward:
+      fishCoins: 65
+      playerExperience: 35
+  - achievementId: initial_bestiary
+    titleLocalizationKey: achievement.title.initial_bestiary
+    descriptionLocalizationKey: achievement.description.initial_bestiary
+    category: 5
+    presentationTier: 1
+    progressRule: 8
+    progressTarget: 5
+    hidden: 0
+    reward:
+      fishCoins: 60
+      playerExperience: 30
+  - achievementId: first_boss
+    titleLocalizationKey: achievement.title.first_boss
+    descriptionLocalizationKey: achievement.description.first_boss
+    category: 0
+    presentationTier: 2
+    progressRule: 9
+    progressTarget: 1
+    hidden: 0
+    reward:
+      fishCoins: 120
+      playerExperience: 75
+  - achievementId: garden_lantern_secret
+    titleLocalizationKey: achievement.title.garden_secret
+    descriptionLocalizationKey: achievement.description.garden_secret
+    category: 6
+    presentationTier: 0
+    progressRule: 10
+    progressTarget: 1
+    hidden: 1
+    reward:
+      fishCoins: 30
+      playerExperience: 20
+  initialEnemyIds:
+  - mouse_scout
+  - moth_swarm
+  - rat_bruiser
+  - beetle_guard
+  - snail_tank

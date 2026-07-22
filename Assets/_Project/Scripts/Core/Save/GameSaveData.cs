@@ -28,6 +28,10 @@ namespace CatGuard.Core.Save
         public string equippedGuardianPerkId = string.Empty;
         public List<string> discoveredCodexEntryIds = new();
         public List<string> processedMetaBattleEventIds = new();
+        public List<AchievementProgressSaveEntry> achievements = new();
+        public List<string> achievementUltimateIds = new();
+        public List<string> achievementBossIds = new();
+        public List<string> processedAchievementEventIds = new();
         public bool audioMuted;
         public string languageCode = "ru";
         public string lastFreeCoinsRewardDateKey;
@@ -133,6 +137,24 @@ namespace CatGuard.Core.Save
         {
             researchId = id;
             level = researchLevel;
+        }
+    }
+
+    [Serializable]
+    public sealed class AchievementProgressSaveEntry
+    {
+        public string achievementId;
+        public int progress;
+        public string completedDateKey = string.Empty;
+        public bool claimed;
+
+        public AchievementProgressSaveEntry()
+        {
+        }
+
+        public AchievementProgressSaveEntry(string id)
+        {
+            achievementId = id;
         }
     }
 }

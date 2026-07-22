@@ -5,6 +5,7 @@ using CatGuard.Core.Localization;
 using CatGuard.Core.Save;
 using CatGuard.Gameplay.Levels;
 using CatGuard.Meta.DailyRewards;
+using CatGuard.Meta.Achievements;
 using CatGuard.Meta.GuardianGrowth;
 using CatGuard.Meta.Upgrades;
 using CatGuard.SDK.Ads;
@@ -352,6 +353,7 @@ namespace CatGuard.Meta.Progression
             data.fishCoins += earnedCoins;
             data.lastDailyRewardClaimDateKey = TodayDateKey();
             data.dailyRewardStreakIndex = GetNextDailyRewardIndex(data.dailyRewardStreakIndex);
+            AchievementService.RecordDailyRewardClaim(data.lastDailyRewardClaimDateKey);
 
             AddDailyMissionProgress(DailyMissionType.ClaimDailyReward, 1, false);
             Save();

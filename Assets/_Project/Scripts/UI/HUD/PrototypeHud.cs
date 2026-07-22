@@ -524,7 +524,7 @@ namespace CatGuard.UI.HUD
             if (!string.IsNullOrWhiteSpace(resultMessage))
             {
                 GUI.Label(
-                    new Rect(overlayRect.x + 28f, overlayRect.y + 230f, overlayRect.width - 56f, 34f),
+                    new Rect(overlayRect.x + 28f, overlayRect.y + 274f, overlayRect.width - 56f, 34f),
                     resultMessage,
                     instructionStyle);
             }
@@ -555,7 +555,19 @@ namespace CatGuard.UI.HUD
                     instructionStyle);
             }
 
-            var adButtonRect = new Rect(overlayRect.center.x - 210f, overlayRect.y + 276f, 420f, 62f);
+            var achievementProgress = HomeHubNavigationService.PendingBattleSummary?.AchievementProgress;
+            if (achievementProgress?.HasUpdates == true)
+            {
+                GUI.Label(
+                    new Rect(overlayRect.x + 30f, overlayRect.y + 226f, overlayRect.width - 60f, 36f),
+                    string.Format(
+                        LocalizationService.Text("achievement.postRoundSummary"),
+                        achievementProgress.Updates.Length,
+                        achievementProgress.CompletedCount),
+                    instructionStyle);
+            }
+
+            var adButtonRect = new Rect(overlayRect.center.x - 210f, overlayRect.y + 320f, 420f, 62f);
             if (won && levelController.CanClaimVictoryDoubleReward)
             {
                 if (GUI.Button(adButtonRect, LocalizationService.Text("button.claimX2"), selectedButtonStyle)

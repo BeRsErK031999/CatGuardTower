@@ -29,6 +29,7 @@ namespace CatGuard.Gameplay.Ultimates
         };
 
         private readonly List<UltimateRuntimeState> states = new();
+        private readonly HashSet<string> activatedUltimateIds = new(StringComparer.Ordinal);
         private readonly List<MeteorSequence> meteorSequences = new();
         private PrototypeLevelController owner;
         private UltimateVfxPool vfxPool;
@@ -47,6 +48,7 @@ namespace CatGuard.Gameplay.Ultimates
         private UltimateConfig wardConfig;
 
         public IReadOnlyList<UltimateRuntimeState> States => states;
+        public IReadOnlyCollection<string> ActivatedUltimateIds => activatedUltimateIds;
         public bool IsTargeting => targetingState != null;
         public bool HasValidTarget => IsTargeting && targetValid;
         public Vector2 TargetPoint => targetPoint;
@@ -66,6 +68,7 @@ namespace CatGuard.Gameplay.Ultimates
         {
             owner = levelOwner;
             states.Clear();
+            activatedUltimateIds.Clear();
             var catalog = UltimateCatalogConfig.LoadDefault();
             var error = "Default ultimate catalog is missing.";
             if (catalog == null || !catalog.IsValid(out error))
@@ -351,6 +354,7 @@ namespace CatGuard.Gameplay.Ultimates
 
             state.Consume();
             UseEventCount++;
+            activatedUltimateIds.Add(state.Config.UltimateId);
             AnalyticsService.TrackUltimateUse(owner.Config, state.Config, point);
             ProceduralAudioService.Play(ProceduralSoundId.UltimateCast);
 

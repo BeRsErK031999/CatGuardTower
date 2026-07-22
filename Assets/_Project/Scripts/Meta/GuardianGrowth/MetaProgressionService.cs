@@ -272,6 +272,17 @@ namespace CatGuard.Meta.GuardianGrowth
             return Math.Max(0, GetResearchEntry(researchId, false)?.level ?? 0);
         }
 
+        public bool SynchronizeUnlocks()
+        {
+            var changed = RefreshUnlocks(null);
+            if (changed)
+            {
+                persist?.Invoke();
+            }
+
+            return changed;
+        }
+
         public bool BuyResearch(string researchId)
         {
             var config = catalog?.FindResearch(researchId);
@@ -588,6 +599,7 @@ namespace CatGuard.Meta.GuardianGrowth
         public static bool BuyResearch(string researchId) => stateMachine?.BuyResearch(researchId) == true;
         public static bool ToggleUltimateEquipped(string ultimateId) => stateMachine?.ToggleUltimateEquipped(ultimateId) == true;
         public static bool EquipPerk(string perkId) => stateMachine?.EquipPerk(perkId) == true;
+        public static void SynchronizeUnlocks() => stateMachine?.SynchronizeUnlocks();
         public static bool IsUltimateUnlocked(string ultimateId) => stateMachine?.IsUltimateUnlocked(ultimateId) == true;
         public static int GetMasteryLevel(string towerId) => stateMachine?.GetMasteryLevel(towerId) ?? 1;
         public static int GetStartingBattleFishBonus() => (int)Math.Round(

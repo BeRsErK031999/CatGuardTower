@@ -5,6 +5,7 @@ using CatGuard.Core.SceneLoading;
 using CatGuard.Gameplay.Levels;
 using CatGuard.Gameplay.Towers;
 using CatGuard.Gameplay.Towers.Upgrades;
+using CatGuard.Meta.HomeHub;
 using CatGuard.Gameplay.Ultimates;
 using CatGuard.UI.Layout;
 using UnityEngine;
@@ -553,6 +554,7 @@ namespace CatGuard.UI.HUD
             if (GUI.Button(retryRect, LocalizationService.Text("button.retry"), buttonStyle))
             {
                 ProceduralAudioService.Play(ProceduralSoundId.MenuClick);
+                HomeHubNavigationService.BeginBattle(levelController.Config);
                 SceneLoader.LoadLevel();
             }
 

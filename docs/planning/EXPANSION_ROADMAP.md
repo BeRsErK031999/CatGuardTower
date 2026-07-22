@@ -1135,6 +1135,6 @@ Ceilings здесь означают ожидаемую способность d
 
 ## 9. Next Action
 
-`E7 — Guardian Ultimates And Map-Scale Abilities` завершён; фактический gate находится в [E7_ULTIMATE_REPORT.md](E7_ULTIMATE_REPORT.md).
+`E8 — Home Hub Foundation` завершён; фактический gate находится в [E8_HOME_HUB_REPORT.md](E8_HOME_HUB_REPORT.md).
 
-Следующий допустимый implementation block: **`E8 — Home Hub Foundation`**. Он должен выполняться отдельной самостоятельной задачей с собственным scope, external-art boundary и Block Test Gate; E7-delivery не включает реализацию E8.
+Следующий допустимый implementation block: **`E9 — Post-Round Contracts And Quest Board`**. Он должен выполняться отдельной самостоятельной задачей с собственным scope, external-art boundary и Block Test Gate; E8-delivery не включает реализацию E9.

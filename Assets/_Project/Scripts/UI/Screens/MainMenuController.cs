@@ -2,7 +2,9 @@ using CatGuard.Core.Audio;
 using CatGuard.Core.Localization;
 using CatGuard.Core.SceneLoading;
 using CatGuard.Gameplay.Levels;
+using CatGuard.Gameplay.Ultimates;
 using CatGuard.Meta.DailyRewards;
+using CatGuard.Meta.HomeHub;
 using CatGuard.Meta.Progression;
 using CatGuard.Meta.Upgrades;
 using CatGuard.QA;
@@ -35,6 +37,8 @@ namespace CatGuard.UI.Screens
         private Texture2D accentHoverTexture;
         private Texture2D dangerTexture;
         private Texture2D dangerHoverTexture;
+        private Texture2D badgeTexture;
+        private Texture2D ambientTexture;
         private Texture2D modalBackdropTexture;
 
         private GUIStyle titleStyle;
@@ -50,8 +54,9 @@ namespace CatGuard.UI.Screens
         private GUIStyle compactButtonStyle;
         private GUIStyle levelButtonStyle;
         private GUIStyle primaryButtonStyle;
-        private GUIStyle selectedTabStyle;
         private GUIStyle dangerButtonStyle;
+        private GUIStyle zoneButtonStyle;
+        private GUIStyle badgeStyle;
         private GUIStyle privacyBodyStyle;
         private GUIStyle privacyMetaStyle;
 
@@ -65,7 +70,8 @@ namespace CatGuard.UI.Screens
         private float resetConfirmationExpiresAt;
         private bool privacyPolicyOpen;
         private bool uiInteractionEnabled = true;
-        private MainMenuView currentView = MainMenuView.Levels;
+        private HomeHubRoute currentRoute = HomeHubRoute.Home;
+        private HomeHubBattleSummary battleSummary;
 
         public bool IsConfigured => levelCatalog != null
             && levelCatalog.IsValid()
@@ -75,6 +81,8 @@ namespace CatGuard.UI.Screens
             && dailyRewardChain.IsValid()
             && dailyMissionCatalog != null
             && dailyMissionCatalog.IsValid();
+        public HomeHubRoute CurrentRoute => currentRoute;
+        public bool HasBattleSummary => battleSummary != null;
 
         public void Configure(LevelCatalogConfig levels, UpgradeCatalogConfig upgrades)
         {
@@ -115,6 +123,9 @@ namespace CatGuard.UI.Screens
                 dailyMissionCatalog,
                 new FakeRewardedAdService());
 
+            currentRoute = HomeHubRoute.Home;
+            battleSummary = HomeHubNavigationService.ConsumeBattleSummary();
+
             DevelopmentQaService.TryBeginLevel(levelCatalog);
         }
 
@@ -129,23 +140,82 @@ namespace CatGuard.UI.Screens
             DestroyRuntimeTexture(accentHoverTexture);
             DestroyRuntimeTexture(dangerTexture);
             DestroyRuntimeTexture(dangerHoverTexture);
+            DestroyRuntimeTexture(badgeTexture);
+            DestroyRuntimeTexture(ambientTexture);
             DestroyRuntimeTexture(modalBackdropTexture);
         }
 
         private void Update()
         {
-            if (privacyPolicyOpen && Input.GetKeyDown(KeyCode.Escape))
+            if (!Input.GetKeyDown(KeyCode.Escape))
+            {
+                return;
+            }
+
+            if (privacyPolicyOpen)
             {
                 privacyPolicyOpen = false;
+                return;
             }
+
+            if (NavigateBack())
+            {
+                return;
+            }
+
+#if !UNITY_EDITOR
+            Application.Quit();
+#endif
+        }
+
+        public void NavigateTo(HomeHubRoute route)
+        {
+            if (route == HomeHubRoute.Home)
+            {
+                currentRoute = HomeHubRoute.Home;
+                return;
+            }
+
+            if ((route == HomeHubRoute.QuestBoard || route == HomeHubRoute.DailyBasket)
+                && !IsDailyConfigured)
+            {
+                return;
+            }
+
+            if (route == HomeHubRoute.Workshop && currentRoute != HomeHubRoute.Workshop)
+            {
+                AnalyticsService.TrackShopOpen("upgrades");
+            }
+
+            ProceduralAudioService.Play(ProceduralSoundId.MenuClick);
+            currentRoute = route;
+        }
+
+        public bool NavigateBack()
+        {
+            if (privacyPolicyOpen)
+            {
+                privacyPolicyOpen = false;
+                return true;
+            }
+
+            if (currentRoute == HomeHubRoute.Home)
+            {
+                return false;
+            }
+
+            ProceduralAudioService.Play(ProceduralSoundId.MenuClick);
+            currentRoute = HomeHubRoute.Home;
+            return true;
         }
 
         private void OnGUI()
         {
             EnsureStyles();
-            if (currentView == MainMenuView.Daily && !IsDailyConfigured)
+            if ((currentRoute == HomeHubRoute.QuestBoard || currentRoute == HomeHubRoute.DailyBasket)
+                && !IsDailyConfigured)
             {
-                currentView = MainMenuView.Levels;
+                currentRoute = HomeHubRoute.Home;
             }
 
             var layout = LandscapeLayout.Begin(out var previousMatrix);
@@ -165,30 +235,17 @@ namespace CatGuard.UI.Screens
                     headerRect.yMax + SectionGap,
                     safeRect.width,
                     Mathf.Max(0f, footerRect.y - headerRect.yMax - (SectionGap * 2f)));
-                var navigationWidth = Mathf.Clamp(bodyRect.width * 0.2f, 260f, 330f);
-                var navigationRect = new Rect(bodyRect.x, bodyRect.y, navigationWidth, bodyRect.height);
-                var contentRect = new Rect(
-                    navigationRect.xMax + SectionGap,
-                    bodyRect.y,
-                    Mathf.Max(0f, bodyRect.width - navigationWidth - SectionGap),
-                    bodyRect.height);
-
                 uiInteractionEnabled = !privacyPolicyOpen;
                 GUI.enabled = uiInteractionEnabled;
                 DrawHeader(headerRect);
-                DrawTabs(navigationRect);
 
-                switch (currentView)
+                if (currentRoute == HomeHubRoute.Home)
                 {
-                    case MainMenuView.Levels:
-                        DrawLevelSelection(contentRect);
-                        break;
-                    case MainMenuView.Upgrades:
-                        DrawUpgrades(contentRect);
-                        break;
-                    case MainMenuView.Daily:
-                        DrawDailyRewards(contentRect);
-                        break;
+                    DrawHomeHub(bodyRect);
+                }
+                else
+                {
+                    DrawRoute(bodyRect);
                 }
 
                 DrawFooter(footerRect);
@@ -223,75 +280,243 @@ namespace CatGuard.UI.Screens
         {
             GUI.Box(rect, GUIContent.none, strongPanelStyle);
 
-            var titleRect = new Rect(rect.x + 24f, rect.y + 8f, rect.width * 0.55f, rect.height - 16f);
-            var title = LocalizationService.Text("game.title");
+            var titleRect = new Rect(rect.x + 24f, rect.y + 8f, rect.width * 0.52f, rect.height - 16f);
+            var title = LocalizationService.Text("hub.title");
             GUI.Label(
                 new Rect(titleRect.x + 3f, titleRect.y + 4f, titleRect.width, titleRect.height),
                 title,
                 titleShadowStyle);
             GUI.Label(titleRect, title, titleStyle);
 
-            var privacyWidth = 170f;
             var coinsWidth = Mathf.Clamp(rect.width * 0.2f, 230f, 360f);
-            var privacyRect = new Rect(rect.xMax - privacyWidth - 20f, rect.y + 20f, privacyWidth, 56f);
-            var coinsRect = new Rect(privacyRect.x - coinsWidth - 14f, rect.y + 20f, coinsWidth, 56f);
+            var homeWidth = 180f;
+            var homeRect = new Rect(rect.xMax - homeWidth - 20f, rect.y + 20f, homeWidth, 56f);
+            var coinsRect = new Rect(homeRect.x - coinsWidth - 14f, rect.y + 20f, coinsWidth, 56f);
             GUI.Box(coinsRect, GUIContent.none, pillStyle);
             GUI.Label(
                 coinsRect,
                 string.Format(LocalizationService.Text("menu.fishCoins"), ProgressionService.FishCoins),
                 labelStyle);
 
-            if (GUI.Button(privacyRect, LocalizationService.Text("privacy.button"), compactButtonStyle))
+            GUI.enabled = uiInteractionEnabled && currentRoute != HomeHubRoute.Home;
+            if (GUI.Button(homeRect, LocalizationService.Text("hub.home"), compactButtonStyle))
             {
-                ProceduralAudioService.Play(ProceduralSoundId.MenuClick);
-                privacyScrollPosition = Vector2.zero;
-                privacyPolicyOpen = true;
+                NavigateTo(HomeHubRoute.Home);
             }
+            GUI.enabled = uiInteractionEnabled;
         }
 
-        private void DrawTabs(Rect navigationRect)
+        private void DrawHomeHub(Rect rect)
         {
-            GUI.Box(navigationRect, GUIContent.none, strongPanelStyle);
+            GUI.Box(rect, GUIContent.none, strongPanelStyle);
+            DrawAmbientDetails(rect);
+
+            var inner = LandscapeLayout.Inset(rect, 22f, 18f);
+            var bannerHeight = battleSummary == null ? 106f : 136f;
+            var bannerRect = new Rect(inner.x, inner.y, inner.width, bannerHeight);
+            GUI.Box(bannerRect, GUIContent.none, panelStyle);
+
+            if (battleSummary == null)
+            {
+                GUI.Label(
+                    new Rect(bannerRect.x + 28f, bannerRect.y + 12f, bannerRect.width - 56f, 40f),
+                    LocalizationService.Text("hub.welcome"),
+                    headingStyle);
+                GUI.Label(
+                    new Rect(bannerRect.x + 32f, bannerRect.y + 56f, bannerRect.width - 64f, 34f),
+                    LocalizationService.Text("hub.welcomeHint"),
+                    smallLabelStyle);
+            }
+            else
+            {
+                DrawBattleSummary(bannerRect);
+            }
+
+            var gridRect = new Rect(inner.x, bannerRect.yMax + 16f, inner.width, inner.yMax - bannerRect.yMax - 16f);
+            const float columnGap = 16f;
+            const float rowGap = 14f;
+            var cardWidth = (gridRect.width - (columnGap * 3f)) / 4f;
+            var cardHeight = (gridRect.height - rowGap) * 0.5f;
+            var badges = HomeHubBadgeService.CreateSnapshot(levelCatalog, upgradeCatalog, dailyMissionCatalog);
+
+            DrawZoneCard(new Rect(gridRect.x, gridRect.y, cardWidth, cardHeight), HomeHubRoute.CampaignGate, badges);
+            DrawZoneCard(new Rect(gridRect.x + cardWidth + columnGap, gridRect.y, cardWidth, cardHeight), HomeHubRoute.Workshop, badges);
+            DrawZoneCard(new Rect(gridRect.x + ((cardWidth + columnGap) * 2f), gridRect.y, cardWidth, cardHeight), HomeHubRoute.QuestBoard, badges);
+            DrawZoneCard(new Rect(gridRect.x + ((cardWidth + columnGap) * 3f), gridRect.y, cardWidth, cardHeight), HomeHubRoute.AchievementWall, badges);
+
+            var lowerWidth = (cardWidth * 3f) + (columnGap * 2f);
+            var lowerX = gridRect.center.x - (lowerWidth * 0.5f);
+            var lowerY = gridRect.y + cardHeight + rowGap;
+            DrawZoneCard(new Rect(lowerX, lowerY, cardWidth, cardHeight), HomeHubRoute.GuardianLodge, badges);
+            DrawZoneCard(new Rect(lowerX + cardWidth + columnGap, lowerY, cardWidth, cardHeight), HomeHubRoute.DailyBasket, badges);
+            DrawZoneCard(new Rect(lowerX + ((cardWidth + columnGap) * 2f), lowerY, cardWidth, cardHeight), HomeHubRoute.SettingsCorner, badges);
+        }
+
+        private void DrawBattleSummary(Rect rect)
+        {
+            var resultKey = battleSummary.Won ? "hub.resultVictory" : "hub.resultDefeat";
+            var level = levelCatalog.FindById(battleSummary.LevelId);
+            var levelName = level == null ? battleSummary.LevelDisplayName : LocalizationService.LevelName(level);
             GUI.Label(
-                new Rect(navigationRect.x + 18f, navigationRect.y + 18f, navigationRect.width - 36f, 34f),
-                LocalizationService.Text("menu.campaign").ToUpperInvariant(),
+                new Rect(rect.x + 28f, rect.y + 14f, rect.width * 0.3f, 38f),
+                LocalizationService.Text(resultKey).ToUpperInvariant(),
                 eyebrowStyle);
-
-            var tabRect = new Rect(navigationRect.x + 18f, navigationRect.y + 66f, navigationRect.width - 36f, 62f);
-            DrawTab(tabRect, MainMenuView.Levels, LocalizationService.Text("tabs.levels"));
-            tabRect.y += 74f;
-            DrawTab(tabRect, MainMenuView.Upgrades, LocalizationService.Text("tabs.upgrades"));
-            if (IsDailyConfigured)
-            {
-                tabRect.y += 74f;
-                DrawTab(tabRect, MainMenuView.Daily, LocalizationService.Text("tabs.daily"));
-            }
-
             GUI.Label(
-                new Rect(
-                    navigationRect.x + 20f,
-                    navigationRect.yMax - 98f,
-                    navigationRect.width - 40f,
-                    76f),
-                LocalizationService.Text("menu.landscapeHint"),
+                new Rect(rect.x + 28f, rect.y + 50f, rect.width * 0.42f, 60f),
+                levelName,
+                headingStyle);
+
+            var details = battleSummary.Won
+                ? string.Format(
+                    LocalizationService.Text("hub.victorySummary"),
+                    battleSummary.EarnedFishCoins,
+                    battleSummary.RemainingLives,
+                    battleSummary.UnlockedLevelNames.Length)
+                : string.Format(
+                    LocalizationService.Text("hub.defeatSummary"),
+                    battleSummary.DefeatedEnemies,
+                    battleSummary.EscapedEnemies);
+            GUI.Label(
+                new Rect(rect.center.x - 20f, rect.y + 24f, rect.width * 0.48f, 84f),
+                details,
                 smallLabelStyle);
+
+            var dismissRect = new Rect(rect.xMax - 166f, rect.yMax - 52f, 138f, 38f);
+            if (GUI.Button(dismissRect, LocalizationService.Text("common.done"), compactButtonStyle))
+            {
+                battleSummary = null;
+            }
         }
 
-        private void DrawTab(Rect rect, MainMenuView view, string label)
+        private void DrawZoneCard(Rect rect, HomeHubRoute route, HomeHubBadgeSnapshot badges)
         {
-            var style = currentView == view ? selectedTabStyle : buttonStyle;
-            if (!GUI.Button(rect, label, style))
+            var bob = Mathf.Sin((Time.unscaledTime * 1.15f) + ((int)route * 0.85f)) * 3f;
+            var visualRect = new Rect(rect.x, rect.y + bob, rect.width, rect.height - 4f);
+            if (GUI.Button(visualRect, GUIContent.none, zoneButtonStyle))
+            {
+                NavigateTo(route);
+            }
+
+            var previousColor = GUI.color;
+            GUI.color = GetZoneColor(route);
+            GUI.DrawTexture(
+                new Rect(visualRect.x + 2f, visualRect.y + 2f, visualRect.width - 4f, 8f),
+                accentTexture,
+                ScaleMode.StretchToFill);
+            GUI.color = previousColor;
+
+            GUI.Label(
+                new Rect(visualRect.x + 20f, visualRect.y + 18f, 58f, 30f),
+                $"{(int)route:00}",
+                eyebrowStyle);
+            GUI.Label(
+                new Rect(visualRect.x + 26f, visualRect.center.y - 50f, visualRect.width - 52f, 52f),
+                LocalizationService.Text(GetRouteTitleKey(route)),
+                labelStyle);
+            GUI.Label(
+                new Rect(visualRect.x + 28f, visualRect.center.y + 8f, visualRect.width - 56f, 48f),
+                LocalizationService.Text(GetRouteHintKey(route)),
+                smallLabelStyle);
+
+            var count = badges.GetCount(route);
+            if (count <= 0)
             {
                 return;
             }
 
-            ProceduralAudioService.Play(ProceduralSoundId.MenuClick);
-            if (view == MainMenuView.Upgrades && currentView != MainMenuView.Upgrades)
+            var badgeRect = new Rect(visualRect.xMax - 50f, visualRect.y + 12f, 38f, 38f);
+            GUI.Box(badgeRect, count.ToString(), badgeStyle);
+        }
+
+        private static Color GetZoneColor(HomeHubRoute route)
+        {
+            return route switch
             {
-                AnalyticsService.TrackShopOpen("upgrades");
+                HomeHubRoute.CampaignGate => new Color(1f, 0.67f, 0.2f, 1f),
+                HomeHubRoute.Workshop => new Color(0.96f, 0.43f, 0.22f, 1f),
+                HomeHubRoute.QuestBoard => new Color(0.42f, 0.83f, 0.52f, 1f),
+                HomeHubRoute.AchievementWall => new Color(0.74f, 0.62f, 1f, 1f),
+                HomeHubRoute.GuardianLodge => new Color(0.34f, 0.8f, 1f, 1f),
+                HomeHubRoute.DailyBasket => new Color(1f, 0.82f, 0.27f, 1f),
+                HomeHubRoute.SettingsCorner => new Color(0.66f, 0.78f, 0.76f, 1f),
+                _ => Color.white
+            };
+        }
+
+        private void DrawAmbientDetails(Rect rect)
+        {
+            var time = Time.unscaledTime;
+            for (var index = 0; index < 5; index++)
+            {
+                var phase = time * (0.35f + (index * 0.03f)) + index;
+                var x = rect.x + 30f + Mathf.Repeat((phase * 96f) + (index * 311f), Mathf.Max(1f, rect.width - 60f));
+                var y = rect.y + 24f + Mathf.PingPong((phase * 43f) + (index * 67f), Mathf.Max(1f, rect.height - 48f));
+                GUI.DrawTexture(new Rect(x, y, 7f, 7f), ambientTexture, ScaleMode.StretchToFill);
+            }
+        }
+
+        private void DrawRoute(Rect rect)
+        {
+            var routeHeader = new Rect(rect.x, rect.y, rect.width, 70f);
+            GUI.Box(routeHeader, GUIContent.none, strongPanelStyle);
+            if (GUI.Button(
+                    new Rect(routeHeader.x + 16f, routeHeader.y + 10f, 178f, 50f),
+                    LocalizationService.Text("hub.back"),
+                    compactButtonStyle))
+            {
+                NavigateBack();
             }
 
-            currentView = view;
+            GUI.Label(
+                new Rect(routeHeader.x + 214f, routeHeader.y + 8f, routeHeader.width - 428f, 54f),
+                LocalizationService.Text(GetRouteTitleKey(currentRoute)),
+                headingStyle);
+
+            var contentRect = new Rect(rect.x, routeHeader.yMax + 12f, rect.width, rect.height - routeHeader.height - 12f);
+            switch (currentRoute)
+            {
+                case HomeHubRoute.CampaignGate:
+                    DrawLevelSelection(contentRect);
+                    break;
+                case HomeHubRoute.Workshop:
+                    DrawUpgrades(contentRect);
+                    break;
+                case HomeHubRoute.QuestBoard:
+                    DrawQuestBoard(contentRect);
+                    break;
+                case HomeHubRoute.AchievementWall:
+                    DrawFutureZone(contentRect, "hub.achievementStatus", "hub.achievementHint");
+                    break;
+                case HomeHubRoute.GuardianLodge:
+                    DrawGuardianLodge(contentRect);
+                    break;
+                case HomeHubRoute.DailyBasket:
+                    DrawDailyBasket(contentRect);
+                    break;
+                case HomeHubRoute.SettingsCorner:
+                    DrawSettingsCorner(contentRect);
+                    break;
+            }
+        }
+
+        private static string GetRouteTitleKey(HomeHubRoute route)
+        {
+            return route switch
+            {
+                HomeHubRoute.CampaignGate => "hub.campaignGate",
+                HomeHubRoute.Workshop => "hub.workshop",
+                HomeHubRoute.QuestBoard => "hub.questBoard",
+                HomeHubRoute.AchievementWall => "hub.achievementWall",
+                HomeHubRoute.GuardianLodge => "hub.guardianLodge",
+                HomeHubRoute.DailyBasket => "hub.dailyBasket",
+                HomeHubRoute.SettingsCorner => "hub.settingsCorner",
+                _ => "hub.title"
+            };
+        }
+
+        private static string GetRouteHintKey(HomeHubRoute route)
+        {
+            return $"{GetRouteTitleKey(route)}.hint";
         }
 
         private void DrawLevelSelection(Rect contentRect)
@@ -400,6 +625,7 @@ namespace CatGuard.UI.Screens
         {
             ProceduralAudioService.Play(ProceduralSoundId.MenuClick);
             ProgressionService.SelectLevel(level);
+            HomeHubNavigationService.BeginBattle(level);
             SceneLoader.LoadLevel();
         }
 
@@ -464,14 +690,14 @@ namespace CatGuard.UI.Screens
             GUI.EndScrollView();
         }
 
-        private void DrawDailyRewards(Rect contentRect)
+        private void DrawDailyBasket(Rect contentRect)
         {
             GUI.Box(contentRect, GUIContent.none, strongPanelStyle);
             var inner = LandscapeLayout.Inset(contentRect, 22f, 20f);
             var columnGap = 20f;
-            var rewardWidth = Mathf.Clamp((inner.width - columnGap) * 0.46f, 450f, 760f);
+            var rewardWidth = Mathf.Clamp((inner.width - columnGap) * 0.67f, 620f, 1100f);
             var rewardRect = new Rect(inner.x, inner.y, rewardWidth, inner.height);
-            var missionsRect = new Rect(
+            var freeCoinsRect = new Rect(
                 rewardRect.xMax + columnGap,
                 inner.y,
                 Mathf.Max(320f, inner.width - rewardWidth - columnGap),
@@ -520,16 +746,41 @@ namespace CatGuard.UI.Screens
                     smallLabelStyle);
             }
 
-            GUI.Box(missionsRect, GUIContent.none, panelStyle);
+            GUI.Box(freeCoinsRect, GUIContent.none, panelStyle);
             GUI.Label(
-                new Rect(missionsRect.x + 18f, missionsRect.y + 18f, missionsRect.width - 36f, 36f),
-                LocalizationService.Text("daily.missions").ToUpperInvariant(),
+                new Rect(freeCoinsRect.x + 20f, freeCoinsRect.y + 28f, freeCoinsRect.width - 40f, 40f),
+                LocalizationService.Text("hub.dailyBonus").ToUpperInvariant(),
                 eyebrowStyle);
-            DrawDailyMissions(new Rect(
-                missionsRect.x + 18f,
-                missionsRect.y + 64f,
-                missionsRect.width - 36f,
-                missionsRect.height - 82f));
+            GUI.Label(
+                new Rect(freeCoinsRect.x + 24f, freeCoinsRect.y + 84f, freeCoinsRect.width - 48f, 90f),
+                LocalizationService.Text("hub.dailyBonusHint"),
+                smallLabelStyle);
+
+            var freeCoinsLabel = string.Format(
+                LocalizationService.Text("ads.freeCoins"),
+                ProgressionService.FreeCoinsRewardFishCoins);
+            GUI.enabled = uiInteractionEnabled && ProgressionService.CanClaimFreeCoinsReward();
+            if (GUI.Button(
+                    new Rect(freeCoinsRect.x + 24f, freeCoinsRect.y + 194f, freeCoinsRect.width - 48f, 62f),
+                    freeCoinsLabel,
+                    primaryButtonStyle))
+            {
+                var earned = ProgressionService.ClaimFreeCoinsReward();
+                if (earned > 0)
+                {
+                    ProceduralAudioService.Play(ProceduralSoundId.MenuClick);
+                    freeCoinsMessage = string.Format(LocalizationService.Text("ads.freeCoinsClaimed"), earned);
+                }
+            }
+
+            GUI.enabled = uiInteractionEnabled;
+            if (!string.IsNullOrWhiteSpace(freeCoinsMessage))
+            {
+                GUI.Label(
+                    new Rect(freeCoinsRect.x + 24f, freeCoinsRect.y + 274f, freeCoinsRect.width - 48f, 54f),
+                    freeCoinsMessage,
+                    smallLabelStyle);
+            }
         }
 
         private void ClaimDailyReward(bool useRewardedDouble)
@@ -615,55 +866,128 @@ namespace CatGuard.UI.Screens
             GUI.EndScrollView();
         }
 
-        private void DrawFooter(Rect rect)
+        private void DrawQuestBoard(Rect contentRect)
+        {
+            GUI.Box(contentRect, GUIContent.none, strongPanelStyle);
+            var inner = LandscapeLayout.Inset(contentRect, 28f, 24f);
+            GUI.Box(inner, GUIContent.none, panelStyle);
+            GUI.Label(
+                new Rect(inner.x + 24f, inner.y + 20f, inner.width - 48f, 42f),
+                LocalizationService.Text("daily.missions").ToUpperInvariant(),
+                eyebrowStyle);
+            GUI.Label(
+                new Rect(inner.x + 28f, inner.y + 62f, inner.width - 56f, 36f),
+                LocalizationService.Text("hub.questHint"),
+                smallLabelStyle);
+            DrawDailyMissions(new Rect(inner.x + 28f, inner.y + 112f, inner.width - 56f, inner.height - 140f));
+        }
+
+        private void DrawFutureZone(Rect contentRect, string statusKey, string hintKey)
+        {
+            GUI.Box(contentRect, GUIContent.none, strongPanelStyle);
+            var cardWidth = Mathf.Min(880f, contentRect.width - 120f);
+            var cardHeight = Mathf.Min(360f, contentRect.height - 90f);
+            var cardRect = new Rect(
+                contentRect.center.x - (cardWidth * 0.5f),
+                contentRect.center.y - (cardHeight * 0.5f),
+                cardWidth,
+                cardHeight);
+            GUI.Box(cardRect, GUIContent.none, panelStyle);
+            GUI.Label(
+                new Rect(cardRect.x + 44f, cardRect.y + 54f, cardRect.width - 88f, 72f),
+                LocalizationService.Text(statusKey),
+                headingStyle);
+            GUI.Label(
+                new Rect(cardRect.x + 56f, cardRect.y + 146f, cardRect.width - 112f, 128f),
+                LocalizationService.Text(hintKey),
+                smallLabelStyle);
+        }
+
+        private void DrawGuardianLodge(Rect contentRect)
+        {
+            GUI.Box(contentRect, GUIContent.none, strongPanelStyle);
+            var inner = LandscapeLayout.Inset(contentRect, 26f, 22f);
+            var catalog = UltimateCatalogConfig.LoadDefault();
+            if (catalog == null || !catalog.IsValid(out _))
+            {
+                DrawFutureZone(contentRect, "hub.guardianUnavailable", "hub.guardianUnavailableHint");
+                return;
+            }
+
+            GUI.Label(
+                new Rect(inner.x, inner.y, inner.width, 42f),
+                LocalizationService.Text("hub.guardianLoadout"),
+                headingStyle);
+            GUI.Label(
+                new Rect(inner.x + 20f, inner.y + 46f, inner.width - 40f, 36f),
+                LocalizationService.Text("hub.guardianHint"),
+                smallLabelStyle);
+
+            const float gap = 18f;
+            var cardWidth = (inner.width - (gap * 2f)) / 3f;
+            var cardY = inner.y + 100f;
+            var cardHeight = inner.height - 112f;
+            var ultimates = catalog.Ultimates;
+            for (var index = 0; index < ultimates.Length; index++)
+            {
+                var ultimate = ultimates[index];
+                if (ultimate == null)
+                {
+                    continue;
+                }
+
+                var card = new Rect(inner.x + (index * (cardWidth + gap)), cardY, cardWidth, cardHeight);
+                GUI.Box(card, GUIContent.none, panelStyle);
+                GUI.Label(
+                    new Rect(card.x + 24f, card.y + 26f, card.width - 48f, 64f),
+                    LocalizationService.Text(ultimate.NameLocalizationKey),
+                    headingStyle);
+                GUI.Label(
+                    new Rect(card.x + 26f, card.y + 106f, card.width - 52f, 130f),
+                    LocalizationService.Text(ultimate.DescriptionLocalizationKey),
+                    smallLabelStyle);
+                var targeting = LocalizationService.Text($"hub.target.{ultimate.TargetingMode.ToString().ToLowerInvariant()}");
+                var stats = string.Format(
+                    LocalizationService.Text("hub.guardianStats"),
+                    ultimate.ChargeRequired,
+                    ultimate.CooldownSeconds,
+                    targeting);
+                GUI.Label(
+                    new Rect(card.x + 24f, card.yMax - 114f, card.width - 48f, 88f),
+                    stats,
+                    eyebrowStyle);
+            }
+        }
+
+        private void DrawSettingsCorner(Rect contentRect)
         {
             if (resetConfirmationArmed && Time.unscaledTime > resetConfirmationExpiresAt)
             {
                 resetConfirmationArmed = false;
             }
 
-            GUI.Box(rect, GUIContent.none, strongPanelStyle);
-            const float spacing = 12f;
-            var freeWidth = Mathf.Clamp(rect.width * 0.24f, 300f, 430f);
-            const float languageWidth = 120f;
-            const float soundWidth = 190f;
-            const float shakeWidth = 180f;
-            const float flashWidth = 190f;
-            const float resetWidth = 170f;
-            var totalWidth = freeWidth + languageWidth + soundWidth + shakeWidth + flashWidth + resetWidth + (spacing * 5f);
-            var x = rect.center.x - (totalWidth * 0.5f);
-            var y = rect.y + 10f;
-            var freeCoinsRect = new Rect(x, y, freeWidth, 52f);
-            var languageRect = new Rect(freeCoinsRect.xMax + spacing, y, languageWidth, 52f);
-            var soundRect = new Rect(languageRect.xMax + spacing, y, soundWidth, 52f);
-            var shakeRect = new Rect(soundRect.xMax + spacing, y, shakeWidth, 52f);
-            var flashRect = new Rect(shakeRect.xMax + spacing, y, flashWidth, 52f);
-            var resetRect = new Rect(flashRect.xMax + spacing, y, resetWidth, 52f);
-            var freeCoinsLabel = string.Format(
-                LocalizationService.Text("ads.freeCoins"),
-                ProgressionService.FreeCoinsRewardFishCoins);
+            GUI.Box(contentRect, GUIContent.none, strongPanelStyle);
+            var inner = LandscapeLayout.Inset(contentRect, 28f, 24f);
+            GUI.Box(inner, GUIContent.none, panelStyle);
 
-            if (!string.IsNullOrWhiteSpace(freeCoinsMessage))
-            {
-                GUI.Label(
-                    new Rect(freeCoinsRect.x, rect.y - 34f, freeCoinsRect.width, 30f),
-                    freeCoinsMessage,
-                    smallLabelStyle);
-            }
+            const float gap = 18f;
+            var columnWidth = (inner.width - 84f - (gap * 2f)) / 3f;
+            const float buttonHeight = 74f;
+            var left = inner.x + 42f;
+            var top = inner.center.y - buttonHeight - (gap * 0.5f);
+            GUI.Label(
+                new Rect(inner.x + 28f, top - 72f, inner.width - 56f, 44f),
+                LocalizationService.Text("hub.settingsHint"),
+                smallLabelStyle);
+            var languageRect = new Rect(left, top, columnWidth, buttonHeight);
+            var soundRect = new Rect(left + columnWidth + gap, top, columnWidth, buttonHeight);
+            var shakeRect = new Rect(left + ((columnWidth + gap) * 2f), top, columnWidth, buttonHeight);
+            var flashRect = new Rect(left, top + buttonHeight + gap, columnWidth, buttonHeight);
+            var privacyRect = new Rect(left + columnWidth + gap, top + buttonHeight + gap, columnWidth, buttonHeight);
+            var resetRect = new Rect(left + ((columnWidth + gap) * 2f), top + buttonHeight + gap, columnWidth, buttonHeight);
 
-            GUI.enabled = uiInteractionEnabled && ProgressionService.CanClaimFreeCoinsReward();
-            if (GUI.Button(freeCoinsRect, freeCoinsLabel, primaryButtonStyle))
-            {
-                var earned = ProgressionService.ClaimFreeCoinsReward();
-                if (earned > 0)
-                {
-                    ProceduralAudioService.Play(ProceduralSoundId.MenuClick);
-                    freeCoinsMessage = string.Format(LocalizationService.Text("ads.freeCoinsClaimed"), earned);
-                }
-            }
-
-            GUI.enabled = uiInteractionEnabled;
-            if (GUI.Button(languageRect, ProgressionService.LanguageCode.ToUpperInvariant(), compactButtonStyle))
+            var languageLabel = $"{LocalizationService.Text("settings.language")}\n{ProgressionService.LanguageCode.ToUpperInvariant()}";
+            if (GUI.Button(languageRect, languageLabel, compactButtonStyle))
             {
                 ProceduralAudioService.Play(ProceduralSoundId.MenuClick);
                 ProgressionService.ToggleLanguage();
@@ -696,6 +1020,13 @@ namespace CatGuard.UI.Screens
                 ProgressionService.ToggleReducedFlash();
             }
 
+            if (GUI.Button(privacyRect, LocalizationService.Text("privacy.button"), compactButtonStyle))
+            {
+                ProceduralAudioService.Play(ProceduralSoundId.MenuClick);
+                privacyScrollPosition = Vector2.zero;
+                privacyPolicyOpen = true;
+            }
+
             var resetLabel = LocalizationService.Text(resetConfirmationArmed ? "common.confirm" : "settings.reset");
             if (GUI.Button(resetRect, resetLabel, dangerButtonStyle))
             {
@@ -703,6 +1034,7 @@ namespace CatGuard.UI.Screens
                 if (resetConfirmationArmed)
                 {
                     ProgressionService.ResetProgress();
+                    battleSummary = null;
                     resetConfirmationArmed = false;
                 }
                 else
@@ -711,7 +1043,30 @@ namespace CatGuard.UI.Screens
                     resetConfirmationExpiresAt = Time.unscaledTime + 3f;
                 }
             }
+        }
 
+        private void DrawFooter(Rect rect)
+        {
+            GUI.Box(rect, GUIContent.none, strongPanelStyle);
+            var selectedLevel = ProgressionService.GetSelectedLevelOrDefault(levelCatalog.FirstLevel);
+            var selectedName = LocalizationService.LevelName(selectedLevel);
+            GUI.Label(
+                new Rect(rect.x + 24f, rect.y + 10f, rect.width * 0.52f, rect.height - 20f),
+                string.Format(LocalizationService.Text("hub.selectedLevel"), selectedName),
+                smallLabelStyle);
+
+            var campaignRect = new Rect(rect.xMax - 402f, rect.y + 10f, 184f, 52f);
+            var quickPlayRect = new Rect(rect.xMax - 206f, rect.y + 10f, 184f, 52f);
+            if (GUI.Button(campaignRect, LocalizationService.Text("hub.campaignGate"), compactButtonStyle))
+            {
+                NavigateTo(HomeHubRoute.CampaignGate);
+            }
+
+            GUI.enabled = uiInteractionEnabled && selectedLevel != null;
+            if (GUI.Button(quickPlayRect, LocalizationService.Text("hub.quickPlay"), primaryButtonStyle))
+            {
+                StartLevel(selectedLevel);
+            }
             GUI.enabled = uiInteractionEnabled;
         }
 
@@ -764,15 +1119,17 @@ namespace CatGuard.UI.Screens
                 return;
             }
 
-            screenTintTexture = CreateTexture(new Color(0.02f, 0.05f, 0.08f, 0.42f));
-            panelTexture = CreateTexture(new Color(0.05f, 0.12f, 0.14f, 0.9f));
-            strongPanelTexture = CreateTexture(new Color(0.025f, 0.075f, 0.1f, 0.96f));
-            buttonTexture = CreateTexture(new Color(0.08f, 0.2f, 0.2f, 0.96f));
+            screenTintTexture = CreateTexture(new Color(0.02f, 0.05f, 0.08f, 0.34f));
+            panelTexture = CreateTexture(new Color(0.05f, 0.12f, 0.14f, 0.86f));
+            strongPanelTexture = CreateTexture(new Color(0.025f, 0.075f, 0.1f, 0.9f));
+            buttonTexture = CreateTexture(new Color(0.08f, 0.2f, 0.2f, 0.88f));
             buttonHoverTexture = CreateTexture(new Color(0.12f, 0.29f, 0.27f, 1f));
             accentTexture = CreateTexture(new Color(0.96f, 0.68f, 0.22f, 1f));
             accentHoverTexture = CreateTexture(new Color(1f, 0.78f, 0.32f, 1f));
             dangerTexture = CreateTexture(new Color(0.48f, 0.16f, 0.16f, 0.96f));
             dangerHoverTexture = CreateTexture(new Color(0.66f, 0.2f, 0.18f, 1f));
+            badgeTexture = CreateTexture(new Color(0.94f, 0.3f, 0.16f, 1f));
+            ambientTexture = CreateTexture(new Color(1f, 0.82f, 0.28f, 0.86f));
             modalBackdropTexture = CreateTexture(new Color(0f, 0f, 0f, 0.76f));
 
             titleStyle = CreateLabelStyle(40, FontStyle.Bold, TextAnchor.MiddleLeft, Color.white);
@@ -796,8 +1153,15 @@ namespace CatGuard.UI.Screens
             levelButtonStyle.alignment = TextAnchor.MiddleLeft;
             levelButtonStyle.padding = new RectOffset(18, 14, 8, 8);
             primaryButtonStyle = CreateButtonStyle(accentTexture, accentHoverTexture, 21, new Color(0.12f, 0.09f, 0.04f));
-            selectedTabStyle = CreateButtonStyle(accentTexture, accentHoverTexture, 20, new Color(0.12f, 0.09f, 0.04f));
             dangerButtonStyle = CreateButtonStyle(dangerTexture, dangerHoverTexture, 16, Color.white);
+            zoneButtonStyle = CreateButtonStyle(buttonTexture, buttonHoverTexture, 22, Color.white);
+            zoneButtonStyle.padding = new RectOffset(26, 26, 20, 20);
+            zoneButtonStyle.alignment = TextAnchor.MiddleCenter;
+            badgeStyle = CreateBoxStyle(badgeTexture);
+            badgeStyle.fontSize = 18;
+            badgeStyle.fontStyle = FontStyle.Bold;
+            badgeStyle.normal.textColor = Color.white;
+            badgeStyle.padding = new RectOffset(2, 2, 2, 2);
         }
 
         private static GUIStyle CreateLabelStyle(int fontSize, FontStyle fontStyle, TextAnchor alignment, Color color)
@@ -873,11 +1237,5 @@ namespace CatGuard.UI.Screens
             }
         }
 
-        private enum MainMenuView
-        {
-            Levels,
-            Upgrades,
-            Daily
-        }
     }
 }

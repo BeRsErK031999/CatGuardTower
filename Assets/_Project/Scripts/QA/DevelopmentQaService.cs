@@ -8,6 +8,7 @@ using CatGuard.Gameplay.Grid;
 using CatGuard.Gameplay.Levels;
 using CatGuard.Gameplay.Towers;
 using CatGuard.Gameplay.Ultimates;
+using CatGuard.Meta.HomeHub;
 using CatGuard.Meta.Progression;
 using CatGuard.SDK.Analytics;
 using UnityEngine;
@@ -65,6 +66,7 @@ namespace CatGuard.QA
 
                 activeCommand = command;
                 Debug.Log($"Development QA starts scenario '{command.scenarioId}' on level '{command.levelId}'.");
+                HomeHubNavigationService.BeginBattle(level);
                 SceneLoader.LoadLevel();
                 return true;
             }

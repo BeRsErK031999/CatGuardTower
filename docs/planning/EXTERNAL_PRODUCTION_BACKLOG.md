@@ -301,6 +301,8 @@ Owner: environment artist
 
 Status: `Not started`
 
+Current implementation boundary: `Functional code-authored E8 placeholder`. The existing original garden plate, IMGUI zone cards, badges, and ambient firefly motion validate navigation and layout only; they do not satisfy the final environment-art deliverables below.
+
 ### Required hub zones
 
 - Campaign Gate;

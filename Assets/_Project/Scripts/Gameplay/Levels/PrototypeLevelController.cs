@@ -9,6 +9,7 @@ using CatGuard.Gameplay.Towers.Upgrades;
 using CatGuard.Gameplay.Ultimates;
 using CatGuard.Gameplay.Waves;
 using CatGuard.Meta.Progression;
+using CatGuard.Meta.HomeHub;
 using CatGuard.QA;
 using CatGuard.SDK.Ads;
 using CatGuard.SDK.Analytics;
@@ -632,6 +633,12 @@ namespace CatGuard.Gameplay.Levels
 
             victoryRewardDoubled = true;
             CompletionResult = CompletionResult.WithRewardedBonus(bonus);
+            HomeHubNavigationService.RecordVictory(
+                config,
+                CompletionResult,
+                Lives,
+                DefeatedEnemies,
+                EscapedEnemies);
             ProceduralAudioService.Play(ProceduralSoundId.Victory);
             SimpleVfxFactory.Spawn(Battlefield.WorldBounds.center, SimpleVfxStyle.Victory, vfxLayer != null ? vfxLayer : runtimeRoot);
             return true;
@@ -653,6 +660,7 @@ namespace CatGuard.Gameplay.Levels
             resultApplied = false;
             Lives = Mathf.Max(1, Mathf.CeilToInt((config.BaseLives + ProgressionService.GetBaseLivesBonus()) * 0.5f));
             State = PrototypeLevelState.Running;
+            HomeHubNavigationService.BeginBattle(config);
             ProceduralAudioService.Play(ProceduralSoundId.Victory);
             SimpleVfxFactory.Spawn(lastGoalPosition, SimpleVfxStyle.Victory, vfxLayer != null ? vfxLayer : runtimeRoot);
             return true;
@@ -771,6 +779,7 @@ namespace CatGuard.Gameplay.Levels
                 State = PrototypeLevelState.Lost;
                 guardianUltimates?.EndBattle("defeat");
                 resultApplied = true;
+                HomeHubNavigationService.RecordDefeat(config, DefeatedEnemies, EscapedEnemies);
                 AnalyticsService.TrackLevelFail(config, DefeatedEnemies, EscapedEnemies, TowerCount, "base_lost");
                 ProceduralAudioService.Play(ProceduralSoundId.Defeat);
                 SimpleVfxFactory.Spawn(lastGoalPosition, SimpleVfxStyle.Defeat, vfxLayer != null ? vfxLayer : runtimeRoot);
@@ -794,6 +803,12 @@ namespace CatGuard.Gameplay.Levels
 
             resultApplied = true;
             CompletionResult = ProgressionService.CompleteLevel(config);
+            HomeHubNavigationService.RecordVictory(
+                config,
+                CompletionResult,
+                Lives,
+                DefeatedEnemies,
+                EscapedEnemies);
             AnalyticsService.TrackLevelComplete(config, CompletionResult, Lives, DefeatedEnemies, EscapedEnemies, TowerCount);
             ProceduralAudioService.Play(ProceduralSoundId.Victory);
             SimpleVfxFactory.Spawn(Battlefield.WorldBounds.center, SimpleVfxStyle.Victory, vfxLayer != null ? vfxLayer : runtimeRoot);

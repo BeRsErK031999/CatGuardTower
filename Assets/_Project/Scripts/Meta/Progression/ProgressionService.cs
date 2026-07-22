@@ -24,8 +24,10 @@ namespace CatGuard.Meta.Progression
         private static IRewardedAdService rewardedAdService;
         private static GameSaveData saveData;
         private static LevelConfig selectedLevel;
+        private static int initializationCount;
 
         public static bool IsInitialized => saveData != null;
+        public static int InitializationCount => initializationCount;
         public static int FishCoins => EnsureSave().fishCoins;
         public static string SavePath => GameSaveService.SavePath;
         public static bool HasDailyLoop => dailyRewardChain != null
@@ -63,12 +65,23 @@ namespace CatGuard.Meta.Progression
             DailyMissionCatalogConfig dailyMissions,
             IRewardedAdService ads)
         {
+            if (saveData != null
+                && ReferenceEquals(levelCatalog, levels)
+                && ReferenceEquals(upgradeCatalog, upgrades)
+                && ReferenceEquals(dailyRewardChain, dailyRewards)
+                && ReferenceEquals(dailyMissionCatalog, dailyMissions))
+            {
+                ApplySettings();
+                return;
+            }
+
             levelCatalog = levels;
             upgradeCatalog = upgrades;
             dailyRewardChain = dailyRewards;
             dailyMissionCatalog = dailyMissions;
             rewardedAdService = ads ?? new FakeRewardedAdService();
             selectedLevel = null;
+            initializationCount++;
             AnalyticsService.Initialize();
             saveData = GameSaveService.LoadOrCreate(levelCatalog?.FirstLevel?.LevelId);
             EnsureDefaults();

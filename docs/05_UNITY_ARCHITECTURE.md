@@ -26,7 +26,7 @@ The previous `_project_scaffold/` contents have been moved into `Assets/_Project
 - `OrientationPolicy` is the single runtime orientation boundary. `GameBootstrap.Awake()` applies landscape-left/right auto-rotation before MainMenu is loaded.
 - Android `PlayerSettings` use `Auto Rotation`, allow only `Landscape Left` and `Landscape Right`, and reject both portrait directions through `AndroidOrientationSettings`.
 - `LandscapeLayout` owns the shared `1920 x 1080` reference surface, `1280 x 720` minimum logical viewport, height-based scaling, wide-screen gutters, safe-area conversion, and screen-to-logical input conversion.
-- `MainMenuController` uses a horizontal navigation/content/footer composition. Levels, upgrades, daily rewards/missions, voluntary rewards, settings, privacy, reset confirmation, RU/EN text, and level launch remain available without introducing the E8 hub.
+- `MainMenuController` is the state-driven E8 Garden Outpost hub. Seven routes expose campaign, upgrades, missions, achievements preview, equipped guardian abilities, daily rewards, and settings; a centralized badge service and transient battle-summary service keep UI state outside the save model.
 - `PrototypeHud` reserves a compact top status bar and bottom tower/action tray. The battlefield viewport between them is reused by camera framing and placement-input exclusion.
 - `PrototypeLevelController` reframes the existing single-path map when resolution or safe area changes. It does not change `LevelConfig.pathPoints`, map size, waves, towers, enemies, or battle balance.
 - `E1ProjectSetup` validates the layout/orientation contract through Unity batchmode. Android emulator tooling confirms the rendered screen is landscape, including a launch that starts from forced portrait.

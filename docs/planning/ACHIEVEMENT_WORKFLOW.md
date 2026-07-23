@@ -37,4 +37,4 @@ E11 introduced the `BossesDefeated` rule and `first_boss` presentation. E13 now 
 
 ## Reset
 
-Local reset deletes schema v4 achievement entries, campaign challenges, event ids, ultimate history, boss history, completion dates, and claimed flags together with the rest of local progression. Diagnostic migration backups are not silently restored.
+Local reset deletes schema v5 achievement entries, campaign challenges, event ids, ultimate history, boss history, completion dates, claimed flags, and persisted accessibility/time-control settings together with the rest of local progression. Diagnostic migration backups are not silently restored.

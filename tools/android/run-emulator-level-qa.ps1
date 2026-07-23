@@ -32,6 +32,19 @@
     [ValidateSet("", "restart", "quit")]
     [string]$InterruptAction = "",
     [int]$TargetFrameRate = 0,
+    [ValidateSet(-1, 0, 1, 2)]
+    [int]$CameraShakeLevel = -1,
+    [ValidateSet(-1, 0, 1)]
+    [int]$ReducedFlashMode = -1,
+    [ValidateSet(0, 90, 100, 120)]
+    [int]$TextScalePercent = 0,
+    [ValidateSet(0, 1, 2)]
+    [int]$PreferredBattleSpeed = 0,
+    [switch]$ExerciseTimeControls,
+    [int]$ExpectedCameraShakeLevel = -1,
+    [int]$ExpectedReducedFlashMode = -1,
+    [int]$ExpectedTextScalePercent = 0,
+    [int]$ExpectedPreferredBattleSpeed = 0,
     [string]$ApkPath = "Builds\Android\CatGuardTowerDefense-emulator.apk",
     [string]$PackageName = "com.catguard.towerdefense.qa",
     [string]$DeviceSerial = "",
@@ -50,6 +63,9 @@
     [int]$ExpectedBossPhases = 0,
     [switch]$RequireMapRules,
     [switch]$RequireBossCleanup,
+    [switch]$RequireSettings,
+    [switch]$RequirePooling,
+    [switch]$RequireTimeControls,
     [string]$ExpectedState = ""
 )
 
@@ -283,6 +299,11 @@ $externalFilesPath = "/sdcard/Android/data/$PackageName/files"
     interruptAtBossPhase = $InterruptAtBossPhase
     interruptAction = $InterruptAction
     targetFrameRate = $TargetFrameRate
+    cameraShakeLevel = $CameraShakeLevel
+    reducedFlashMode = $ReducedFlashMode
+    textScalePercent = $TextScalePercent
+    preferredBattleSpeed = $PreferredBattleSpeed
+    exerciseTimeControls = [bool]$ExerciseTimeControls
 } | ConvertTo-Json -Depth 3 | Set-Content -LiteralPath $commandPath -Encoding UTF8
 
 Invoke-TargetAdb -Arguments @("shell", "am", "force-stop", $PackageName) -AllowFailure | Out-Null
@@ -426,7 +447,22 @@ $failed = $scenarioResult.state -eq "error" `
     -or ($RequireBossCleanup -and (
         -not $scenarioResult.bossId `
         -or $scenarioResult.enteredBossPhaseIds.Count -lt 1 `
-        -or -not $scenarioResult.battleRuntimeCleanupComplete))
+        -or -not $scenarioResult.battleRuntimeCleanupComplete)) `
+    -or ($RequireSettings -and (
+        ($ExpectedCameraShakeLevel -ge 0 -and $scenarioResult.cameraShakeLevel -ne $ExpectedCameraShakeLevel) `
+        -or ($ExpectedReducedFlashMode -ge 0 -and [int]$scenarioResult.reducedFlash -ne $ExpectedReducedFlashMode) `
+        -or ($ExpectedTextScalePercent -gt 0 -and $scenarioResult.textScalePercent -ne $ExpectedTextScalePercent) `
+        -or ($ExpectedPreferredBattleSpeed -gt 0 -and $scenarioResult.preferredBattleSpeed -ne $ExpectedPreferredBattleSpeed))) `
+    -or ($RequireTimeControls -and -not $scenarioResult.timeControlsVerified) `
+    -or ($RequirePooling -and (
+        $scenarioResult.enemyPoolCreated -lt 1 `
+        -or $scenarioResult.enemyPoolCreated -gt $scenarioResult.enemyPoolCapacity `
+        -or $scenarioResult.enemyPoolReused -lt 1 `
+        -or $scenarioResult.enemyPoolPeakActive -gt $scenarioResult.enemyPoolCapacity `
+        -or $scenarioResult.simpleVfxCreated -gt 96 `
+        -or $scenarioResult.simpleVfxDropped -gt 0 `
+        -or $scenarioResult.cachedAudioClips -lt 1 `
+        -or $scenarioResult.cachedAudioClips -gt 11))
 if ($failed) {
     exit 1
 }

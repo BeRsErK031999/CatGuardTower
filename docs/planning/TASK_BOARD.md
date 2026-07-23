@@ -329,7 +329,6 @@ Source of truth: `EXPANSION_ROADMAP.md`.
 
 ### Todo
 
-* [ ] E14 — Balance, Performance, Accessibility, And Polish.
 * [ ] E15 — Expansion Release Gate.
 
 ### In Progress
@@ -352,6 +351,7 @@ Source of truth: `EXPANSION_ROADMAP.md`.
 * [x] E11 — Achievements And Reward Claims; full gate recorded in `E11_ACHIEVEMENTS_REPORT.md`.
 * [x] E12 — Expanded Landscape Campaign; 12 maps, 3 biomes, 8 enemies, challenges, schema v4, and device traversal gate.
 * [x] E13 — Bosses And Advanced Map Rules; 2 mini-bosses, 1 three-phase main boss, 3 data-driven rules, and the full Unity/Android gate recorded in `E13_BOSSES_ADVANCED_RULES_REPORT.md`.
+* [x] E14 — Balance, Performance, Accessibility, And Polish; bounded enemy/VFX pools, cached audio, schema v5 accessibility settings, pause and 1×/2× controls, staged tutorials, and the full Unity/Android gate recorded in `E14_BALANCE_PERFORMANCE_ACCESSIBILITY_REPORT.md`.
 * [x] Select `Bloons TD 6` as the primary systems benchmark and `Kingdom Rush` as the secondary presentation benchmark.
 * [x] Define the large-section test/commit/push workflow.
 * [x] Create the external production backlog.

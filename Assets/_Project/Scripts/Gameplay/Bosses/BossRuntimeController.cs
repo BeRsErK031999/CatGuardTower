@@ -31,7 +31,7 @@ namespace CatGuard.Gameplay.Bosses
         public float HealthPercent => enemy?.HealthPercent ?? 0f;
         public bool IsTransitioning => !ended && CurrentPhase != null && !abilityExecuted;
         public float TelegraphRemainingSeconds => IsTransitioning
-            ? Mathf.Max(0f, transitionEndsAt - Time.unscaledTime)
+            ? Mathf.Max(0f, transitionEndsAt - Time.time)
             : 0f;
 
         public void Initialize(
@@ -39,6 +39,7 @@ namespace CatGuard.Gameplay.Bosses
             BasicEnemy bossEnemy,
             BossEncounterConfig config)
         {
+            enabled = true;
             owner = levelOwner;
             enemy = bossEnemy;
             encounter = config;
@@ -47,6 +48,24 @@ namespace CatGuard.Gameplay.Bosses
             CreateTelegraphVisual();
             owner?.RegisterBoss(this);
             EnterPhase(0);
+        }
+
+        public void ResetForPool()
+        {
+            EndRuntime("pool_release");
+            owner = null;
+            enemy = null;
+            encounter = null;
+            phaseIndex = -1;
+            transitionEndsAt = 0f;
+            abilityExecuted = true;
+            ended = true;
+            if (telegraphVisual != null)
+            {
+                telegraphVisual.gameObject.SetActive(false);
+            }
+
+            enabled = false;
         }
 
         public float FilterIncomingDamage(
@@ -158,7 +177,7 @@ namespace CatGuard.Gameplay.Bosses
 
         private void Update()
         {
-            if (ended || !IsTransitioning || Time.unscaledTime < transitionEndsAt)
+            if (ended || owner?.IsPaused == true || !IsTransitioning || Time.time < transitionEndsAt)
             {
                 RefreshTelegraphVisual();
                 return;
@@ -183,7 +202,7 @@ namespace CatGuard.Gameplay.Bosses
 
             phaseIndex = targetIndex;
             abilityExecuted = false;
-            transitionEndsAt = Time.unscaledTime + CurrentPhase.TelegraphSeconds;
+            transitionEndsAt = Time.time + CurrentPhase.TelegraphSeconds;
             enemy?.SetBossPhaseMovementMultiplier(CurrentPhase.MovementSpeedMultiplier);
             RefreshTelegraphVisual();
             owner?.NotifyBossPhaseStarted(this);
@@ -212,6 +231,19 @@ namespace CatGuard.Gameplay.Bosses
 
         private void CreateTelegraphVisual()
         {
+            if (telegraphVisual != null)
+            {
+                telegraphRenderer.color = encounter == null
+                    ? new Color(1f, 0.4f, 0.18f, 0.45f)
+                    : new Color(
+                        encounter.PresentationColor.r,
+                        encounter.PresentationColor.g,
+                        encounter.PresentationColor.b,
+                        0.48f);
+                telegraphVisual.gameObject.SetActive(false);
+                return;
+            }
+
             var telegraphObject = new GameObject("BossTelegraphRing");
             telegraphObject.transform.SetParent(transform, false);
             telegraphVisual = telegraphObject.transform;

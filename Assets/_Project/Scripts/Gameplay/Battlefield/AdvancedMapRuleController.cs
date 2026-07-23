@@ -86,7 +86,7 @@ namespace CatGuard.Gameplay.Battlefield
 
         public void BeginTimeline()
         {
-            timelineStartedAt = Time.unscaledTime;
+            timelineStartedAt = Time.time;
             timelineRunning = true;
             cleanedUp = false;
             foreach (var state in states)
@@ -145,7 +145,7 @@ namespace CatGuard.Gameplay.Battlefield
                 {
                     state.ForcedUntil = Mathf.Max(
                         state.ForcedUntil,
-                        Time.unscaledTime + Mathf.Max(0.1f, durationSeconds));
+                        Time.time + Mathf.Max(0.1f, durationSeconds));
                 }
 
                 SetActive(state, true);
@@ -162,7 +162,7 @@ namespace CatGuard.Gameplay.Battlefield
                 return 0f;
             }
 
-            return Mathf.Max(0f, state.Config.ActivationDelaySeconds - (Time.unscaledTime - timelineStartedAt));
+            return Mathf.Max(0f, state.Config.ActivationDelaySeconds - (Time.time - timelineStartedAt));
         }
 
         public void EndBattle(string reason)
@@ -201,11 +201,16 @@ namespace CatGuard.Gameplay.Battlefield
 
         private void EvaluateStates()
         {
-            var elapsed = Time.unscaledTime - timelineStartedAt;
+            if (owner?.IsPaused == true)
+            {
+                return;
+            }
+
+            var elapsed = Time.time - timelineStartedAt;
             foreach (var state in states)
             {
                 var config = state.Config;
-                var forced = state.ForcePersistent || state.ForcedUntil > Time.unscaledTime;
+                var forced = state.ForcePersistent || state.ForcedUntil > Time.time;
                 var scheduled = config.RuleType == AdvancedMapRuleType.SecondaryEntrance
                     ? elapsed >= config.ActivationDelaySeconds
                     : elapsed >= config.ActivationDelaySeconds

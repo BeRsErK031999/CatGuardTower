@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace CatGuard.Core.Audio
@@ -7,9 +8,12 @@ namespace CatGuard.Core.Audio
         private static AudioSource sfxSource;
         private static AudioSource musicSource;
         private static AudioClip musicLoop;
+        private static readonly Dictionary<ProceduralSoundId, AudioClip> ClipCache = new();
         private static bool muted;
+        private static ProceduralAudioContext context = ProceduralAudioContext.Hub;
 
         public static bool IsMuted => muted;
+        public static int CachedClipCount => ClipCache.Count;
 
         public static void Initialize(bool startMuted)
         {
@@ -24,6 +28,14 @@ namespace CatGuard.Core.Audio
             muted = isMuted;
             EnsureSources();
             ApplyMute();
+        }
+
+        public static void SetContext(ProceduralAudioContext audioContext)
+        {
+            context = audioContext;
+            EnsureMusic();
+            musicSource.volume = context == ProceduralAudioContext.Hub ? 0.13f : 0.09f;
+            musicSource.pitch = context == ProceduralAudioContext.Hub ? 0.92f : 1f;
         }
 
         public static void EnsureMusic()
@@ -50,23 +62,38 @@ namespace CatGuard.Core.Audio
             }
 
             EnsureSources();
-            var clip = soundId switch
+            if (!ClipCache.TryGetValue(soundId, out var clip))
             {
-                ProceduralSoundId.MenuClick => CreateTone("MenuClick", 520f, 0.07f, 0.18f),
-                ProceduralSoundId.TowerPlaced => CreateTone("TowerPlaced", 660f, 0.10f, 0.22f),
-                ProceduralSoundId.TowerShot => CreateTone("TowerShot", 880f, 0.05f, 0.16f),
-                ProceduralSoundId.EnemyDefeated => CreateTone("EnemyDefeated", 360f, 0.12f, 0.22f),
-                ProceduralSoundId.BaseHit => CreateTone("BaseHit", 150f, 0.16f, 0.28f),
-                ProceduralSoundId.UltimateCast => CreateArpeggio("UltimateCast", new[] { 392f, 523.25f, 783.99f }, 0.28f, 0.2f),
-                ProceduralSoundId.Victory => CreateArpeggio("Victory", new[] { 523.25f, 659.25f, 783.99f }, 0.36f, 0.22f),
-                ProceduralSoundId.Defeat => CreateArpeggio("Defeat", new[] { 349.23f, 293.66f, 220f }, 0.42f, 0.22f),
-                _ => null
-            };
+                clip = CreateClip(soundId);
+                if (clip != null)
+                {
+                    ClipCache[soundId] = clip;
+                }
+            }
 
             if (clip != null)
             {
                 sfxSource.PlayOneShot(clip);
             }
+        }
+
+        private static AudioClip CreateClip(ProceduralSoundId soundId)
+        {
+            return soundId switch
+            {
+                ProceduralSoundId.MenuClick => CreateTone("MenuClick", 520f, 0.07f, 0.18f),
+                ProceduralSoundId.TowerPlaced => CreateTone("TowerPlaced", 660f, 0.10f, 0.22f),
+                ProceduralSoundId.TowerUpgrade => CreateArpeggio("TowerUpgrade", new[] { 523.25f, 659.25f }, 0.18f, 0.18f),
+                ProceduralSoundId.TowerShot => CreateTone("TowerShot", 880f, 0.05f, 0.16f),
+                ProceduralSoundId.EnemyDefeated => CreateTone("EnemyDefeated", 360f, 0.12f, 0.22f),
+                ProceduralSoundId.BaseHit => CreateTone("BaseHit", 150f, 0.16f, 0.28f),
+                ProceduralSoundId.BossPhase => CreateArpeggio("BossPhase", new[] { 196f, 261.63f, 392f }, 0.32f, 0.21f),
+                ProceduralSoundId.MapRule => CreateTone("MapRule", 240f, 0.22f, 0.2f),
+                ProceduralSoundId.UltimateCast => CreateArpeggio("UltimateCast", new[] { 392f, 523.25f, 783.99f }, 0.28f, 0.2f),
+                ProceduralSoundId.Victory => CreateArpeggio("Victory", new[] { 523.25f, 659.25f, 783.99f }, 0.36f, 0.22f),
+                ProceduralSoundId.Defeat => CreateArpeggio("Defeat", new[] { 349.23f, 293.66f, 220f }, 0.42f, 0.22f),
+                _ => null
+            };
         }
 
         private static void EnsureSources()

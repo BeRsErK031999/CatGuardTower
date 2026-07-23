@@ -38,7 +38,7 @@ MonoBehaviour:
   replayRewardCoins: 18
   unlocksLevelIds:
   - level_07
-  tutorialTextKey: 
+  tutorialTextKey: tutorial.e14.upgrades
   campaignMetadata:
     biomeNameLocalizationKey: campaign.biome.rooftops
     tacticalSummaryLocalizationKey: campaign.map.level_06.summary
@@ -57,3 +57,5 @@ MonoBehaviour:
     recommendedMaxActiveEnemies: 96
     externalAssetManifest: Internal code-authored layout; existing Cat Guard prototype
       sprites and animation profiles only; no external asset or license dependency.
+  bossEncounter: {fileID: 0}
+  advancedMapRules: []

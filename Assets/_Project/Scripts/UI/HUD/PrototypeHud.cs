@@ -48,6 +48,7 @@ namespace CatGuard.UI.HUD
         private Texture2D accentTexture;
         private Texture2D accentHoverTexture;
         private Texture2D modalBackdropTexture;
+        private int appliedTextScalePercent = -1;
         private string resultMessage = string.Empty;
         private BasicTower sellConfirmationTower;
         private float sellConfirmationUntil;
@@ -68,7 +69,8 @@ namespace CatGuard.UI.HUD
             }
 
             if (levelController != null
-                && levelController.State is PrototypeLevelState.Won or PrototypeLevelState.Lost)
+                && (levelController.IsPaused
+                    || levelController.State is PrototypeLevelState.Won or PrototypeLevelState.Lost))
             {
                 return true;
             }
@@ -114,7 +116,11 @@ namespace CatGuard.UI.HUD
             try
             {
                 DrawTopHud(GetTopBarRect(layout));
-                if (levelController.State is PrototypeLevelState.Preparing or PrototypeLevelState.Running)
+                if (levelController.IsPaused)
+                {
+                    DrawPauseOverlay(layout.SurfaceRect, layout.SafeRect);
+                }
+                else if (levelController.State is PrototypeLevelState.Preparing or PrototypeLevelState.Running)
                 {
                     DrawWorldIndicators(layout);
                     DrawBossAndRuleHud(layout);
@@ -237,11 +243,14 @@ namespace CatGuard.UI.HUD
             var levelName = levelController.Config == null
                 ? LocalizationService.Text("common.none")
                 : LocalizationService.LevelName(levelController.Config);
-            var menuWidth = 150f;
+            const float pauseWidth = 132f;
+            const float speedWidth = 86f;
+            const float controlGap = 8f;
+            var controlWidth = pauseWidth + speedWidth + controlGap;
             var stateWidth = Mathf.Clamp(panelRect.width * 0.18f, 210f, 320f);
             var levelWidth = Mathf.Clamp(panelRect.width * 0.3f, 360f, 620f);
             var statsX = panelRect.x + 18f + levelWidth + 12f;
-            var statsWidth = Mathf.Max(300f, panelRect.width - levelWidth - stateWidth - menuWidth - 72f);
+            var statsWidth = Mathf.Max(260f, panelRect.width - levelWidth - stateWidth - controlWidth - 72f);
 
             GUI.Label(
                 new Rect(panelRect.x + 18f, panelRect.y + 10f, levelWidth, panelRect.height - 20f),
@@ -276,11 +285,73 @@ namespace CatGuard.UI.HUD
                 statsStyle);
 
             if (GUI.Button(
-                    new Rect(panelRect.xMax - menuWidth - 14f, panelRect.y + 13f, menuWidth, panelRect.height - 26f),
-                    LocalizationService.Text("button.menu"),
+                    new Rect(panelRect.xMax - controlWidth - 14f, panelRect.y + 13f, pauseWidth, panelRect.height - 26f),
+                    LocalizationService.Text("button.pause"),
                     compactButtonStyle))
             {
                 ProceduralAudioService.Play(ProceduralSoundId.MenuClick);
+                levelController.TogglePause();
+            }
+
+            if (GUI.Button(
+                    new Rect(panelRect.xMax - speedWidth - 14f, panelRect.y + 13f, speedWidth, panelRect.height - 26f),
+                    $"{levelController.BattleSpeed}x",
+                    compactButtonStyle))
+            {
+                ProceduralAudioService.Play(ProceduralSoundId.MenuClick);
+                levelController.ToggleBattleSpeed();
+            }
+        }
+
+        private void DrawPauseOverlay(Rect surfaceRect, Rect safeRect)
+        {
+            GUI.DrawTexture(surfaceRect, modalBackdropTexture, ScaleMode.StretchToFill);
+            var width = Mathf.Min(760f, safeRect.width - 120f);
+            var height = Mathf.Min(430f, safeRect.height - 100f);
+            var rect = new Rect(
+                safeRect.center.x - width * 0.5f,
+                safeRect.center.y - height * 0.5f,
+                width,
+                height);
+            GUI.Box(rect, GUIContent.none, strongPanelStyle);
+            GUI.Label(
+                new Rect(rect.x + 30f, rect.y + 26f, rect.width - 60f, 72f),
+                LocalizationService.Text("pause.title"),
+                statusStyle);
+            GUI.Label(
+                new Rect(rect.x + 40f, rect.y + 104f, rect.width - 80f, 62f),
+                LocalizationService.Text("pause.hint"),
+                instructionStyle);
+
+            var buttonWidth = rect.width - 100f;
+            if (GUI.Button(
+                    new Rect(rect.x + 50f, rect.y + 184f, buttonWidth, 58f),
+                    LocalizationService.Text("button.resume"),
+                    selectedButtonStyle))
+            {
+                ProceduralAudioService.Play(ProceduralSoundId.MenuClick);
+                levelController.SetPaused(false);
+            }
+
+            var halfWidth = (buttonWidth - 14f) * 0.5f;
+            if (GUI.Button(
+                    new Rect(rect.x + 50f, rect.y + 260f, halfWidth, 58f),
+                    LocalizationService.Text("button.retry"),
+                    buttonStyle))
+            {
+                ProceduralAudioService.Play(ProceduralSoundId.MenuClick);
+                levelController.SetPaused(false);
+                HomeHubNavigationService.BeginBattle(levelController.Config);
+                SceneLoader.LoadLevel();
+            }
+
+            if (GUI.Button(
+                    new Rect(rect.x + 64f + halfWidth, rect.y + 260f, halfWidth, 58f),
+                    LocalizationService.Text("button.menu"),
+                    buttonStyle))
+            {
+                ProceduralAudioService.Play(ProceduralSoundId.MenuClick);
+                levelController.SetPaused(false);
                 SceneLoader.LoadMainMenu();
             }
         }
@@ -858,6 +929,7 @@ namespace CatGuard.UI.HUD
         {
             if (panelStyle != null)
             {
+                ApplyTextScale();
                 return;
             }
 
@@ -887,6 +959,29 @@ namespace CatGuard.UI.HUD
                 fontStyle = FontStyle.Bold,
                 normal = { textColor = Color.white }
             };
+            ApplyTextScale();
+        }
+
+        private void ApplyTextScale()
+        {
+            var percent = CatGuard.Meta.Progression.ProgressionService.TextScalePercent;
+            if (appliedTextScalePercent == percent || levelStyle == null)
+            {
+                return;
+            }
+
+            appliedTextScalePercent = percent;
+            var scale = percent / 100f;
+            levelStyle.fontSize = Mathf.RoundToInt(23 * scale);
+            statsStyle.fontSize = Mathf.RoundToInt(17 * scale);
+            instructionStyle.fontSize = Mathf.RoundToInt(18 * scale);
+            statusStyle.fontSize = Mathf.RoundToInt(46 * scale);
+            buttonStyle.fontSize = Mathf.RoundToInt(20 * scale);
+            compactButtonStyle.fontSize = Mathf.RoundToInt(17 * scale);
+            selectedButtonStyle.fontSize = Mathf.RoundToInt(20 * scale);
+            towerButtonStyle.fontSize = Mathf.RoundToInt(17 * scale);
+            selectedTowerButtonStyle.fontSize = Mathf.RoundToInt(17 * scale);
+            indicatorStyle.fontSize = Mathf.RoundToInt(16 * scale);
         }
 
         private static GUIStyle CreateLabelStyle(int fontSize, FontStyle fontStyle, TextAnchor alignment, Color color)

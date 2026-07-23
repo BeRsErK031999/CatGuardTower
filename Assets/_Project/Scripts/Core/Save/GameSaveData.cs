@@ -39,6 +39,8 @@ namespace CatGuard.Core.Save
         public string lastFreeCoinsRewardDateKey;
         public int cameraShakeIntensity = 2;
         public bool reducedFlash;
+        public int textScalePercent = 100;
+        public int preferredBattleSpeed = 1;
 
         public static GameSaveData CreateDefault(string firstLevelId)
         {

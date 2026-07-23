@@ -528,7 +528,7 @@ public static class E12ProjectSetup
         if (!GameSaveMigrationService.TryMigrate(save, "level_01", out var changed, out var error)
             || !changed
             || !string.IsNullOrEmpty(error)
-            || save.schemaVersion != 4
+            || save.schemaVersion != GameSaveMigrationService.CurrentSchemaVersion
             || save.selectedChallengeId != string.Empty
             || save.completedChallengeIds == null
             || !save.completedLevelIds.Contains("level_01"))
@@ -584,7 +584,7 @@ public static class E12ProjectSetup
             ["Assets/_Project/Scripts/Meta/Progression/ProgressionService.cs"] = new[] { "IsChallengeUnlocked", "CompleteChallenge", "completedChallengeIds" },
             ["Assets/_Project/Scripts/Gameplay/Levels/PrototypeLevelController.cs"] = new[] { "ActiveChallenge", "EnemyHealthMultiplier", "PresentationPalette" },
             ["Assets/_Project/Scripts/UI/Screens/MainMenuController.cs"] = new[] { "selectedCampaignChallenge", "campaign.challenge", "TacticalSummaryLocalizationKey" },
-            ["Assets/_Project/Scripts/Core/Save/GameSaveMigrationService.cs"] = new[] { "CurrentSchemaVersion = 4", "MigrateVersion3ToVersion4" },
+            ["Assets/_Project/Scripts/Core/Save/GameSaveMigrationService.cs"] = new[] { "CurrentSchemaVersion", "MigrateVersion3ToVersion4" },
             ["tools/android/run-emulator-campaign-qa.ps1"] = new[] { "ChallengeId", "level_12", "RequirePerformance" }
         };
         foreach (var pair in required)

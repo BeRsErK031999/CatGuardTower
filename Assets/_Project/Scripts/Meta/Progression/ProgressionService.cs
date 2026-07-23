@@ -39,6 +39,9 @@ namespace CatGuard.Meta.Progression
         public static int CameraShakeLevel => Math.Clamp(EnsureSave().cameraShakeIntensity, 0, 2);
         public static float CameraShakeIntensity => CameraShakeLevel * 0.5f;
         public static bool ReducedFlash => EnsureSave().reducedFlash;
+        public static int TextScalePercent => Math.Clamp(EnsureSave().textScalePercent, 90, 120);
+        public static float TextScale => TextScalePercent / 100f;
+        public static int PreferredBattleSpeed => EnsureSave().preferredBattleSpeed >= 2 ? 2 : 1;
         public static bool IsDailyRewardDoubleAvailable => rewardedAdService != null
             && rewardedAdService.IsRewardedAdAvailable(RewardedAdPlacementIds.DailyRewardDouble);
         public static int FreeCoinsRewardFishCoins => FreeCoinsRewardAmount;
@@ -144,15 +147,45 @@ namespace CatGuard.Meta.Progression
 
         public static void CycleCameraShakeIntensity()
         {
-            var data = EnsureSave();
-            data.cameraShakeIntensity = (CameraShakeLevel + 1) % 3;
+            SetCameraShakeIntensity((CameraShakeLevel + 1) % 3);
+        }
+
+        public static void SetCameraShakeIntensity(int level)
+        {
+            EnsureSave().cameraShakeIntensity = Math.Clamp(level, 0, 2);
             Save();
         }
 
         public static void ToggleReducedFlash()
         {
-            var data = EnsureSave();
-            data.reducedFlash = !data.reducedFlash;
+            SetReducedFlash(!ReducedFlash);
+        }
+
+        public static void SetReducedFlash(bool enabled)
+        {
+            EnsureSave().reducedFlash = enabled;
+            Save();
+        }
+
+        public static void CycleTextScale()
+        {
+            SetTextScalePercent(TextScalePercent switch
+            {
+                90 => 100,
+                100 => 120,
+                _ => 90
+            });
+        }
+
+        public static void SetTextScalePercent(int percent)
+        {
+            EnsureSave().textScalePercent = percent <= 95 ? 90 : percent <= 110 ? 100 : 120;
+            Save();
+        }
+
+        public static void SetPreferredBattleSpeed(int speed)
+        {
+            EnsureSave().preferredBattleSpeed = speed >= 2 ? 2 : 1;
             Save();
         }
 
@@ -592,6 +625,8 @@ namespace CatGuard.Meta.Progression
 
             data.languageCode = LocalizationService.NormalizeLanguageCode(data.languageCode);
             data.cameraShakeIntensity = Math.Clamp(data.cameraShakeIntensity, 0, 2);
+            data.textScalePercent = data.textScalePercent <= 95 ? 90 : data.textScalePercent <= 110 ? 100 : 120;
+            data.preferredBattleSpeed = data.preferredBattleSpeed >= 2 ? 2 : 1;
             NormalizeDailyRewardState(data);
             EnsureDailyMissionsForToday(data);
         }

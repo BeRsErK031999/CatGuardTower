@@ -39,7 +39,7 @@ MonoBehaviour:
   replayRewardCoins: 8
   unlocksLevelIds:
   - level_02
-  tutorialTextKey: tutorial.level_01
+  tutorialTextKey: tutorial.e14.basics
   campaignMetadata:
     biomeNameLocalizationKey: campaign.biome.backyard
     tacticalSummaryLocalizationKey: campaign.map.level_01.summary
@@ -58,3 +58,5 @@ MonoBehaviour:
     recommendedMaxActiveEnemies: 96
     externalAssetManifest: Internal code-authored layout; existing Cat Guard prototype
       sprites and animation profiles only; no external asset or license dependency.
+  bossEncounter: {fileID: 0}
+  advancedMapRules: []

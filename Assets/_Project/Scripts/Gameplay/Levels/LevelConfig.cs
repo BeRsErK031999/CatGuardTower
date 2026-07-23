@@ -179,6 +179,11 @@ namespace CatGuard.Gameplay.Levels
             advancedMapRules = rules ?? Array.Empty<AdvancedMapRuleConfig>();
         }
 
+        public void ConfigureTutorialText(string localizationKey)
+        {
+            tutorialTextKey = localizationKey ?? string.Empty;
+        }
+
         public void Configure(
             string id,
             string title,

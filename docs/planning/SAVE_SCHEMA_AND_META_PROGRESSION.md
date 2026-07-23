@@ -2,7 +2,7 @@
 
 ## Source of truth
 
-`GameSaveData.schemaVersion` and `GameSaveMigrationService.CurrentSchemaVersion` define the local-save contract. E12 uses schema version `4`. A missing version is legacy version `0`; migrations run sequentially (`0 -> 1 -> 2 -> 3 -> 4`) and are safe to repeat because a completed step advances the stored version exactly once.
+`GameSaveData.schemaVersion` and `GameSaveMigrationService.CurrentSchemaVersion` define the local-save contract. E14 uses schema version `5`. A missing version is legacy version `0`; migrations run sequentially (`0 -> 1 -> 2 -> 3 -> 4 -> 5`) and are safe to repeat because a completed step advances the stored version exactly once. Schema v5 adds persisted `textScalePercent` and `preferredBattleSpeed`; absent v4 values normalize to 100% and 1x.
 
 ## E12 campaign challenge fields
 

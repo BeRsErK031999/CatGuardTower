@@ -27,6 +27,7 @@ namespace CatGuard.VFX
             startColor = fromColor;
             endColor = toColor;
             elapsed = 0f;
+            enabled = true;
             Apply(0f);
         }
 
@@ -38,7 +39,8 @@ namespace CatGuard.VFX
 
             if (t >= 1f)
             {
-                Destroy(gameObject);
+                enabled = false;
+                SimpleVfxFactory.Release(this);
             }
         }
 

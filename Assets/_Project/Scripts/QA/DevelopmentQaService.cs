@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using CatGuard.Gameplay.Battlefield;
+using CatGuard.Core.Audio;
 using CatGuard.Core.SceneLoading;
 using CatGuard.Gameplay.Grid;
 using CatGuard.Gameplay.Levels;
@@ -11,6 +12,7 @@ using CatGuard.Gameplay.Ultimates;
 using CatGuard.Meta.HomeHub;
 using CatGuard.Meta.Progression;
 using CatGuard.SDK.Analytics;
+using CatGuard.VFX;
 using UnityEngine;
 
 namespace CatGuard.QA
@@ -139,6 +141,22 @@ namespace CatGuard.QA
             {
                 ProgressionService.SetLanguage(command.languageCode);
             }
+            if (command.cameraShakeLevel >= 0)
+            {
+                ProgressionService.SetCameraShakeIntensity(command.cameraShakeLevel);
+            }
+            if (command.reducedFlashMode >= 0)
+            {
+                ProgressionService.SetReducedFlash(command.reducedFlashMode == 1);
+            }
+            if (command.textScalePercent > 0)
+            {
+                ProgressionService.SetTextScalePercent(command.textScalePercent);
+            }
+            if (command.preferredBattleSpeed > 0)
+            {
+                ProgressionService.SetPreferredBattleSpeed(command.preferredBattleSpeed);
+            }
 
             if (!save.unlockedLevelIds.Contains(level.LevelId))
             {
@@ -229,6 +247,11 @@ namespace CatGuard.QA
         public int interruptAtBossPhase;
         public string interruptAction;
         public int targetFrameRate;
+        public int cameraShakeLevel = -1;
+        public int reducedFlashMode = -1;
+        public int textScalePercent;
+        public int preferredBattleSpeed;
+        public bool exerciseTimeControls;
     }
 
     [Serializable]
@@ -327,6 +350,20 @@ namespace CatGuard.QA
         public int mapRuleDeactivations;
         public bool battleRuntimeCleanupComplete;
         public int targetFrameRate;
+        public int cameraShakeLevel;
+        public bool reducedFlash;
+        public int textScalePercent;
+        public int preferredBattleSpeed;
+        public bool timeControlsVerified;
+        public int enemyPoolCreated;
+        public int enemyPoolReused;
+        public int enemyPoolPeakActive;
+        public int enemyPoolCapacity;
+        public int simpleVfxCreated;
+        public int simpleVfxReused;
+        public int simpleVfxDropped;
+        public int simpleVfxPeakActive;
+        public int cachedAudioClips;
     }
 
     public sealed class DevelopmentQaScenarioRunner : MonoBehaviour
@@ -365,6 +402,7 @@ namespace CatGuard.QA
         private float nextUltimateAt;
         private bool targetingGateExercised;
         private int previousTargetFrameRate;
+        private bool timeControlsVerified;
 
         public void Initialize(
             PrototypeLevelController levelController,
@@ -383,6 +421,17 @@ namespace CatGuard.QA
             {
                 QualitySettings.vSyncCount = 0;
                 Application.targetFrameRate = command.targetFrameRate;
+            }
+            if (command.exerciseTimeControls)
+            {
+                controller.SetBattleSpeed(2, true);
+                controller.SetPaused(true);
+                var paused = controller.IsPaused && Mathf.Approximately(Time.timeScale, 0f);
+                controller.SetPaused(false);
+                controller.SetBattleSpeed(command.preferredBattleSpeed > 0 ? command.preferredBattleSpeed : 1, true);
+                timeControlsVerified = paused
+                    && !controller.IsPaused
+                    && controller.BattleSpeed == ProgressionService.PreferredBattleSpeed;
             }
 
             if (!controller.ConfigureDevelopmentScenario(
@@ -496,6 +545,20 @@ namespace CatGuard.QA
                     mapRuleDeactivations = controller.MapRules?.DeactivationCount ?? 0,
                     battleRuntimeCleanupComplete = controller.BattleRuntimeCleanupComplete,
                     targetFrameRate = command.targetFrameRate,
+                    cameraShakeLevel = ProgressionService.CameraShakeLevel,
+                    reducedFlash = ProgressionService.ReducedFlash,
+                    textScalePercent = ProgressionService.TextScalePercent,
+                    preferredBattleSpeed = ProgressionService.PreferredBattleSpeed,
+                    timeControlsVerified = !command.exerciseTimeControls || timeControlsVerified,
+                    enemyPoolCreated = controller.EnemyPoolCreatedCount,
+                    enemyPoolReused = controller.EnemyPoolReusedCount,
+                    enemyPoolPeakActive = controller.EnemyPoolPeakActiveCount,
+                    enemyPoolCapacity = controller.EnemyPoolCapacity,
+                    simpleVfxCreated = SimpleVfxFactory.CreatedCount,
+                    simpleVfxReused = SimpleVfxFactory.ReusedCount,
+                    simpleVfxDropped = SimpleVfxFactory.DroppedCount,
+                    simpleVfxPeakActive = SimpleVfxFactory.PeakActiveCount,
+                    cachedAudioClips = ProceduralAudioService.CachedClipCount,
                     analyticsPayloadValid = HasValidBattleUpgradeAnalytics() && HasValidUltimateAnalytics(),
                     error = string.Empty
                 });
@@ -579,6 +642,20 @@ namespace CatGuard.QA
                 mapRuleDeactivations = controller.MapRules?.DeactivationCount ?? 0,
                 battleRuntimeCleanupComplete = controller.BattleRuntimeCleanupComplete,
                 targetFrameRate = command.targetFrameRate,
+                cameraShakeLevel = ProgressionService.CameraShakeLevel,
+                reducedFlash = ProgressionService.ReducedFlash,
+                textScalePercent = ProgressionService.TextScalePercent,
+                preferredBattleSpeed = ProgressionService.PreferredBattleSpeed,
+                timeControlsVerified = !command.exerciseTimeControls || timeControlsVerified,
+                enemyPoolCreated = controller.EnemyPoolCreatedCount,
+                enemyPoolReused = controller.EnemyPoolReusedCount,
+                enemyPoolPeakActive = controller.EnemyPoolPeakActiveCount,
+                enemyPoolCapacity = controller.EnemyPoolCapacity,
+                simpleVfxCreated = SimpleVfxFactory.CreatedCount,
+                simpleVfxReused = SimpleVfxFactory.ReusedCount,
+                simpleVfxDropped = SimpleVfxFactory.DroppedCount,
+                simpleVfxPeakActive = SimpleVfxFactory.PeakActiveCount,
+                cachedAudioClips = ProceduralAudioService.CachedClipCount,
                 error = string.Empty
             });
 

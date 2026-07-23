@@ -64,6 +64,7 @@ namespace CatGuard.UI.Screens
         private GUIStyle badgeStyle;
         private GUIStyle privacyBodyStyle;
         private GUIStyle privacyMetaStyle;
+        private int appliedTextScalePercent = -1;
 
         private Vector2 levelsScrollPosition;
         private string selectedCampaignLevelId = string.Empty;
@@ -136,6 +137,7 @@ namespace CatGuard.UI.Screens
                 dailyRewardChain,
                 dailyMissionCatalog,
                 new FakeRewardedAdService());
+            ProceduralAudioService.SetContext(ProceduralAudioContext.Hub);
 
             if (!MetaProgressionService.Initialize(
                     MetaProgressionCatalogConfig.LoadDefault(),
@@ -1486,8 +1488,8 @@ namespace CatGuard.UI.Screens
             var inner = LandscapeLayout.Inset(contentRect, 28f, 24f);
             GUI.Box(inner, GUIContent.none, panelStyle);
 
-            const float gap = 18f;
-            var columnWidth = (inner.width - 84f - (gap * 2f)) / 3f;
+            const float gap = 14f;
+            var columnWidth = (inner.width - 84f - (gap * 3f)) / 4f;
             const float buttonHeight = 74f;
             var left = inner.x + 42f;
             var top = inner.center.y - buttonHeight - (gap * 0.5f);
@@ -1498,7 +1500,8 @@ namespace CatGuard.UI.Screens
             var languageRect = new Rect(left, top, columnWidth, buttonHeight);
             var soundRect = new Rect(left + columnWidth + gap, top, columnWidth, buttonHeight);
             var shakeRect = new Rect(left + ((columnWidth + gap) * 2f), top, columnWidth, buttonHeight);
-            var flashRect = new Rect(left, top + buttonHeight + gap, columnWidth, buttonHeight);
+            var flashRect = new Rect(left + ((columnWidth + gap) * 3f), top, columnWidth, buttonHeight);
+            var textScaleRect = new Rect(left, top + buttonHeight + gap, columnWidth, buttonHeight);
             var privacyRect = new Rect(left + columnWidth + gap, top + buttonHeight + gap, columnWidth, buttonHeight);
             var resetRect = new Rect(left + ((columnWidth + gap) * 2f), top + buttonHeight + gap, columnWidth, buttonHeight);
 
@@ -1534,6 +1537,14 @@ namespace CatGuard.UI.Screens
             {
                 ProceduralAudioService.Play(ProceduralSoundId.MenuClick);
                 ProgressionService.ToggleReducedFlash();
+            }
+
+            var textScaleLabel = $"{LocalizationService.Text("settings.textScale")}\n{ProgressionService.TextScalePercent}%";
+            if (GUI.Button(textScaleRect, textScaleLabel, compactButtonStyle))
+            {
+                ProceduralAudioService.Play(ProceduralSoundId.MenuClick);
+                ProgressionService.CycleTextScale();
+                ApplyTextScale();
             }
 
             if (GUI.Button(privacyRect, LocalizationService.Text("privacy.button"), compactButtonStyle))
@@ -1574,8 +1585,14 @@ namespace CatGuard.UI.Screens
                 string.Format(LocalizationService.Text("hub.selectedLevel"), selectedName),
                 smallLabelStyle);
 
-            var campaignRect = new Rect(rect.xMax - 402f, rect.y + 10f, 184f, 52f);
-            var quickPlayRect = new Rect(rect.xMax - 206f, rect.y + 10f, 184f, 52f);
+            const float footerButtonWidth = 220f;
+            const float footerButtonGap = 12f;
+            var quickPlayRect = new Rect(rect.xMax - footerButtonWidth - 22f, rect.y + 10f, footerButtonWidth, 52f);
+            var campaignRect = new Rect(
+                quickPlayRect.x - footerButtonGap - footerButtonWidth,
+                rect.y + 10f,
+                footerButtonWidth,
+                52f);
             if (GUI.Button(campaignRect, LocalizationService.Text("hub.campaignGate"), compactButtonStyle))
             {
                 NavigateTo(HomeHubRoute.CampaignGate);
@@ -1635,6 +1652,7 @@ namespace CatGuard.UI.Screens
         {
             if (titleStyle != null)
             {
+                ApplyTextScale();
                 return;
             }
 
@@ -1682,6 +1700,35 @@ namespace CatGuard.UI.Screens
             badgeStyle.fontStyle = FontStyle.Bold;
             badgeStyle.normal.textColor = Color.white;
             badgeStyle.padding = new RectOffset(2, 2, 2, 2);
+            ApplyTextScale();
+        }
+
+        private void ApplyTextScale()
+        {
+            var percent = ProgressionService.TextScalePercent;
+            if (appliedTextScalePercent == percent || titleStyle == null)
+            {
+                return;
+            }
+
+            appliedTextScalePercent = percent;
+            var scale = percent / 100f;
+            titleStyle.fontSize = Mathf.RoundToInt(40 * scale);
+            titleShadowStyle.fontSize = Mathf.RoundToInt(40 * scale);
+            headingStyle.fontSize = Mathf.RoundToInt(30 * scale);
+            labelStyle.fontSize = Mathf.RoundToInt(21 * scale);
+            smallLabelStyle.fontSize = Mathf.RoundToInt(17 * scale);
+            eyebrowStyle.fontSize = Mathf.RoundToInt(16 * scale);
+            privacyBodyStyle.fontSize = Mathf.RoundToInt(20 * scale);
+            privacyMetaStyle.fontSize = Mathf.RoundToInt(16 * scale);
+            buttonStyle.fontSize = Mathf.RoundToInt(20 * scale);
+            compactButtonStyle.fontSize = Mathf.RoundToInt(17 * scale);
+            levelButtonStyle.fontSize = Mathf.RoundToInt(18 * scale);
+            primaryButtonStyle.fontSize = Mathf.RoundToInt(21 * scale);
+            achievementButtonStyle.fontSize = Mathf.RoundToInt(16 * scale);
+            dangerButtonStyle.fontSize = Mathf.RoundToInt(16 * scale);
+            zoneButtonStyle.fontSize = Mathf.RoundToInt(22 * scale);
+            badgeStyle.fontSize = Mathf.RoundToInt(18 * scale);
         }
 
         private static GUIStyle CreateLabelStyle(int fontSize, FontStyle fontStyle, TextAnchor alignment, Color color)

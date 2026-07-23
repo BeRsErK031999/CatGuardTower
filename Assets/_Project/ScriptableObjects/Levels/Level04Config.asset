@@ -41,7 +41,7 @@ MonoBehaviour:
   replayRewardCoins: 14
   unlocksLevelIds:
   - level_05
-  tutorialTextKey: 
+  tutorialTextKey: tutorial.e14.routes
   campaignMetadata:
     biomeNameLocalizationKey: campaign.biome.backyard
     tacticalSummaryLocalizationKey: campaign.map.level_04.summary

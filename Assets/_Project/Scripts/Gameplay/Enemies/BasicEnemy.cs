@@ -66,22 +66,60 @@ namespace CatGuard.Gameplay.Enemies
             maxHealth = config.Health * Mathf.Max(0.1f, healthMultiplier);
             currentHealth = maxHealth;
             baseSpeed = config.Speed;
-            ConfigureSpeedMultiplier(speedMultiplier);
             baseDamage = config.BaseDamage;
             nextPathIndex = 1;
             completed = false;
             NormalizedProgress = 0f;
             bossPhaseSpeedMultiplier = 1f;
+            combatSlowMultiplier = 1f;
+            combatSlowUntil = 0f;
+            ultimateSlowMultiplier = 1f;
+            ultimateSlowUntil = 0f;
+            burnDamagePerSecond = 0f;
+            burnUntil = 0f;
+            ultimateStunUntil = 0f;
+            controlStatus = UnitStatusModifier.None;
+            statusModifier = UnitStatusModifier.None;
+            ConfigureSpeedMultiplier(speedMultiplier);
 
             transform.position = route.Points[0];
             EnsureVisual();
             var bossEncounter = owner.ResolveBossEncounter(enemyConfig);
+            var reusableBossRuntime = GetComponent<BossRuntimeController>();
             if (bossEncounter != null)
             {
-                bossRuntime = gameObject.AddComponent<BossRuntimeController>();
+                bossRuntime = reusableBossRuntime == null
+                    ? gameObject.AddComponent<BossRuntimeController>()
+                    : reusableBossRuntime;
                 bossRuntime.Initialize(owner, this, bossEncounter);
             }
+            else
+            {
+                reusableBossRuntime?.ResetForPool();
+                bossRuntime = null;
+            }
             UpdateVisual();
+        }
+
+        public void PrepareForPool()
+        {
+            bossRuntime?.ResetForPool();
+            bossRuntime = null;
+            levelController = null;
+            config = null;
+            route = null;
+            completed = true;
+            currentHealth = 0f;
+            maxHealth = 0f;
+            baseSpeed = 0f;
+            speed = 0f;
+            combatSlowUntil = 0f;
+            ultimateSlowUntil = 0f;
+            burnUntil = 0f;
+            ultimateStunUntil = 0f;
+            controlStatus = UnitStatusModifier.None;
+            statusModifier = UnitStatusModifier.None;
+            animationPresenter?.SetStatusModifier(UnitStatusModifier.None);
         }
 
         public float ApplyDamage(float amount, bool generatesUltimateCharge = true)

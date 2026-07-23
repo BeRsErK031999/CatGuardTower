@@ -5,7 +5,7 @@ namespace CatGuard.Core.Save
 {
     public static class GameSaveMigrationService
     {
-        public const int CurrentSchemaVersion = 4;
+        public const int CurrentSchemaVersion = 5;
 
         public static bool TryMigrate(GameSaveData data, string firstLevelId, out bool changed, out string error)
         {
@@ -45,6 +45,11 @@ namespace CatGuard.Core.Save
                     case 3:
                         MigrateVersion3ToVersion4(data);
                         data.schemaVersion = 4;
+                        changed = true;
+                        break;
+                    case 4:
+                        MigrateVersion4ToVersion5(data);
+                        data.schemaVersion = 5;
                         changed = true;
                         break;
                     default:
@@ -121,6 +126,12 @@ namespace CatGuard.Core.Save
             data.completedChallengeIds ??= new List<string>();
         }
 
+        private static void MigrateVersion4ToVersion5(GameSaveData data)
+        {
+            data.textScalePercent = NormalizeTextScale(data.textScalePercent);
+            data.preferredBattleSpeed = NormalizeBattleSpeed(data.preferredBattleSpeed);
+        }
+
         private static void NormalizeCollections(GameSaveData data, string firstLevelId)
         {
             data.unlockedLevelIds ??= new List<string>();
@@ -149,6 +160,9 @@ namespace CatGuard.Core.Save
             data.languageCode ??= "ru";
             data.lastFreeCoinsRewardDateKey ??= string.Empty;
             data.equippedGuardianPerkId ??= string.Empty;
+            data.cameraShakeIntensity = Math.Clamp(data.cameraShakeIntensity, 0, 2);
+            data.textScalePercent = NormalizeTextScale(data.textScalePercent);
+            data.preferredBattleSpeed = NormalizeBattleSpeed(data.preferredBattleSpeed);
 
             if (!string.IsNullOrWhiteSpace(firstLevelId) && !data.unlockedLevelIds.Contains(firstLevelId))
             {
@@ -159,6 +173,21 @@ namespace CatGuard.Core.Save
             {
                 data.selectedLevelId = firstLevelId ?? string.Empty;
             }
+        }
+
+        private static int NormalizeTextScale(int value)
+        {
+            if (value <= 0)
+            {
+                return 100;
+            }
+
+            return value <= 95 ? 90 : value <= 110 ? 100 : 120;
+        }
+
+        private static int NormalizeBattleSpeed(int value)
+        {
+            return value >= 2 ? 2 : 1;
         }
     }
 }

@@ -5,7 +5,8 @@ param(
     [string]$OutputDir = "Builds\Android\qa-device\e12-campaign",
     [int]$TimeoutSeconds = 240,
     [double]$MinimumAverageFps = 15,
-    [double]$MaximumP95FrameTimeMs = 80
+    [double]$MaximumP95FrameTimeMs = 80,
+    [switch]$ExpansionLoadout
 )
 
 Set-StrictMode -Version Latest
@@ -49,14 +50,22 @@ $towerIds = @(
     "cat_dart", "yarn_cannon", "bell_sniper", "laser_pointer", "blanket_boom",
     "cat_dart", "yarn_cannon"
 )
+$expansionBranches = @(
+    "dart_precision", "yarn_snare", "bell_marksman", "laser_focus", "blanket_burn",
+    "dart_precision", "yarn_snare", "bell_marksman", "laser_focus", "blanket_burn",
+    "dart_precision", "yarn_snare"
+)
+$expansionUltimates = @("yarn_meteor_shower", "catnip_moon")
 $runs = New-Object System.Collections.Generic.List[object]
 for ($index = 1; $index -le 12; $index++) {
     $levelId = "level_{0:d2}" -f $index
     $challengeId = "challenge_level_{0:d2}" -f $index
     foreach ($mode in @("normal", "challenge")) {
         $isHeaviest = $index -eq 12 -and $mode -eq "challenge"
+        $isFinale = $index -eq 12
         $isEasiest = $index -eq 1 -and $mode -eq "normal"
         $scenarioId = "e12-$levelId-$mode"
+        $combatSampleDelay = if ($ExpansionLoadout) { 3 } else { 10 }
         $arguments = @{
             LevelId = $levelId
             ScenarioId = $scenarioId
@@ -68,12 +77,24 @@ for ($index = 1; $index -le 12; $index++) {
             DeviceSerial = $DeviceSerial
             OutputDir = $resolvedOutput
             TimeoutSeconds = $TimeoutSeconds
-            CombatSampleDelaySeconds = 10
+            CombatSampleDelaySeconds = $combatSampleDelay
             MinimumAverageFps = $MinimumAverageFps
             MaximumP95FrameTimeMs = $MaximumP95FrameTimeMs
             SkipInstall = $true
             RequireVictory = $true
             RequirePerformance = [bool]($isEasiest -or $isHeaviest)
+        }
+        if ($ExpansionLoadout) {
+            $arguments.StartingLives = 999
+            $arguments.StartingBattleFish = 9999
+            $arguments.UpgradeBranchIds = $expansionBranches
+            $arguments.UpgradeTargetTier = 2
+            $arguments.TargetPriority = "Strong"
+            $arguments.UltimateIds = $expansionUltimates
+            $arguments.ExerciseUltimateTargeting = $true
+            $arguments.PreferredBattleSpeed = 2
+            $arguments.RequireBattleUpgrades = $isFinale
+            $arguments.RequireUltimates = $isFinale
         }
         if ($mode -eq "challenge") {
             $arguments.ChallengeId = $challengeId

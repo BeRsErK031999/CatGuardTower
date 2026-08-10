@@ -1,0 +1,21 @@
+# Known Issues — 0.2.0 Expansion Candidate
+
+Status: open; release is not approved
+
+## Blocking
+
+- Physical-device QA is unavailable until the owner connects at least one representative Android phone. Touch edges, cutout/safe area, both landscape directions, background/foreground, audio routing, performance, thermal behavior, battery use, clean install, offline use, and upgrade preservation remain unverified on real hardware.
+- Human balance/play-feel testing has not started. Automated scenarios prove deterministic completion but cannot establish clarity, pacing, difficulty, satisfaction, or accessibility comfort.
+- Store/account inputs are incomplete: final developer identity, privacy contact and public URL, audience/content rating, Play Console access, upload key, and final release decision.
+- Final non-development landscape screenshots have not replaced the legacy portrait store set.
+- The current Emulator 37.1.11 SwiftShader reproduction measured the E14 worst case below budget; the host-GPU diagnostic terminated before a comparable result. This performance discrepancy is unresolved and blocks reliance on the current emulator as release evidence.
+
+## Non-Blocking Candidate Limitations
+
+- Art and audio remain project-owned/generated or procedural production placeholders rather than a commissioned final asset pack.
+- There is no cloud save, cross-device progression, account recovery, online leaderboard, real analytics, crash reporting, advertising SDK, or in-app purchase flow.
+- Progress is device-local and is removed by clearing app data or uninstalling.
+
+## Store Guardrail
+
+Do not upload or distribute `0.2.0` as release-ready while any blocking item above remains open. Update this file and the release decision with exact evidence instead of deleting unresolved risks.

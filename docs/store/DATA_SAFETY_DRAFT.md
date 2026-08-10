@@ -2,14 +2,16 @@
 
 Source status: draft for owner/legal review. Keep this file synchronized with actual SDKs, permissions, and runtime behavior.
 
-Official Google Play references re-checked on 2026-07-17:
+Official Google Play references rechecked on 2026-08-10:
 
 - Data Safety guidance: https://support.google.com/googleplay/android-developer/answer/10787469?hl=en
 - User Data policy: https://support.google.com/googleplay/android-developer/answer/10144311?hl=en
+- 2026 target API requirement: https://support.google.com/googleplay/android-developer/answer/11926878?hl=en-PH
 
 ## Current Build Evidence
 
 - Store package: `com.berserk031999.catguardtower`.
+- Expansion candidate: `0.2.0` (`versionCode` `2`), configured for target SDK 36 through Unity's installed Android platform.
 - QA package: `com.catguard.towerdefense.qa`.
 - `UnityConnectSettings.asset` has Unity Analytics, Unity Ads, Unity Purchasing, Cloud Diagnostics, and Performance Reporting disabled.
 - `ProjectSettings.asset` has `ForceInternetPermission: 0` and `ForceSDCardPermission: 0`.
@@ -22,6 +24,7 @@ Official Google Play references re-checked on 2026-07-17:
   - min SDK 25 and target SDK 36;
   - no `INTERNET`, advertising ID, billing, storage, camera, microphone, contacts, location, notification, or other sensitive permission;
   - the only `uses-permission` entry is the package-scoped AndroidX dynamic-receiver protection permission.
+- This historical `0.1.0` inspection does not approve `0.2.0`. The E15 gate must repeat bundletool manifest/permission validation against the exact candidate AAB and attach its hash before submission.
 - The localized in-app privacy modal documents the local save, no-live-SDK state, and deletion paths.
 
 ## Draft Data Safety Answers
@@ -77,4 +80,4 @@ Re-open this draft before upload if any of these are added:
 
 - Data Safety must stay consistent with `docs/store/PRIVACY_POLICY_DRAFT.md`.
 - Internal-only testing may be exempt, but closed/open/production tracks require accurate Data Safety declarations.
-- Do not submit this as final until a release AAB has been inspected for manifest permissions and bundled SDKs.
+- Do not submit this as final until the exact `0.2.0` release AAB has been inspected for manifest permissions and bundled SDKs, the owner confirms the answers, and the public privacy-policy URL is active.

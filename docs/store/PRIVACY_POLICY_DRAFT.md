@@ -2,7 +2,7 @@
 
 Source status: draft for owner/legal review. This is not legal advice and must be reviewed before publication.
 
-Official Google Play references re-checked on 2026-07-17:
+Official Google Play references rechecked on 2026-08-10:
 
 - User Data policy and privacy policy requirements: https://support.google.com/googleplay/android-developer/answer/10144311?hl=en
 - Data Safety guidance: https://support.google.com/googleplay/android-developer/answer/10787469?hl=en
@@ -29,7 +29,7 @@ Privacy Policy
 
 Effective date: [publish date]
 
-Cat Guard: Tower Defense is developed by [developer legal/display name]. This policy explains how the Android game Cat Guard: Tower Defense handles data in the current closed-testing build.
+Cat Guard: Tower Defense is developed by [developer legal/display name]. This policy explains how the Android game Cat Guard: Tower Defense handles data in the 0.2.0 closed-testing candidate.
 
 Data we collect
 
@@ -39,10 +39,11 @@ Local game data
 
 The game stores local progress on the player's device. This local save can include:
 - Fish Coins balance
-- selected, unlocked, and completed levels
-- upgrade levels
-- daily reward and daily mission progress
-- sound and language settings
+- campaign/challenge selection, unlocks, and completion
+- tower upgrades, Guardian mastery, research, perks, and equipped ultimates
+- quests, contracts, achievements, codex discoveries, and claimed rewards
+- daily reward and mission progress
+- sound, language, camera shake, reduced flash, text scale, and preferred battle speed
 - last free coins reward date
 
 This local game data stays on the device in the current build. It is used only to provide gameplay progression and settings.

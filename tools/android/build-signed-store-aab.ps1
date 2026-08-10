@@ -1,5 +1,7 @@
 [CmdletBinding()]
 param(
+    [ValidateSet("Aab", "Apk")]
+    [string]$Artifact = "Aab",
     [string]$KeystorePath = $env:CATGUARD_ANDROID_KEYSTORE_PATH,
     [string]$KeyAlias = $env:CATGUARD_ANDROID_KEY_ALIAS,
     [System.Security.SecureString]$KeystorePassword,
@@ -153,8 +155,14 @@ try {
     $logDirectory = Join-Path $repoRoot "Builds\Android\logs"
     New-Item -ItemType Directory -Force -Path $logDirectory | Out-Null
     $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
-    $logPath = Join-Path $logDirectory "signed-store-aab-$timestamp.log"
-    $outputPath = Join-Path $repoRoot "Builds\Android\CatGuardTowerDefense-store.aab"
+    $artifactExtension = $Artifact.ToLowerInvariant()
+    $executeMethod = if ($Artifact -eq "Aab") {
+        "Phase11ProjectSetup.BuildSignedAab"
+    } else {
+        "Phase11ProjectSetup.BuildSignedApk"
+    }
+    $logPath = Join-Path $logDirectory "signed-store-$artifactExtension-$timestamp.log"
+    $outputPath = Join-Path $repoRoot "Builds\Android\CatGuardTowerDefense-store.$artifactExtension"
 
     if (Test-Path -LiteralPath $outputPath) {
         Remove-Item -LiteralPath $outputPath -Force
@@ -165,7 +173,7 @@ try {
     [Environment]::SetEnvironmentVariable("CATGUARD_ANDROID_KEY_ALIAS", $KeyAlias.Trim(), "Process")
     [Environment]::SetEnvironmentVariable("CATGUARD_ANDROID_KEY_PASSWORD", $keyPasswordPlain, "Process")
 
-    Write-Host "Building signed store AAB with Unity..."
+    Write-Host "Building signed store $($Artifact.ToUpperInvariant()) with Unity..."
     Write-Host "Output: $outputPath"
     Write-Host "Log: $logPath"
 
@@ -176,7 +184,7 @@ try {
         "-projectPath",
         ('"' + $repoRoot + '"'),
         "-executeMethod",
-        "Phase11ProjectSetup.BuildSignedAab",
+        $executeMethod,
         "-logFile",
         ('"' + $logPath + '"')
     )
@@ -189,15 +197,15 @@ try {
     $unityExitCode = $unityProcess.ExitCode
 
     if ($unityExitCode -ne 0) {
-        throw "Unity signed store AAB build failed with exit code $unityExitCode. See: $logPath"
+        throw "Unity signed store $Artifact build failed with exit code $unityExitCode. See: $logPath"
     }
 
     if (-not (Test-Path -LiteralPath $outputPath -PathType Leaf)) {
-        throw "Unity reported success but the store AAB was not created: $outputPath"
+        throw "Unity reported success but the store $Artifact was not created: $outputPath"
     }
 
     $artifact = Get-Item -LiteralPath $outputPath
-    Write-Host "Signed store AAB created: $($artifact.FullName) ($($artifact.Length) bytes)"
+    Write-Host "Signed store $Artifact created: $($artifact.FullName) ($($artifact.Length) bytes)"
 }
 finally {
     foreach ($name in $environmentNames) {

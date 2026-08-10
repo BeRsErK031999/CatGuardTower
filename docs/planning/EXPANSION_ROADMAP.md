@@ -1137,4 +1137,4 @@ Ceilings здесь означают ожидаемую способность d
 
 `E13 — Bosses And Advanced Map Rules` завершён; фактический Unity/Android gate находится в [E13_BOSSES_ADVANCED_RULES_REPORT.md](E13_BOSSES_ADVANCED_RULES_REPORT.md), а authoring и runtime lifecycle описаны в [BOSS_AND_MAP_RULE_WORKFLOW.md](BOSS_AND_MAP_RULE_WORKFLOW.md).
 
-Следующий допустимый implementation block: **`E14 — Balance, Performance, Accessibility, And Polish`**. E13 подтверждает deterministic behavior при искусственных 12 FPS, но не объявляет этот результат production performance floor и не заменяет campaign-wide balance/accessibility audit или проверку на реальном Android hardware profile.
+Активный implementation block: **`E15 — Expansion Release Gate`**. E14 отмечен завершённым в task board и историческом отчёте; E15 начат с release tooling, версии `0.2.0`, store/privacy/license документов и воспроизводимого install/upgrade gate. Блок нельзя закрывать, коммитить или пушить как завершённый до финальных landscape captures, human playtest, physical-device QA, store/account inputs, полного block test gate и честного release decision.

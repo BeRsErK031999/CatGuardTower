@@ -2,17 +2,23 @@
 
 Source status: closed-testing preparation checklist. Do not start production access request until the owner confirms readiness.
 
-Official Google Play reference checked on 2026-07-07:
+Official Google Play references rechecked on 2026-08-10:
 
 - App testing requirements for new personal developer accounts: https://support.google.com/googleplay/android-developer/answer/14151465?hl=en
 - Set up tests in Play Console: https://support.google.com/googleplay/android-developer/answer/9845334?hl=en
 
 ## Current Gate
 
-Phase 10 real-device install/FPS QA is still open. Run:
+E15 real-device install, upgrade, offline, landscape, save, performance, and crash QA is still open. Run the complete release gate only after all E15 exit criteria are implemented:
 
 ```text
-powershell -ExecutionPolicy Bypass -File tools\android\run-device-qa.ps1 -ApkPath Builds\Android\CatGuardTowerDefense-qa.apk
+powershell.exe -NoProfile -ExecutionPolicy Bypass `
+  -File tools\android\run-e15-release-gate.ps1 `
+  -BaselineApkPath "<same-key-0.1.0.apk>" `
+  -DeviceSerial "<physical-device-serial>" `
+  -RequirePhysicalDevice `
+  -RequirePerformance `
+  -ConfirmPackageReset
 ```
 
 Do not request production access until this physical-device gate is passed or explicitly accepted as a known risk by the owner.
@@ -28,12 +34,12 @@ Do not request production access until this physical-device gate is passed or ex
 ## Before Creating The Closed Test
 
 - Confirm package name: `com.berserk031999.catguardtower`.
-- Confirm `versionName` `0.1.0` and `versionCode` `1`.
+- Confirm candidate `versionName` `0.2.0` and `versionCode` `2`; keep a same-package/same-key `0.1.0` APK for upgrade evidence.
 - Create and back up the real upload keystore outside Git.
 - Build the signed store AAB with `tools/android/build-signed-store-aab.ps1`.
 - Confirm the generated AAB uses the store package/version and ARM64 payload.
 - Complete store listing draft.
-- Upload app icon, feature graphic, and screenshots.
+- Upload the owner-approved app icon, feature graphic, and five non-development `1920 x 1080` landscape screenshots.
 - Publish privacy policy URL.
 - Complete Data Safety answers.
 - Complete content rating questionnaire.

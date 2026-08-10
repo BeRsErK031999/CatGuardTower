@@ -72,11 +72,11 @@ function Test-ImageAsset {
 
 Test-ImageAsset "icon\catguard-store-icon-512.png" 512 512 $true 1048576
 Test-ImageAsset "feature\catguard-feature-1024x500.png" 1024 500 $false
-Test-ImageAsset "screenshots\01-main-menu-level-select-1080x1920.png" 1080 1920 $false 0 $true
-Test-ImageAsset "screenshots\02-level-placement-1080x1920.png" 1080 1920 $false 0 $true
-Test-ImageAsset "screenshots\03-wave-combat-1080x1920.png" 1080 1920 $false 0 $true
-Test-ImageAsset "screenshots\04-victory-upgrades-1080x1920.png" 1080 1920 $false 0 $true
-Test-ImageAsset "screenshots\05-daily-loop-1080x1920.png" 1080 1920 $false 0 $true
+Test-ImageAsset "screenshots\01-home-hub-campaign-1920x1080.png" 1920 1080 $false 0 $true
+Test-ImageAsset "screenshots\02-tower-placement-1920x1080.png" 1920 1080 $false 0 $true
+Test-ImageAsset "screenshots\03-boss-combat-1920x1080.png" 1920 1080 $false 0 $true
+Test-ImageAsset "screenshots\04-victory-progression-1920x1080.png" 1920 1080 $false 0 $true
+Test-ImageAsset "screenshots\05-quests-achievements-1920x1080.png" 1920 1080 $false 0 $true
 
 if ($errors.Count -gt 0) {
     $errors | ForEach-Object { Write-Error $_ }

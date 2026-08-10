@@ -18,7 +18,7 @@ The first public path is Android closed testing, then a small soft launch.
 
 Use Android App Bundle (`.aab`) for Google Play. Do not commit generated `.apk` or `.aab` files.
 
-The initial store package name is `com.berserk031999.catguardtower`, with `versionName` `0.1.0` and `versionCode` `1`. This can still be changed before the first Play Console upload, but not after the package is created in Google Play.
+The store package name is `com.berserk031999.catguardtower`. The historical baseline is `0.1.0` (`versionCode` `1`); the E15 landscape expansion candidate is `0.2.0` (`versionCode` `2`). The package name must not change after the Play Console app is created.
 
 Current QA artifacts are generated locally through `Phase10ProjectSetup` into `Builds/Android/`:
 
@@ -28,12 +28,13 @@ Current QA artifacts are generated locally through `Phase10ProjectSetup` into `B
 
 These files are ignored by Git. The QA application id is `com.catguard.towerdefense.qa`; it is intentionally separate from the store package.
 
-## Signed Store AAB
+## Signed Store APK And AAB
 
-Use the dedicated wrapper to build the Google Play artifact with the store package and an upload key:
+Use the dedicated wrapper to build Google Play artifacts with the store package and an upload key:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File tools\android\build-signed-store-aab.ps1 `
+powershell -ExecutionPolicy Bypass -File tools\android\build-signed-store.ps1 `
+  -Artifact Aab `
   -KeystorePath "D:\Secure\CatGuard\catguard-upload.jks" `
   -KeyAlias "catguard-upload"
 ```
@@ -49,10 +50,11 @@ CATGUARD_ANDROID_KEY_ALIAS
 CATGUARD_ANDROID_KEY_PASSWORD
 ```
 
-Then run the wrapper with `-NonInteractive`. The output is ignored by Git:
+Then run the wrapper with `-NonInteractive`. Build `-Artifact Apk` for E15 install/upgrade evidence and `-Artifact Aab` for Google Play. Both outputs are ignored by Git:
 
 ```text
 Builds/Android/CatGuardTowerDefense-store.aab
+Builds/Android/CatGuardTowerDefense-store.apk
 ```
 
 Do not reuse the temporary validation key from development checks for Google Play. The owner must create and back up the real upload keystore before the first closed-testing upload.

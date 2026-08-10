@@ -1,0 +1,84 @@
+{
+  "schemaVersion": 4,
+  "fishCoins": 321,
+  "selectedLevelId": "level_04",
+  "selectedChallengeId": "",
+  "unlockedLevelIds": [
+    "level_01",
+    "level_02",
+    "level_03",
+    "level_04"
+  ],
+  "completedLevelIds": [
+    "level_01",
+    "level_02",
+    "level_03"
+  ],
+  "completedChallengeIds": [],
+  "upgrades": [
+    {
+      "upgradeId": "claw_training",
+      "level": 2
+    }
+  ],
+  "lastDailyRewardClaimDateKey": "2026-08-08",
+  "dailyRewardStreakIndex": 2,
+  "dailyMissionDateKey": "2026-08-08",
+  "dailyMissions": [],
+  "quests": [
+    {
+      "questId": "tutorial_hold_line",
+      "progress": 1,
+      "rewardClaimed": true
+    }
+  ],
+  "activeQuestIds": [
+    "pest_patrol",
+    "build_circle"
+  ],
+  "processedQuestEventIds": [],
+  "playerExperience": 140,
+  "towerMasteries": [],
+  "workshopResearch": [
+    {
+      "researchId": "starting_supplies",
+      "level": 2
+    }
+  ],
+  "unlockedUltimateIds": [
+    "yarn_meteor_shower",
+    "catnip_moon"
+  ],
+  "unlockedGuardianPerkIds": [
+    "supply_pouch"
+  ],
+  "equippedUltimateIds": [
+    "yarn_meteor_shower",
+    "catnip_moon"
+  ],
+  "equippedGuardianPerkId": "supply_pouch",
+  "discoveredCodexEntryIds": [
+    "mouse_scout"
+  ],
+  "processedMetaBattleEventIds": [],
+  "achievements": [
+    {
+      "achievementId": "first_clear",
+      "progress": 1,
+      "completedDateKey": "2026-08-08",
+      "claimed": true
+    }
+  ],
+  "achievementUltimateIds": [
+    "yarn_meteor_shower"
+  ],
+  "achievementBossIds": [],
+  "processedAchievementEventIds": [],
+  "audioMuted": false,
+  "languageCode": "ru",
+  "lastFreeCoinsRewardDateKey": "",
+  "cameraShakeIntensity": 1,
+  "reducedFlash": true,
+  "textScalePercent": 0,
+  "preferredBattleSpeed": 0
+}

@@ -1,0 +1,325 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using UnityEditor;
+using UnityEditor.Build;
+using UnityEngine;
+
+public static class E15ProjectSetup
+{
+    private const string WorkflowPath = "docs/planning/E15_RELEASE_GATE_WORKFLOW.md";
+    private const string ReadinessPath = "docs/planning/E15_RELEASE_READINESS.md";
+    private const string ReportPath = "docs/planning/E15_EXPANSION_RELEASE_REPORT.md";
+    private const string ReleaseNotesPath = "docs/release/RELEASE_NOTES_0.2.0.md";
+    private const string KnownIssuesPath = "docs/release/KNOWN_ISSUES_0.2.0.md";
+    private const string LicenseAuditPath = "docs/release/SOURCE_ASSET_LICENSE_AUDIT.md";
+    private const string DecisionPath = "docs/release/E15_RELEASE_DECISION.md";
+    private const string ExternalBacklogPath = "docs/planning/EXTERNAL_PRODUCTION_BACKLOG.md";
+    private const string StoreAssetFolder = "docs/store/assets/screenshots";
+
+    private static readonly string[] LandscapeStoreScreenshots =
+    {
+        "01-home-hub-campaign-1920x1080.png",
+        "02-tower-placement-1920x1080.png",
+        "03-boss-combat-1920x1080.png",
+        "04-victory-progression-1920x1080.png",
+        "05-quests-achievements-1920x1080.png"
+    };
+
+    [MenuItem("Cat Guard/Validate E15 Release Readiness")]
+    public static void ValidateReadiness()
+    {
+        ValidateAndExit(false);
+    }
+
+    public static void Validate()
+    {
+        ValidateAndExit(true);
+    }
+
+    private static void ValidateAndExit(bool requireFinalApproval)
+    {
+        var errors = new List<string>();
+        Phase11ProjectSetup.ConfigureStoreBuildSettingsForRelease();
+        ValidateAndroidReleaseSettings(errors);
+        ValidateSdkAndPermissionContract(errors);
+        ValidateReleaseArtifacts(errors);
+        ValidateNoCommittedSecrets(errors);
+
+        if (requireFinalApproval)
+        {
+            ValidateLandscapeStoreAssets(errors);
+            ValidateOwnerApproval(errors);
+        }
+
+        if (errors.Count > 0)
+        {
+            foreach (var error in errors)
+            {
+                Debug.LogError(error);
+            }
+
+            EditorApplication.Exit(1);
+            return;
+        }
+
+        AssetDatabase.SaveAssets();
+        var gate = requireFinalApproval ? "final release" : "internal readiness";
+        Debug.Log($"E15 {gate} validation passed: Android store identity {Phase11ProjectSetup.StoreApplicationIdentifier} {Phase11ProjectSetup.StoreVersionName} ({Phase11ProjectSetup.StoreVersionCode}), ARM64/IL2CPP, API 36 readiness, no-live-SDK Data Safety boundary, secret-free signing workflow, release documents, source/license audit, and E15 QA orchestration are present.");
+        EditorApplication.Exit(0);
+    }
+
+    private static void ValidateAndroidReleaseSettings(ICollection<string> errors)
+    {
+        if (!BuildPipeline.IsBuildTargetSupported(BuildTargetGroup.Android, BuildTarget.Android))
+        {
+            errors.Add("E15 requires Unity Android Build Support.");
+        }
+
+        if (PlayerSettings.GetApplicationIdentifier(NamedBuildTarget.Android)
+            != Phase11ProjectSetup.StoreApplicationIdentifier)
+        {
+            errors.Add("E15 store package identity is not configured.");
+        }
+
+        if (PlayerSettings.bundleVersion != Phase11ProjectSetup.StoreVersionName
+            || PlayerSettings.Android.bundleVersionCode != Phase11ProjectSetup.StoreVersionCode)
+        {
+            errors.Add("E15 expansion candidate must use versionName 0.2.0 and versionCode 2.");
+        }
+
+        if (PlayerSettings.GetScriptingBackend(NamedBuildTarget.Android) != ScriptingImplementation.IL2CPP
+            || PlayerSettings.Android.targetArchitectures != AndroidArchitecture.ARM64)
+        {
+            errors.Add("E15 Google Play artifacts must use IL2CPP and ARM64 only.");
+        }
+
+        if (PlayerSettings.Android.minSdkVersion != AndroidSdkVersions.AndroidApiLevel25)
+        {
+            errors.Add("E15 minimum Android API must remain 25.");
+        }
+
+        var targetApi = (int)PlayerSettings.Android.targetSdkVersion;
+        if (targetApi != (int)AndroidSdkVersions.AndroidApiLevelAuto && targetApi < 36)
+        {
+            errors.Add("E15 must resolve target API 36 or newer for the 2026 Google Play deadline.");
+        }
+
+        AndroidOrientationSettings.ValidateLandscapeAutoRotation(errors);
+        if (PlayerSettings.Android.forceInternetPermission || PlayerSettings.Android.forceSDCardPermission)
+        {
+            errors.Add("E15 no-live-SDK candidate must not force Internet or external-storage permissions.");
+        }
+    }
+
+    private static void ValidateSdkAndPermissionContract(ICollection<string> errors)
+    {
+        ValidateFileContains(
+            "ProjectSettings/UnityConnectSettings.asset",
+            new[]
+            {
+                "UnityPurchasingSettings:",
+                "UnityAnalyticsSettings:",
+                "UnityAdsSettings:",
+                "m_EnableCloudDiagnosticsReporting: 0"
+            },
+            errors);
+
+        var connectSettings = ReadText("ProjectSettings/UnityConnectSettings.asset");
+        var enabledServiceLines = connectSettings
+            .Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
+            .Where(line => line.Trim() == "m_Enabled: 1")
+            .ToArray();
+        if (enabledServiceLines.Length > 0)
+        {
+            errors.Add("A Unity online service is enabled but the E15 Data Safety declaration says no data is transmitted.");
+        }
+
+        var manifest = ReadText("Packages/manifest.json");
+        foreach (var forbiddenPackage in new[] { "firebase", "crashlytics", "purchasing", "advertisement" })
+        {
+            if (manifest.Contains(forbiddenPackage, StringComparison.OrdinalIgnoreCase))
+            {
+                errors.Add($"Live SDK package '{forbiddenPackage}' requires a new privacy/Data Safety review.");
+            }
+        }
+
+        var defines = PlayerSettings.GetScriptingDefineSymbols(NamedBuildTarget.Android);
+        if (defines.Contains("CATGUARD_FIREBASE_ANALYTICS", StringComparison.Ordinal))
+        {
+            errors.Add("CATGUARD_FIREBASE_ANALYTICS must remain disabled for the E15 no-data-collection candidate.");
+        }
+    }
+
+    private static void ValidateReleaseArtifacts(ICollection<string> errors)
+    {
+        var requiredFiles = new Dictionary<string, string[]>
+        {
+            [WorkflowPath] = new[] { "clean install", "upgrade install", "offline", "physical device", "run-e15-release-gate.ps1" },
+            [ReadinessPath] = new[] { "Status:", "PLAYTEST-001", "DEVICE-QA-001", "STORE-ACCOUNT-001" },
+            [ReleaseNotesPath] = new[] { "0.2.0", "12", "landscape", "save schema v5" },
+            [KnownIssuesPath] = new[] { "performance", "physical", "store" },
+            [LicenseAuditPath] = new[] { "OpenAI image generation", "procedural", "third-party", "paid" },
+            [DecisionPath] = new[] { "Status:", "Owner", "Release decision", "Remaining risks" },
+            ["docs/store/STORE_LISTING_DRAFT.md"] = new[] { "0.2.0", "12", "landscape", "Guardian ultimates" },
+            ["docs/store/DATA_SAFETY_DRAFT.md"] = new[] { "2026-08-10", "target SDK 36", "No" },
+            ["docs/store/PRIVACY_POLICY_DRAFT.md"] = new[] { "0.2.0", "quests", "achievements", "text scale" },
+            ["docs/store/STORE_ASSET_CHECKLIST.md"] = new[] { "1920 x 1080", "E15", "legacy" },
+            ["Assets/_Project/Scripts/Core/Localization/LocalizationService.cs"] = new[] { "August 10, 2026", "10 августа 2026", "codex discoveries", "записи кодекса" },
+            ["tools/android/build-signed-store-aab.ps1"] = new[] { "BuildSignedAab", "BuildSignedApk", "Artifact" },
+            ["tools/android/build-e15-baseline-apk.ps1"] = new[] { "28f7e88", "worktree", "bundletool", "universal.apk" },
+            ["tools/android/run-e15-release-gate.ps1"] = new[] { "BaselineApkPath", "CandidateApkPath", "CandidateAabPath", "upgrade" },
+            ["tools/store/validate-store-assets.ps1"] = new[] { "1920", "1080", "boss-combat" }
+        };
+
+        foreach (var pair in requiredFiles)
+        {
+            ValidateFileContains(pair.Key, pair.Value, errors);
+        }
+    }
+
+    private static void ValidateNoCommittedSecrets(ICollection<string> errors)
+    {
+        var projectRoot = Path.GetFullPath(Path.Combine(Application.dataPath, ".."));
+        foreach (var relativeRoot in new[] { "Assets", "Packages", "ProjectSettings", "docs", "tools" })
+        {
+            var searchRoot = Path.Combine(projectRoot, relativeRoot);
+            if (!Directory.Exists(searchRoot))
+            {
+                continue;
+            }
+
+            foreach (var pattern in new[] { "*.keystore", "*.jks", "google-services.json" })
+            {
+                foreach (var path in Directory.GetFiles(searchRoot, pattern, SearchOption.AllDirectories))
+                {
+                    errors.Add($"Potential release secret is inside the repository: {path}");
+                }
+            }
+        }
+    }
+
+    private static void ValidateLandscapeStoreAssets(ICollection<string> errors)
+    {
+        foreach (var fileName in LandscapeStoreScreenshots)
+        {
+            var path = Path.Combine(StoreAssetFolder, fileName);
+            if (!TryReadPngSize(path, out var width, out var height))
+            {
+                errors.Add($"E15 landscape store screenshot is missing or invalid: {path}");
+                continue;
+            }
+
+            if (width != 1920 || height != 1080)
+            {
+                errors.Add($"E15 store screenshot must be 1920x1080: {path} is {width}x{height}.");
+            }
+        }
+    }
+
+    private static void ValidateOwnerApproval(ICollection<string> errors)
+    {
+        var decision = ReadText(DecisionPath);
+        if (!decision.Contains("Status: approved", StringComparison.OrdinalIgnoreCase))
+        {
+            errors.Add("E15 release decision is not approved by the owner.");
+        }
+
+        var readiness = ReadText(ReadinessPath);
+        if (!readiness.Contains("Status: completed", StringComparison.OrdinalIgnoreCase))
+        {
+            errors.Add("E15 readiness document is not completed.");
+        }
+
+        ValidateFileContains(ReportPath, new[] { "Status: completed", "develop == origin/develop" }, errors);
+
+        var backlog = ReadText(ExternalBacklogPath);
+        foreach (var id in new[] { "PLAYTEST-001", "DEVICE-QA-001", "STORE-ACCOUNT-001" })
+        {
+            var section = ReadSection(backlog, $"ID: `{id}`");
+            if (section.Length == 0
+                || section.Contains("Status: `Not started`", StringComparison.Ordinal)
+                || section.Contains("Status: `Blocked", StringComparison.Ordinal))
+            {
+                errors.Add($"External E15 P0 block is not complete: {id}.");
+            }
+        }
+
+        var privacy = ReadText("docs/store/PRIVACY_POLICY_DRAFT.md");
+        foreach (var placeholder in new[] { "[developer legal/display name]", "[privacy contact", "[publish date]" })
+        {
+            if (privacy.Contains(placeholder, StringComparison.OrdinalIgnoreCase))
+            {
+                errors.Add($"Privacy policy owner placeholder remains unresolved: {placeholder}");
+            }
+        }
+    }
+
+    private static void ValidateFileContains(string path, IEnumerable<string> tokens, ICollection<string> errors)
+    {
+        if (!File.Exists(path))
+        {
+            errors.Add($"E15 required file is missing: {path}");
+            return;
+        }
+
+        var content = ReadText(path);
+        foreach (var token in tokens)
+        {
+            if (!content.Contains(token, StringComparison.OrdinalIgnoreCase))
+            {
+                errors.Add($"E15 required token '{token}' is missing from {path}.");
+            }
+        }
+    }
+
+    private static string ReadText(string path)
+    {
+        return File.Exists(path) ? File.ReadAllText(path) : string.Empty;
+    }
+
+    private static string ReadSection(string content, string marker)
+    {
+        var start = content.IndexOf(marker, StringComparison.Ordinal);
+        if (start < 0)
+        {
+            return string.Empty;
+        }
+
+        var end = content.IndexOf("\n## ", start + marker.Length, StringComparison.Ordinal);
+        return end < 0 ? content.Substring(start) : content.Substring(start, end - start);
+    }
+
+    private static bool TryReadPngSize(string path, out int width, out int height)
+    {
+        width = 0;
+        height = 0;
+        if (!File.Exists(path))
+        {
+            return false;
+        }
+
+        var bytes = File.ReadAllBytes(path);
+        if (bytes.Length < 24
+            || bytes[0] != 0x89
+            || bytes[1] != 0x50
+            || bytes[2] != 0x4E
+            || bytes[3] != 0x47)
+        {
+            return false;
+        }
+
+        width = ReadBigEndianInt32(bytes, 16);
+        height = ReadBigEndianInt32(bytes, 20);
+        return width > 0 && height > 0;
+    }
+
+    private static int ReadBigEndianInt32(byte[] bytes, int offset)
+    {
+        return (bytes[offset] << 24)
+               | (bytes[offset + 1] << 16)
+               | (bytes[offset + 2] << 8)
+               | bytes[offset + 3];
+    }
+}

@@ -12,14 +12,19 @@ Candidate: `0.2.0` (`versionCode` `2`), package `com.berserk031999.catguardtower
 
 `BLOCKED` — do not upload to a closed, open, or production Google Play track yet.
 
+## Completed evidence
+
+- Signed same-key `0.1.0` baseline APK and `0.2.0` ARM64 APK/AAB artifact preflight passed for package, version, target API, manifest permissions, certificate continuity, and hashes.
+- Five non-development `1920 x 1080` landscape screenshots were captured, imported, visually reviewed, and accepted by the store-asset validator.
+- Candidate upload-key material is stored outside Git; owner approval and an independent backup are still required.
+
 ## Evidence Required To Change Status To Approved
 
 - Completed `PLAYTEST-001` findings and disposition of blocker/major issues.
 - Completed `DEVICE-QA-001` physical-device matrix with clean install, upgrade install, offline, both landscape directions, save, performance, thermal, audio, touch, and crash evidence.
 - Completed `STORE-ACCOUNT-001` owner/legal/contact/Play Console/upload-key actions.
-- Signed candidate APK/AAB manifest and certificate audit.
 - Full E14 functional regression and E15 release gate on the exact candidate commit.
-- Final `1920 x 1080` non-development landscape screenshots and owner-approved RU/EN listing.
+- Owner approval of the imported screenshots and RU/EN listing.
 - Published privacy-policy URL and submitted Data Safety answers matching the actual AAB.
 - Final source/asset audit and completed `E15_EXPANSION_RELEASE_REPORT.md`.
 

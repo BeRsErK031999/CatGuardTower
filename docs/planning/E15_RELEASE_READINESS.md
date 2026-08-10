@@ -12,17 +12,21 @@ Checked on: `2026-08-10`
 - Store generation and validation contracts now require five `1920 x 1080` landscape captures.
 - Release notes, known issues, source/asset license audit, release-decision record, and an E15 Unity readiness/final validator are present.
 - Google Play target API, Data Safety, preview-asset, and closed-testing references were rechecked against official sources on `2026-08-10`.
+- A same-key historical `0.1.0` universal baseline APK and signed non-development `0.2.0` ARM64 APK/AAB were reproduced. Artifact identity, versions, API 36 target, manifest permissions, certificate continuity, and hashes passed the desktop preflight.
+- Five real `1920 x 1080` landscape screenshots were captured from a non-development `0.2.0` IL2CPP x86_64 emulator sibling, imported into `docs/store/assets/screenshots/`, visually reviewed, and accepted by `tools/store/validate-store-assets.ps1`.
+- A candidate upload key now exists outside Git under `%USERPROFILE%\.catguard\release-signing`; its independent backup and owner approval remain open, so it does not yet close `STORE-ACCOUNT-001`.
 
 ## Current Blocking Evidence
 
 - `PLAYTEST-001`: not started. Automated victory does not replace human balance, comprehension, and fun review.
 - `DEVICE-QA-001`: blocked until a physical Android device is connected. E15 requires install, both landscape directions, touch, background/foreground, thermal, battery, heavy-wave FPS, audio, offline, save, and upgrade evidence.
-- `STORE-ACCOUNT-001`: not started. Final owner identity/contact, public privacy URL, audience/content rating, Play Console actions, and the real upload key are unavailable.
-- Five final non-development landscape store captures are not yet committed; the existing portrait files remain historical Phase 11 evidence only.
+- `STORE-ACCOUNT-001`: partially prepared. Final owner identity/contact, public privacy URL, audience/content rating, Play Console actions, screenshot/listing approval, and independent upload-key backup/approval are unavailable.
 - The fresh 2026-08-10 E14 reproduction on Emulator 37.1.11 failed its current performance gate under SwiftShader, while host-GPU mode terminated during the diagnostic scenario. This discrepancy must be resolved or superseded by valid physical-device evidence before release acceptance.
+
+Desktop evidence is summarized in `docs/release/E15_DESKTOP_PREFLIGHT_REPORT.md`. The x86_64 capture sibling proves current landscape UI content only; it does not replace ARM64 install, upgrade, performance, thermal, rotation, or touch QA on a physical phone.
 
 ## Gate State
 
-`E15ProjectSetup.ValidateReadiness` checks the internal release scaffolding. `E15ProjectSetup.Validate` is intentionally stricter and must remain red until the final screenshots, external P0 blocks, completed report, and owner approval are present.
+`E15ProjectSetup.ValidateReadiness` checks the internal release scaffolding. `E15ProjectSetup.Validate` also validates the imported screenshots and must remain red until the external P0 blocks, completed report, privacy/store inputs, and owner approval are present.
 
 No E15 completion, release approval, commit, or post-change push may be claimed while this document remains `Status: in progress`.

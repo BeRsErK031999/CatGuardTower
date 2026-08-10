@@ -43,10 +43,10 @@ function Resolve-UnityExecutable {
 function Assert-SafeTemporaryWorktree {
     param([string]$Path)
 
-    $resolvedTemp = [IO.Path]::GetFullPath($env:TEMP).TrimEnd('\\', '/') + [IO.Path]::DirectorySeparatorChar
+    $resolvedTemp = [IO.Path]::GetFullPath($env:TEMP).TrimEnd('\', '/') + [IO.Path]::DirectorySeparatorChar
     $resolvedPath = [IO.Path]::GetFullPath($Path)
     if (-not $resolvedPath.StartsWith($resolvedTemp, [StringComparison]::OrdinalIgnoreCase) `
-        -or -not ([IO.Path]::GetFileName($resolvedPath)).StartsWith("CatGuardTower-E15-Baseline-", [StringComparison]::Ordinal)) {
+        -or -not ([IO.Path]::GetFileName($resolvedPath)).StartsWith("CGE15-", [StringComparison]::Ordinal)) {
         throw "Refusing to clean an unexpected baseline worktree path: $resolvedPath"
     }
 }
@@ -93,12 +93,18 @@ $unity = Resolve-UnityExecutable $UnityPath
 $editorRoot = Split-Path -Parent $unity
 $androidPlayer = Join-Path $editorRoot "Data\PlaybackEngines\AndroidPlayer"
 $java = Join-Path $androidPlayer "OpenJDK\bin\java.exe"
-$bundletool = Get-ChildItem -LiteralPath $androidPlayer -Recurse -File -Filter "bundletool*.jar" | Select-Object -First 1 -ExpandProperty FullName
+$bundletool = Get-ChildItem `
+    -LiteralPath $androidPlayer `
+    -Recurse `
+    -File `
+    -Filter "bundletool*.jar" `
+    -ErrorAction SilentlyContinue |
+    Select-Object -First 1 -ExpandProperty FullName
 if (-not (Test-Path -LiteralPath $java -PathType Leaf) -or -not $bundletool) {
     throw "Unity Android Java/bundletool was not found."
 }
 
-$worktreePath = Join-Path $env:TEMP ("CatGuardTower-E15-Baseline-" + [Guid]::NewGuid().ToString("N"))
+$worktreePath = Join-Path $env:TEMP ("CGE15-" + [Guid]::NewGuid().ToString("N").Substring(0, 8))
 Assert-SafeTemporaryWorktree $worktreePath
 $keystorePassFile = Join-Path $env:TEMP ("CatGuardTower-E15-KsPass-" + [Guid]::NewGuid().ToString("N") + ".txt")
 $keyPassFile = Join-Path $env:TEMP ("CatGuardTower-E15-KeyPass-" + [Guid]::NewGuid().ToString("N") + ".txt")
@@ -172,7 +178,14 @@ try {
 
     if ($worktreeAdded) {
         Assert-SafeTemporaryWorktree $worktreePath
-        & git -C $script:RepoRoot worktree remove --force $worktreePath | Out-Null
+        & git -c core.longpaths=true -C $script:RepoRoot worktree remove --force $worktreePath | Out-Null
+        if ($LASTEXITCODE -ne 0 -and [IO.Directory]::Exists($worktreePath)) {
+            [IO.Directory]::Delete("\\?\" + [IO.Path]::GetFullPath($worktreePath), $true)
+        }
+
         & git -C $script:RepoRoot worktree prune | Out-Null
+        if ($LASTEXITCODE -ne 0 -or [IO.Directory]::Exists($worktreePath)) {
+            throw "Could not clean the verified baseline worktree: $worktreePath"
+        }
     }
 }

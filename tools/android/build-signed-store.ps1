@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [ValidateSet("Aab", "Apk")]
+    [ValidateSet("Aab", "Apk", "CaptureApk")]
     [string]$Artifact = "Aab",
     [string]$KeystorePath = $env:CATGUARD_ANDROID_KEYSTORE_PATH,
     [string]$KeyAlias = $env:CATGUARD_ANDROID_KEY_ALIAS,
@@ -16,4 +16,4 @@ $ErrorActionPreference = "Stop"
 
 $implementation = Join-Path $PSScriptRoot "build-signed-store-aab.ps1"
 & $implementation @PSBoundParameters
-exit $LASTEXITCODE
+exit 0

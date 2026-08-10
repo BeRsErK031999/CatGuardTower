@@ -18,6 +18,7 @@ public static class Phase11ProjectSetup
     private const string BuildFolder = "Builds/Android";
     private const string StoreApkPath = BuildFolder + "/CatGuardTowerDefense-store.apk";
     private const string StoreAabPath = BuildFolder + "/CatGuardTowerDefense-store.aab";
+    private const string StoreCaptureApkPath = BuildFolder + "/CatGuardTowerDefense-store-capture-x86_64.apk";
     private const string KeystorePathVariable = "CATGUARD_ANDROID_KEYSTORE_PATH";
     private const string KeystorePasswordVariable = "CATGUARD_ANDROID_KEYSTORE_PASSWORD";
     private const string KeyAliasVariable = "CATGUARD_ANDROID_KEY_ALIAS";
@@ -59,15 +60,23 @@ public static class Phase11ProjectSetup
 
     public static void BuildSignedAab()
     {
-        BuildSignedArtifact(StoreAabPath, true);
+        BuildSignedArtifact(StoreAabPath, true, null);
     }
 
     public static void BuildSignedApk()
     {
-        BuildSignedArtifact(StoreApkPath, false);
+        BuildSignedArtifact(StoreApkPath, false, null);
     }
 
-    private static void BuildSignedArtifact(string artifactPath, bool appBundle)
+    public static void BuildSignedStoreCaptureApk()
+    {
+        BuildSignedArtifact(StoreCaptureApkPath, false, AndroidArchitecture.X86_64);
+    }
+
+    private static void BuildSignedArtifact(
+        string artifactPath,
+        bool appBundle,
+        AndroidArchitecture? architectureOverride)
     {
         var originalSettings = AndroidBuildSettingsSnapshot.Capture();
         var exitCode = 1;
@@ -86,6 +95,11 @@ public static class Phase11ProjectSetup
             if (errors.Count > 0)
             {
                 throw new InvalidOperationException(string.Join(" ", errors));
+            }
+
+            if (architectureOverride.HasValue)
+            {
+                PlayerSettings.Android.targetArchitectures = architectureOverride.Value;
             }
 
             signingConfiguration.Apply();

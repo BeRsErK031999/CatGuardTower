@@ -19,12 +19,14 @@ Official Google Play references rechecked on 2026-08-10:
 - `FirebaseAnalyticsService` is compile-gated behind `CATGUARD_FIREBASE_ANALYTICS` and is not active in the current build.
 - `FakeAnalyticsService` and `FakeRewardedAdService` are local/test implementations only.
 - `GameSaveService` writes local progress to `Application.persistentDataPath/catguard-save.json`.
-- The signed release AAB produced on 2026-07-16 was re-inspected on 2026-07-17 with Unity's bundled `bundletool 1.17.2`:
-  - package `com.berserk031999.catguardtower`, `versionName` `0.1.0`, `versionCode` `1`;
+- The signed `0.2.0` candidate AAB was inspected on 2026-08-10 with Unity's bundled `bundletool 1.17.2`, `jarsigner`, and the E15 artifact-only gate:
+  - package `com.berserk031999.catguardtower`, `versionName` `0.2.0`, `versionCode` `2`;
   - min SDK 25 and target SDK 36;
+  - bundletool validation and JAR signature verification both exited `0`;
   - no `INTERNET`, advertising ID, billing, storage, camera, microphone, contacts, location, notification, or other sensitive permission;
-  - the only `uses-permission` entry is the package-scoped AndroidX dynamic-receiver protection permission.
-- This historical `0.1.0` inspection does not approve `0.2.0`. The E15 gate must repeat bundletool manifest/permission validation against the exact candidate AAB and attach its hash before submission.
+  - the only `uses-permission` entry is `com.berserk031999.catguardtower.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`;
+  - AAB SHA-256: `C469403B7C13528B0D39702B484D67B06ACC11DC0F4E271C396095D5D7CBD9C0`;
+  - ignored manifest evidence: `Builds/Android/qa-device/e15-release/20260810-162440/e15-artifact-preflight.json` and `candidate-aab-manifest.xml`.
 - The localized in-app privacy modal documents the local save, no-live-SDK state, and deletion paths.
 
 ## Draft Data Safety Answers
@@ -80,4 +82,4 @@ Re-open this draft before upload if any of these are added:
 
 - Data Safety must stay consistent with `docs/store/PRIVACY_POLICY_DRAFT.md`.
 - Internal-only testing may be exempt, but closed/open/production tracks require accurate Data Safety declarations.
-- Do not submit this as final until the exact `0.2.0` release AAB has been inspected for manifest permissions and bundled SDKs, the owner confirms the answers, and the public privacy-policy URL is active.
+- The exact `0.2.0` candidate AAB inspection is complete. Do not submit this as final until the owner confirms the answers, the public privacy-policy URL is active, and the final rebuilt AAB hash is rechecked if candidate source changes.

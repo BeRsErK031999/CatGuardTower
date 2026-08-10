@@ -62,6 +62,31 @@ Outputs under ignored `Builds/Android/`:
 - `CatGuardTowerDefense-store.aab`;
 - timestamped Unity build logs.
 
+### Emulator-only store screenshot build
+
+An x86_64 emulator cannot execute the ARM64 store APK as trustworthy device evidence. For non-development store screenshots only, build an ABI-only x86_64 sibling from the same source, package, version, release configuration, IL2CPP backend, and signing identity:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass `
+  -File tools\android\build-signed-store.ps1 `
+  -Artifact CaptureApk
+```
+
+The output is `Builds/Android/CatGuardTowerDefense-store-capture-x86_64.apk`. It must never be uploaded to Google Play, used for performance acceptance, or presented as physical-device evidence. The shippable APK/AAB remain ARM64-only.
+
+## Artifact-Only Desktop Preflight
+
+After the same-key baseline APK and candidate APK/AAB exist, validate their identities, signatures, target SDK, AAB manifest, permissions, and hashes without selecting or mutating an Android device:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass `
+  -File tools\android\run-e15-release-gate.ps1 `
+  -BaselineApkPath "Builds\Android\baseline\CatGuardTowerDefense-0.1.0-universal.apk" `
+  -ArtifactOnly
+```
+
+The command writes `e15-artifact-preflight.json` and `candidate-aab-manifest.xml` under the ignored evidence directory. It never installs or uninstalls the package and does not require `-ConfirmPackageReset`. A passing artifact preflight is desktop evidence only; it does not replace the complete install, upgrade, save, performance, or physical-device release gate.
+
 ## Artifact, Clean Install, Upgrade, And Offline Gate
 
 The runner validates APK signatures and identities, validates and dumps the AAB manifest with bundletool, rejects sensitive permissions that contradict the Data Safety draft, performs a destructive clean install for exactly the store package, launches offline, installs the baseline, performs an upgrade install after injecting the tracked schema-v4 fixture, and verifies schema/save continuity.

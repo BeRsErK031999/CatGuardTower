@@ -1,6 +1,6 @@
 # Google Play Store Asset Checklist
 
-Source status: E15 landscape replacement contract. Existing `1080 x 1920` portrait screenshots are legacy Phase 11 evidence and must not be uploaded for the landscape expansion.
+Source status: five E15 landscape candidates are imported and validator-clean. Existing `1080 x 1920` portrait screenshots are legacy Phase 11 evidence and must not be uploaded for the landscape expansion.
 
 Official Google Play preview-asset requirements rechecked on `2026-08-10`:
 
@@ -27,14 +27,14 @@ Google Play requires at least two screenshots across device types and recommends
 Required replacement set:
 
 1. `01-home-hub-campaign-1920x1080.png` — Garden Outpost with campaign navigation.
-2. `02-tower-placement-1920x1080.png` — readable tower selection, paths, goals, and placement state.
-3. `03-boss-combat-1920x1080.png` — multi-route boss combat with towers and Guardian ultimates.
+2. `02-tower-placement-1920x1080.png` — readable tower selection, upgrade controls, path, goals, and placement state.
+3. `03-boss-combat-1920x1080.png` — multi-route `Капитан Колючка` boss combat with towers and Guardian ultimate status.
 4. `04-victory-progression-1920x1080.png` — victory rewards, contracts, experience, and achievements.
-5. `05-quests-achievements-1920x1080.png` — quest board or achievements/progression surface.
+5. `05-quests-achievements-1920x1080.png` — defense contracts and daily quest rewards.
 
 Every screenshot must:
 
-- come from the exact non-development `0.2.0` candidate;
+- come from the non-development `0.2.0` candidate source and release configuration; the documented ABI-only x86_64 sibling is allowed for emulator capture but must not be shipped;
 - depict real current UI and gameplay;
 - contain no device frame, notification, status bar, Unity splash, or `Development Build` watermark;
 - remain correctly oriented and unstretched;
@@ -44,11 +44,11 @@ Every screenshot must:
 
 ## Prepared Alt Text
 
-- Home hub: `Коты-защитники в Садовой заставе рядом с картой кампании и зонами развития.`
-- Placement: `Ландшафтная карта с двумя тропами, целями и выбором пяти котов-башен.`
-- Boss combat: `Коты-башни сражаются с Крысиным королём на перекрёстке двух маршрутов.`
+- Home hub: `Зоны Садовой заставы с воротами кампании, мастерской, заданиями и развитием Хранителя.`
+- Placement: `Кот-башня у тропы на экране расстановки с выбором защитников и панелью улучшений.`
+- Boss combat: `Бой с Капитаном Колючкой на двух маршрутах с башнями и готовой способностью Хранителя.`
 - Victory: `Экран победы с рыбками, опытом, прогрессом контрактов и достижений.`
-- Quests: `Доска заданий и достижений с прогрессом и наградами игрока.`
+- Quests: `Доска заданий с активными контрактами, выполненными целями и ежедневными наградами.`
 
 ## Import And Validation
 
@@ -63,4 +63,4 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass `
   -File tools\store\validate-store-assets.ps1
 ```
 
-The E15 validator intentionally remains red while any replacement screenshot is missing. Preserve the legacy portrait files only as historical evidence until the new set is captured and owner-approved; do not present them as current store candidates.
+The five imported candidates pass automated validation. E15 remains red until the owner approves them and all other release blocks are complete. Preserve the legacy portrait files only as historical evidence; do not present them as current store candidates.

@@ -221,13 +221,13 @@ public static class E15ProjectSetup
     private static void ValidateOwnerApproval(ICollection<string> errors)
     {
         var decision = ReadText(DecisionPath);
-        if (!decision.Contains("Status: approved", StringComparison.OrdinalIgnoreCase))
+        if (!HasDocumentStatus(decision, "approved"))
         {
             errors.Add("E15 release decision is not approved by the owner.");
         }
 
         var readiness = ReadText(ReadinessPath);
-        if (!readiness.Contains("Status: completed", StringComparison.OrdinalIgnoreCase))
+        if (!HasDocumentStatus(readiness, "completed"))
         {
             errors.Add("E15 readiness document is not completed.");
         }
@@ -254,6 +254,19 @@ public static class E15ProjectSetup
                 errors.Add($"Privacy policy owner placeholder remains unresolved: {placeholder}");
             }
         }
+    }
+
+    private static bool HasDocumentStatus(string content, string expectedStatus)
+    {
+        var statusLine = content
+            .Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
+            .Select(line => line.Trim())
+            .FirstOrDefault(line => line.StartsWith("Status:", StringComparison.OrdinalIgnoreCase));
+
+        return string.Equals(
+            statusLine,
+            $"Status: {expectedStatus}",
+            StringComparison.OrdinalIgnoreCase);
     }
 
     private static void ValidateFileContains(string path, IEnumerable<string> tokens, ICollection<string> errors)

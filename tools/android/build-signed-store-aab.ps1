@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [ValidateSet("Aab", "Apk")]
+    [ValidateSet("Aab", "Apk", "CaptureApk")]
     [string]$Artifact = "Aab",
     [string]$KeystorePath = $env:CATGUARD_ANDROID_KEYSTORE_PATH,
     [string]$KeyAlias = $env:CATGUARD_ANDROID_KEY_ALIAS,
@@ -155,14 +155,19 @@ try {
     $logDirectory = Join-Path $repoRoot "Builds\Android\logs"
     New-Item -ItemType Directory -Force -Path $logDirectory | Out-Null
     $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
-    $artifactExtension = $Artifact.ToLowerInvariant()
-    $executeMethod = if ($Artifact -eq "Aab") {
-        "Phase11ProjectSetup.BuildSignedAab"
-    } else {
-        "Phase11ProjectSetup.BuildSignedApk"
+    $artifactLabel = $Artifact.ToLowerInvariant()
+    $executeMethod = switch ($Artifact) {
+        "Aab" { "Phase11ProjectSetup.BuildSignedAab" }
+        "Apk" { "Phase11ProjectSetup.BuildSignedApk" }
+        "CaptureApk" { "Phase11ProjectSetup.BuildSignedStoreCaptureApk" }
     }
-    $logPath = Join-Path $logDirectory "signed-store-$artifactExtension-$timestamp.log"
-    $outputPath = Join-Path $repoRoot "Builds\Android\CatGuardTowerDefense-store.$artifactExtension"
+    $outputFileName = switch ($Artifact) {
+        "Aab" { "CatGuardTowerDefense-store.aab" }
+        "Apk" { "CatGuardTowerDefense-store.apk" }
+        "CaptureApk" { "CatGuardTowerDefense-store-capture-x86_64.apk" }
+    }
+    $logPath = Join-Path $logDirectory "signed-store-$artifactLabel-$timestamp.log"
+    $outputPath = Join-Path $repoRoot "Builds\Android\$outputFileName"
 
     if (Test-Path -LiteralPath $outputPath) {
         Remove-Item -LiteralPath $outputPath -Force
@@ -204,8 +209,8 @@ try {
         throw "Unity reported success but the store $Artifact was not created: $outputPath"
     }
 
-    $artifact = Get-Item -LiteralPath $outputPath
-    Write-Host "Signed store $Artifact created: $($artifact.FullName) ($($artifact.Length) bytes)"
+    $artifactFile = Get-Item -LiteralPath $outputPath
+    Write-Host "Signed store $Artifact created: $($artifactFile.FullName) ($($artifactFile.Length) bytes)"
 }
 finally {
     foreach ($name in $environmentNames) {

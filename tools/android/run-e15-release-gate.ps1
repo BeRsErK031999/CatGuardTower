@@ -9,6 +9,7 @@ param(
     [string]$DeviceSerial = "",
     [string]$OutputDir = "Builds\Android\qa-device\e15-release",
     [int]$LaunchWaitSeconds = 25,
+    [switch]$ArtifactOnly,
     [switch]$RequirePhysicalDevice,
     [switch]$RequirePerformance,
     [switch]$ConfirmPackageReset
@@ -347,25 +348,52 @@ foreach ($path in @($resolvedBaselineApk, $resolvedCandidateApk, $resolvedCandid
         throw "E15 artifact is missing: $path"
     }
 }
-if (-not $ConfirmPackageReset) {
+if (-not $ArtifactOnly -and -not $ConfirmPackageReset) {
     throw "E15 clean-install QA deletes app data for exactly '$PackageName'. Re-run with -ConfirmPackageReset after confirming the target."
 }
 
 $script:Tools = Find-AndroidTools
+$javaBinDirectory = Split-Path -Parent $script:Tools.Java
+$env:JAVA_HOME = Split-Path -Parent $javaBinDirectory
 $baseline = Get-ApkMetadata $resolvedBaselineApk
 $candidate = Get-ApkMetadata $resolvedCandidateApk
 $bundle = Get-AabMetadata $resolvedCandidateAab
 Assert-ArtifactContract -Baseline $baseline -Candidate $candidate -Bundle $bundle
-$script:Device = Select-Device
 
 $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
 $runRoot = Join-Path $resolvedOutputDir $timestamp
-$manifestPath = Join-Path $runRoot "e15-release-gate.json"
+$manifestName = if ($ArtifactOnly) { "e15-artifact-preflight.json" } else { "e15-release-gate.json" }
+$manifestPath = Join-Path $runRoot $manifestName
 $aabManifestPath = Join-Path $runRoot "candidate-aab-manifest.xml"
 New-Item -ItemType Directory -Force -Path $runRoot | Out-Null
 $bundle.manifestText | Set-Content -LiteralPath $aabManifestPath -Encoding UTF8
 $bundle.manifestPath = $aabManifestPath
 $bundle.PSObject.Properties.Remove("manifestText")
+
+$gitHead = (& git -C $script:RepoRoot rev-parse HEAD).Trim()
+$gitBranch = (& git -C $script:RepoRoot branch --show-current).Trim()
+if ($ArtifactOnly) {
+    $preflight = [pscustomobject]@{
+        generatedAtUtc = (Get-Date).ToUniversalTime().ToString("o")
+        passed = $true
+        kind = "artifact-only-preflight"
+        fullReleaseGate = $false
+        gitBranch = $gitBranch
+        gitHead = $gitHead
+        packageName = $PackageName
+        baselineApk = $baseline
+        candidateApk = $candidate
+        candidateAab = $bundle
+    }
+    $preflight | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $manifestPath -Encoding UTF8
+
+    Write-Host "E15 artifact preflight manifest: $manifestPath"
+    Write-Host "Candidate: $($candidate.versionName) ($($candidate.versionCode))"
+    Write-Host "Artifact preflight passed. Full release gate was not run."
+    exit 0
+}
+
+$script:Device = Select-Device
 
 Write-Host "E15 target: $($script:Device.serial)"
 Write-Host "Package reset scope: $PackageName"
@@ -398,8 +426,6 @@ $saveContinuity = Compare-SaveContinuity `
     -BeforePath $beforeSavePath `
     -AfterPath ([string]$upgradeSummary.savePath)
 
-$gitHead = (& git -C $script:RepoRoot rev-parse HEAD).Trim()
-$gitBranch = (& git -C $script:RepoRoot branch --show-current).Trim()
 $passed = [bool]$cleanSummary.launched `
     -and [bool]$cleanSummary.landscapeConfirmed `
     -and [int]$cleanSummary.fatalPatternCount -eq 0 `

@@ -333,7 +333,7 @@ Source of truth: `EXPANSION_ROADMAP.md`.
 
 ### In Progress
 
-* [ ] E15 — Expansion Release Gate; internal `0.2.0` release tooling and documentation are in progress, while final landscape captures, human playtest, physical-device QA, store/account inputs, and release approval remain blocking.
+* [ ] E15 — Expansion Release Gate; signed artifacts, desktop preflight, and final landscape captures are prepared, while human playtest, physical-device QA, store/account approval, the complete block gate, and release approval remain blocking.
 
 ### Done
 

@@ -502,6 +502,8 @@ Owner: product owner + invited testers
 
 Status: `Not started`
 
+Execution handoff: `docs/release/E15_PLAYTEST_HANDOFF.md`
+
 ### Why this cannot be automated away
 
 Automation can prove that waves complete, rewards are consistent, and FPS is measurable. It cannot honestly decide:
@@ -575,6 +577,8 @@ Priority: `P0` for E15
 Owner: product owner
 
 Status: `Not started`
+
+Execution handoff: `docs/release/E15_OWNER_INPUT_HANDOFF.md`
 
 ### Owner decisions/actions
 

@@ -25,6 +25,8 @@ Checked on: `2026-08-10`
 
 Desktop evidence is summarized in `docs/release/E15_DESKTOP_PREFLIGHT_REPORT.md`. The x86_64 capture sibling proves current landscape UI content only; it does not replace ARM64 install, upgrade, performance, thermal, rotation, or touch QA on a physical phone.
 
+The next non-device execution inputs are prepared in `docs/release/E15_PLAYTEST_HANDOFF.md` and `docs/release/E15_OWNER_INPUT_HANDOFF.md`. These documents make the remaining human and owner evidence explicit but do not complete either external P0 block.
+
 ## Gate State
 
 `E15ProjectSetup.ValidateReadiness` checks the internal release scaffolding. `E15ProjectSetup.Validate` also validates the imported screenshots and must remain red until the external P0 blocks, completed report, privacy/store inputs, and owner approval are present.

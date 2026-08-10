@@ -23,6 +23,8 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass `
 
 Do not request production access until this physical-device gate is passed or explicitly accepted as a known risk by the owner.
 
+Use `docs/release/E15_PLAYTEST_HANDOFF.md` for subjective session evidence and `docs/release/E15_OWNER_INPUT_HANDOFF.md` for the exact owner, listing, privacy, and upload-key decisions required before Play Console submission.
+
 ## Closed Testing Requirements
 
 - Prepare a closed testing track after Play Console app setup is complete.

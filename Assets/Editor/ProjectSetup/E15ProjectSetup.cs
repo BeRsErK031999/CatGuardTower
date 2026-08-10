@@ -162,6 +162,8 @@ public static class E15ProjectSetup
             [KnownIssuesPath] = new[] { "performance", "physical", "store" },
             [LicenseAuditPath] = new[] { "OpenAI image generation", "procedural", "third-party", "paid" },
             [DecisionPath] = new[] { "Status:", "Owner", "Release decision", "Remaining risks" },
+            ["docs/release/E15_PLAYTEST_HANDOFF.md"] = new[] { "PLAYTEST-001", "Required ratings", "Completion rule" },
+            ["docs/release/E15_OWNER_INPUT_HANDOFF.md"] = new[] { "STORE-ACCOUNT-001", "Upload-key decision", "Completion rule" },
             ["docs/store/STORE_LISTING_DRAFT.md"] = new[] { "0.2.0", "12", "landscape", "Guardian ultimates" },
             ["docs/store/DATA_SAFETY_DRAFT.md"] = new[] { "2026-08-10", "target SDK 36", "No" },
             ["docs/store/PRIVACY_POLICY_DRAFT.md"] = new[] { "0.2.0", "quests", "achievements", "text scale" },
@@ -221,13 +223,13 @@ public static class E15ProjectSetup
     private static void ValidateOwnerApproval(ICollection<string> errors)
     {
         var decision = ReadText(DecisionPath);
-        if (!HasDocumentStatus(decision, "approved"))
+        if (!HasStatus(decision, "approved"))
         {
             errors.Add("E15 release decision is not approved by the owner.");
         }
 
         var readiness = ReadText(ReadinessPath);
-        if (!HasDocumentStatus(readiness, "completed"))
+        if (!HasStatus(readiness, "completed"))
         {
             errors.Add("E15 readiness document is not completed.");
         }
@@ -238,9 +240,7 @@ public static class E15ProjectSetup
         foreach (var id in new[] { "PLAYTEST-001", "DEVICE-QA-001", "STORE-ACCOUNT-001" })
         {
             var section = ReadSection(backlog, $"ID: `{id}`");
-            if (section.Length == 0
-                || section.Contains("Status: `Not started`", StringComparison.Ordinal)
-                || section.Contains("Status: `Blocked", StringComparison.Ordinal))
+            if (!HasStatus(section, "Completed"))
             {
                 errors.Add($"External E15 P0 block is not complete: {id}.");
             }
@@ -256,17 +256,20 @@ public static class E15ProjectSetup
         }
     }
 
-    private static bool HasDocumentStatus(string content, string expectedStatus)
+    private static bool HasStatus(string content, string expectedStatus)
     {
         var statusLine = content
             .Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
             .Select(line => line.Trim())
             .FirstOrDefault(line => line.StartsWith("Status:", StringComparison.OrdinalIgnoreCase));
 
-        return string.Equals(
-            statusLine,
-            $"Status: {expectedStatus}",
-            StringComparison.OrdinalIgnoreCase);
+        if (statusLine == null)
+        {
+            return false;
+        }
+
+        var status = statusLine.Substring("Status:".Length).Trim().Trim('`');
+        return string.Equals(status, expectedStatus, StringComparison.OrdinalIgnoreCase);
     }
 
     private static void ValidateFileContains(string path, IEnumerable<string> tokens, ICollection<string> errors)

@@ -4,7 +4,7 @@ Status: ready for execution; `PLAYTEST-001` remains incomplete
 
 Prepared on: `2026-08-10`
 
-Candidate: commit `c47461fa82c770cdfe9394434ecc1c23c7354eb5`, package `com.berserk031999.catguardtower`, version `0.2.0` (`2`)
+Base candidate: commit `3bb8f55c901719239829d3d6ca51a79f22d8544e`, package `com.berserk031999.catguardtower`, version `0.2.0` (`2`)
 
 ## Purpose
 
@@ -18,6 +18,8 @@ This handoff collects the subjective evidence automation cannot provide: clarity
 4. Include the required low/mid-range physical Android session only in the final phone stage.
 
 The emulator pass may start `PLAYTEST-001`, but the external block stays incomplete until every minimum cohort and required output in `EXTERNAL_PRODUCTION_BACKLOG.md` is present.
+
+Record live results in `docs/release/E15_PLAYTEST_FINDINGS.md`.
 
 ## Owner expert session
 
@@ -63,7 +65,7 @@ Session ID:
 Date:
 Tester alias:
 Tester profile: owner expert / tower-defense player / casual mobile player
-Build commit: c47461fa82c770cdfe9394434ecc1c23c7354eb5
+Build commit: 3bb8f55c901719239829d3d6ca51a79f22d8544e or the later accepted playtest-fix commit
 Runtime: emulator / physical device
 Device or AVD:
 Android version:

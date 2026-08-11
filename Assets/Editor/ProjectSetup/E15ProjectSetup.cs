@@ -163,6 +163,7 @@ public static class E15ProjectSetup
             [LicenseAuditPath] = new[] { "OpenAI image generation", "procedural", "third-party", "paid" },
             [DecisionPath] = new[] { "Status:", "Owner", "Release decision", "Remaining risks" },
             ["docs/release/E15_PLAYTEST_HANDOFF.md"] = new[] { "PLAYTEST-001", "Required ratings", "Completion rule" },
+            ["docs/release/E15_PLAYTEST_FINDINGS.md"] = new[] { "PLAYTEST-001", "Owner results", "Cohort progress" },
             ["docs/release/E15_OWNER_INPUT_HANDOFF.md"] = new[] { "STORE-ACCOUNT-001", "Upload-key decision", "Completion rule" },
             ["docs/store/STORE_LISTING_DRAFT.md"] = new[] { "0.2.0", "12", "landscape", "Guardian ultimates" },
             ["docs/store/DATA_SAFETY_DRAFT.md"] = new[] { "2026-08-10", "target SDK 36", "No" },

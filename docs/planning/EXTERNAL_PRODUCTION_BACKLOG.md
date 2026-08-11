@@ -504,6 +504,8 @@ Status: `Not started`
 
 Execution handoff: `docs/release/E15_PLAYTEST_HANDOFF.md`
 
+Findings record: `docs/release/E15_PLAYTEST_FINDINGS.md`
+
 ### Why this cannot be automated away
 
 Automation can prove that waves complete, rewards are consistent, and FPS is measurable. It cannot honestly decide:

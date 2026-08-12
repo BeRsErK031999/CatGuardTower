@@ -31,7 +31,7 @@ Candidate: `0.2.0` (`versionCode` `2`), package `com.berserk031999.catguardtower
 ## Remaining risks
 
 - Current emulator performance evidence is inconsistent with the historical E14 report.
-- No physical-device or human-playtest evidence exists yet.
+- The owner-support emulator walkthrough has objective evidence through level 12. The exact rebuilt store-signed capture no longer reproduces the original opening wall, but level-12 victory/fairness acceptance, subjective owner ratings, broader tester cohorts, and physical-device evidence are still missing.
 - Store/account/legal decisions require the owner and cannot be automated.
 
 When every item is complete, replace the status with exactly `Status: approved`, record the owner and date, state the chosen track, and link the immutable release evidence. Approval must not conceal accepted risks.

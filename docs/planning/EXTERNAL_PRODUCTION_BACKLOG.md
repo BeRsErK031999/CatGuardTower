@@ -500,7 +500,7 @@ Priority: `P0` for E14/E15
 
 Owner: product owner + invited testers
 
-Status: `Not started`
+Status: `In progress; owner-support walkthrough reached level 12, subjective ratings and required cohorts remain open`
 
 Execution handoff: `docs/release/E15_PLAYTEST_HANDOFF.md`
 

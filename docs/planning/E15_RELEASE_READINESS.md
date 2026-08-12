@@ -2,7 +2,7 @@
 
 Status: in progress
 
-Checked on: `2026-08-10`
+Checked on: `2026-08-12`
 
 ## Implemented Internally
 
@@ -18,7 +18,7 @@ Checked on: `2026-08-10`
 
 ## Current Blocking Evidence
 
-- `PLAYTEST-001`: not started. Automated victory does not replace human balance, comprehension, and fun review.
+- `PLAYTEST-001`: in progress. The ADB-assisted owner-support walkthrough reached `level_12`, covered the main hub systems, persistence, in-place signed-candidate upgrades, voluntary rewarded flows, and levels 1-11. It found a major standard-resource level-12 progression wall. The source-side sequential-wave fix compiles, passes E12/E13/internal E15 validation, and no longer reproduces the opening wall on an exact rebuilt store-signed capture: targeted attempts improved from 8-10/63 to 46/59 and 51/63. A deliberate reinvestment victory, owner subjective ratings, required tester cohorts, and physical-device representation remain open.
 - `DEVICE-QA-001`: blocked until a physical Android device is connected. E15 requires install, both landscape directions, touch, background/foreground, thermal, battery, heavy-wave FPS, audio, offline, save, and upgrade evidence.
 - `STORE-ACCOUNT-001`: partially prepared. Final owner identity/contact, public privacy URL, audience/content rating, Play Console actions, screenshot/listing approval, and independent upload-key backup/approval are unavailable.
 - The fresh 2026-08-10 E14 reproduction on Emulator 37.1.11 failed its current performance gate under SwiftShader, while host-GPU mode terminated during the diagnostic scenario. This discrepancy must be resolved or superseded by valid physical-device evidence before release acceptance.

@@ -5,7 +5,7 @@ Status: open; release is not approved
 ## Blocking
 
 - Physical-device QA is unavailable until the owner connects at least one representative Android phone. Touch edges, cutout/safe area, both landscape directions, background/foreground, audio routing, performance, thermal behavior, battery use, clean install, offline use, and upgrade preservation remain unverified on real hardware.
-- Human balance/play-feel testing has not started. Automated scenarios prove deterministic completion but cannot establish clarity, pacing, difficulty, satisfaction, or accessibility comfort.
+- Human balance/play-feel testing is incomplete. The owner-support emulator walkthrough reached level 12 and found a major standard-resource opening progression wall. The sequential-wave fix passed compilation/readiness and removed the opening wall on an exact rebuilt store-signed capture, improving targeted attempts from 8-10/63 to 46/59 and 51/63, but a deliberate reinvestment victory and owner fairness acceptance are still required. Owner subjective ratings, the required tester cohorts, and physical-device representation remain missing.
 - Store/account inputs are incomplete: final developer identity, privacy contact and public URL, audience/content rating, Play Console access, owner approval of the candidate upload key and screenshots, independent key backup, and final release decision.
 - The current Emulator 37.1.11 SwiftShader reproduction measured the E14 worst case below budget; the host-GPU diagnostic terminated before a comparable result. This performance discrepancy is unresolved and blocks reliance on the current emulator as release evidence.
 

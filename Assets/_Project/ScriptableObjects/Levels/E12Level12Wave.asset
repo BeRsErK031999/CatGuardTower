@@ -15,10 +15,10 @@ MonoBehaviour:
   groups:
   - enemyConfig: {fileID: 11400000, guid: 7f3846739d72a624ebc306e03c7e994c, type: 2}
     count: 30
-    spawnInterval: 0.345
+    spawnInterval: 0.42
     delayBeforeGroup: 0
-    healthMultiplier: 3.205395
-    speedMultiplier: 1.385
+    healthMultiplier: 1.8
+    speedMultiplier: 1.25
     routeSelectionRule: 1
     routeIds:
     - amber
@@ -26,28 +26,28 @@ MonoBehaviour:
   - enemyConfig: {fileID: 11400000, guid: b47878b293e7cdf4bb20b3301eb7876d, type: 2}
     count: 13
     spawnInterval: 0.56
-    delayBeforeGroup: 0.35
-    healthMultiplier: 3.205395
-    speedMultiplier: 1.385
+    delayBeforeGroup: 6
+    healthMultiplier: 3.4
+    speedMultiplier: 1.35
     routeSelectionRule: 0
     routeIds:
     - blue
   - enemyConfig: {fileID: 11400000, guid: e1aae313645f43d4c8452cc0f84a5ac7, type: 2}
     count: 15
     spawnInterval: 0.41000003
-    delayBeforeGroup: 0.45
-    healthMultiplier: 3.205395
-    speedMultiplier: 1.385
+    delayBeforeGroup: 10
+    healthMultiplier: 3.4
+    speedMultiplier: 1.35
     routeSelectionRule: 0
     routeIds:
     - amber
   - enemyConfig: {fileID: 11400000, guid: 62f36f5744456464786a77367232dd90, type: 2}
     count: 1
     spawnInterval: 1
-    delayBeforeGroup: 2.2
+    delayBeforeGroup: 12
     healthMultiplier: 1
     speedMultiplier: 1
     routeSelectionRule: 0
     routeIds:
     - blue
-  concurrentGroups: 1
+  concurrentGroups: 0

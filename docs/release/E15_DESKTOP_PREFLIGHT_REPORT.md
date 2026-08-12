@@ -58,6 +58,6 @@ The ARM64 store APK reached a Unity native `Loading.Preload` crash when forced t
 - `DEVICE-QA-001`: complete signed ARM64 clean-install, upgrade, offline, save, both-landscape-directions, touch, audio, background/foreground, crash, performance, thermal, and battery gate on a physical phone.
 - `STORE-ACCOUNT-001`: owner/legal/contact/Play Console inputs, public privacy URL, Data Safety submission, audience/content rating, screenshot/listing approval, and independent upload-key backup/approval.
 - Fresh full E14 regression and complete E15 block gate on the exact final candidate commit.
-- Final approved `E15_EXPANSION_RELEASE_REPORT.md`, release decision, commit, and `develop == origin/develop` verification.
+- Completion of the prepared `E15_EXPANSION_RELEASE_REPORT.md`, final release decision, commit, and `develop == origin/develop` verification.
 
 No release approval, E15 completion, upload, merge, or push to `develop` is implied by this report.

@@ -10,13 +10,18 @@ param(
     [switch]$SkipInstall,
     [switch]$Offline,
     [switch]$RequirePerformance,
-    [switch]$RequirePhysicalDevice
+    [switch]$RequirePhysicalDevice,
+    [switch]$UseRunningApp,
+    [ValidateSet("launch-surface", "level_12-heavy-wave")]
+    [string]$PerformanceContext = "launch-surface",
+    [switch]$RequireReleasePerformanceEvidence
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
 $script:RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..\..")).Path
+. (Join-Path $PSScriptRoot "android-qa-provenance.ps1")
 
 function Resolve-ProjectPath {
     param([string]$Path)
@@ -95,6 +100,46 @@ function Invoke-TargetAdb {
     )
 
     return Invoke-Adb -Arguments ($script:TargetArgs + $Arguments) -AllowFailure:$AllowFailure
+}
+
+function Get-RuntimePerformanceCheckpoint {
+    param(
+        [string]$PackageName,
+        [string]$OutputPath
+    )
+
+    $externalFilesPath = "/sdcard/Android/data/$PackageName/files"
+    $remoteRequest = "$externalFilesPath/catguard-performance-checkpoint.request"
+    $remoteResponse = "$externalFilesPath/catguard-performance-checkpoint.json"
+    Invoke-TargetAdb -Arguments @("shell", "rm", "-f", $remoteRequest, $remoteResponse) -AllowFailure | Out-Null
+
+    try {
+        $requestResult = Invoke-TargetAdb -Arguments @("shell", "touch", $remoteRequest) -AllowFailure
+        if ($requestResult.ExitCode -ne 0) {
+            return $null
+        }
+
+        $deadline = (Get-Date).AddSeconds(10)
+        do {
+            Start-Sleep -Milliseconds 250
+            $responseResult = Invoke-TargetAdb -Arguments @("shell", "cat", $remoteResponse) -AllowFailure
+        } while ($responseResult.ExitCode -ne 0 -and (Get-Date) -lt $deadline)
+
+        $responseText = ($responseResult.Output -join [Environment]::NewLine).Trim()
+        if ($responseResult.ExitCode -ne 0 -or -not $responseText) {
+            return $null
+        }
+
+        $responseText | Set-Content -LiteralPath $OutputPath -Encoding UTF8
+        return $responseText | ConvertFrom-Json
+    }
+    catch {
+        Write-Warning "Runtime performance checkpoint could not be captured: $($_.Exception.Message)"
+        return $null
+    }
+    finally {
+        Invoke-TargetAdb -Arguments @("shell", "rm", "-f", $remoteRequest, $remoteResponse) -AllowFailure | Out-Null
+    }
 }
 
 function Write-Lines {
@@ -200,6 +245,17 @@ if (-not (Test-Path -LiteralPath $resolvedApkPath)) {
     Write-Host "Build it first with Phase10ProjectSetup.BuildAll or pass -ApkPath to an existing APK."
     exit 2
 }
+$expectedApkSha256 = (Get-FileHash -LiteralPath $resolvedApkPath -Algorithm SHA256).Hash
+if ($RequireReleasePerformanceEvidence -and (
+    -not $RequirePerformance `
+    -or -not $RequirePhysicalDevice `
+    -or -not $SkipInstall `
+    -or -not $UseRunningApp `
+    -or $LaunchWaitSeconds -lt 20 `
+    -or $PerformanceContext -ne "level_12-heavy-wave")) {
+    Write-Host "Release performance evidence requires -RequirePerformance, -RequirePhysicalDevice, -SkipInstall, -UseRunningApp, -LaunchWaitSeconds 20 or more, and -PerformanceContext level_12-heavy-wave."
+    exit 2
+}
 
 $script:AdbPath = Find-Adb
 $devices = Invoke-Adb -Arguments @("devices", "-l")
@@ -267,9 +323,13 @@ $windowPath = Join-Path $runDir "dumpsys-window.txt"
 $displayPath = Join-Path $runDir "dumpsys-display.txt"
 $gfxInfoPath = Join-Path $runDir "dumpsys-gfxinfo.txt"
 $surfaceLatencyPath = Join-Path $runDir "surfaceflinger-latency.txt"
+$graphicsPath = Join-Path $runDir "graphics-provenance.txt"
 $screenshotPath = Join-Path $runDir "screen.png"
 $summaryPath = Join-Path $runDir "qa-summary.json"
 $savePath = Join-Path $runDir "catguard-save.json"
+$installedApkPath = Join-Path $runDir "installed-base.apk"
+$runtimeCheckpointBeforePath = Join-Path $runDir "runtime-performance-checkpoint-before.json"
+$runtimeCheckpointAfterPath = Join-Path $runDir "runtime-performance-checkpoint-after.json"
 
 Write-Lines -Path $devicesPath -Lines $devices.Output
 
@@ -285,6 +345,22 @@ if (-not $SkipInstall) {
     Invoke-TargetAdb -Arguments @("install", "-r", $resolvedApkPath) | Out-Null
 }
 
+$packagePathsResult = Invoke-TargetAdb -Arguments @("shell", "pm", "path", $PackageName) -AllowFailure
+$installedBaseRemotePath = [string](@($packagePathsResult.Output | Where-Object {
+    $_ -match '^package:.+/base\.apk$'
+} | ForEach-Object {
+    $_.Substring("package:".Length).Trim()
+} | Select-Object -First 1))
+$installedApkSha256 = ""
+if ($installedBaseRemotePath) {
+    $installedPull = Invoke-TargetAdb -Arguments @("pull", $installedBaseRemotePath, $installedApkPath) -AllowFailure
+    if ($installedPull.ExitCode -eq 0 -and (Test-Path -LiteralPath $installedApkPath -PathType Leaf)) {
+        $installedApkSha256 = (Get-FileHash -LiteralPath $installedApkPath -Algorithm SHA256).Hash
+    }
+}
+$apkIdentityMatched = $installedApkSha256 `
+    -and $installedApkSha256 -ieq $expectedApkSha256
+
 $offlineRequested = $false
 if ($Offline) {
     $offlineRequested = $true
@@ -293,12 +369,31 @@ if ($Offline) {
     Invoke-TargetAdb -Arguments @("shell", "svc", "data", "disable") -AllowFailure | Out-Null
 }
 
-Write-Host "Launching app..."
-Invoke-TargetAdb -Arguments @("shell", "input", "keyevent", "KEYCODE_WAKEUP") -AllowFailure | Out-Null
-Invoke-TargetAdb -Arguments @("shell", "wm", "dismiss-keyguard") -AllowFailure | Out-Null
-Invoke-TargetAdb -Arguments @("shell", "cmd", "statusbar", "collapse") -AllowFailure | Out-Null
-$launchResult = Invoke-TargetAdb -Arguments @("shell", "monkey", "-p", $PackageName, "-c", "android.intent.category.LAUNCHER", "1") -AllowFailure
+if ($UseRunningApp) {
+    Write-Host "Sampling the already running app without relaunching it..."
+    $launchResult = [pscustomobject]@{ ExitCode = 0; Output = @("UseRunningApp") }
+}
+else {
+    Write-Host "Launching app..."
+    Invoke-TargetAdb -Arguments @("shell", "input", "keyevent", "KEYCODE_WAKEUP") -AllowFailure | Out-Null
+    Invoke-TargetAdb -Arguments @("shell", "wm", "dismiss-keyguard") -AllowFailure | Out-Null
+    Invoke-TargetAdb -Arguments @("shell", "cmd", "statusbar", "collapse") -AllowFailure | Out-Null
+    $launchResult = Invoke-TargetAdb -Arguments @("shell", "monkey", "-p", $PackageName, "-c", "android.intent.category.LAUNCHER", "1") -AllowFailure
+}
+$runtimeCheckpointBefore = $null
+$runtimeCheckpointAfter = $null
+if ($PerformanceContext -eq "level_12-heavy-wave") {
+    $runtimeCheckpointBefore = Get-RuntimePerformanceCheckpoint `
+        -PackageName $PackageName `
+        -OutputPath $runtimeCheckpointBeforePath
+    Invoke-TargetAdb -Arguments @("shell", "dumpsys", "SurfaceFlinger", "--latency-clear") -AllowFailure | Out-Null
+}
 Start-Sleep -Seconds $LaunchWaitSeconds
+if ($PerformanceContext -eq "level_12-heavy-wave") {
+    $runtimeCheckpointAfter = Get-RuntimePerformanceCheckpoint `
+        -PackageName $PackageName `
+        -OutputPath $runtimeCheckpointAfterPath
+}
 
 $pidResult = Invoke-TargetAdb -Arguments @("shell", "pidof", $PackageName) -AllowFailure
 $appPid = ($pidResult.Output -join "").Trim()
@@ -316,6 +411,17 @@ $gfxInfoResult = Invoke-TargetAdb -Arguments @("shell", "dumpsys", "gfxinfo", $P
 Write-Lines -Path $gfxInfoPath -Lines $gfxInfoResult.Output
 
 $surfaceListResult = Invoke-TargetAdb -Arguments @("shell", "dumpsys", "SurfaceFlinger", "--list") -AllowFailure
+$surfaceFlingerResult = Invoke-TargetAdb -Arguments @("shell", "dumpsys", "SurfaceFlinger") -AllowFailure
+$hardwareEgl = ((Invoke-TargetAdb -Arguments @("shell", "getprop", "ro.hardware.egl") -AllowFailure).Output -join "").Trim()
+$hardwareVulkan = ((Invoke-TargetAdb -Arguments @("shell", "getprop", "ro.hardware.vulkan") -AllowFailure).Output -join "").Trim()
+$qemuGles = ((Invoke-TargetAdb -Arguments @("shell", "getprop", "ro.kernel.qemu.gles") -AllowFailure).Output -join "").Trim()
+$graphicsProvenance = Get-AndroidGraphicsProvenance `
+    -SurfaceFlingerLines $surfaceFlingerResult.Output `
+    -HardwareEgl $hardwareEgl `
+    -HardwareVulkan $hardwareVulkan `
+    -QemuGles $qemuGles `
+    -IsEmulator $isEmulator
+Write-Lines -Path $graphicsPath -Lines $surfaceFlingerResult.Output
 $surfaceLayer = [string](@($surfaceListResult.Output | Where-Object {
     $_ -like "*$PackageName*" -and $_ -like "*SurfaceView*" -and $_ -like "*(BLAST)*"
 } | Select-Object -First 1))
@@ -384,7 +490,25 @@ if ($saveResult.ExitCode -eq 0 -and (($saveResult.Output -join "").Trim().Length
 $fatalPattern = "FATAL EXCEPTION|Fatal signal|Abort message|NullReferenceException|MissingMethodException|DllNotFoundException| E/AndroidRuntime"
 $fatalHits = @($logcatResult.Output | Where-Object { $_ -match $fatalPattern })
 $focusLines = @($windowResult.Output | Where-Object { $_ -match "mCurrentFocus|mFocusedApp|mFocusedWindow|topResumedActivity|mTopFocusedDisplay" })
+$packageFocused = @($focusLines | Where-Object { $_ -match [regex]::Escape($PackageName) }).Count -gt 0
 $frameRateLines = @($displayResult.Output | Where-Object { $_ -match "(?i)fps|refresh|frameRate|DisplayDeviceInfo|mode" } | Select-Object -First 80)
+$releasePerformanceEvidenceEligible = $PerformanceContext -eq "level_12-heavy-wave" `
+    -and [bool]$RequirePerformance `
+    -and [bool]$RequirePhysicalDevice `
+    -and [bool]$SkipInstall `
+    -and [bool]$UseRunningApp `
+    -and $LaunchWaitSeconds -ge 20 `
+    -and $packageFocused `
+    -and $apkIdentityMatched `
+    -and $null -ne $runtimeCheckpointBefore `
+    -and [bool]$runtimeCheckpointBefore.heavyWaveEligible `
+    -and $null -ne $runtimeCheckpointAfter `
+    -and [bool]$runtimeCheckpointAfter.heavyWaveEligible `
+    -and [bool]$graphicsProvenance.releaseAcceptanceEligible `
+    -and [bool]$performance.passed `
+    -and $appPid.Length -gt 0 `
+    -and $fatalHits.Count -eq 0 `
+    -and $landscapeConfirmed
 
 $summary = [pscustomobject]@{
     timestampUtc = (Get-Date).ToUniversalTime().ToString("o")
@@ -397,6 +521,11 @@ $summary = [pscustomobject]@{
     androidApiLevel = $androidApiLevel
     packageName = $PackageName
     apkPath = $resolvedApkPath
+    apkSha256 = $expectedApkSha256
+    installedBaseRemotePath = $installedBaseRemotePath
+    installedApkPath = if ($installedApkSha256) { $installedApkPath } else { "" }
+    installedApkSha256 = $installedApkSha256
+    apkIdentityMatched = [bool]$apkIdentityMatched
     skipInstall = [bool]$SkipInstall
     offlineRequested = $offlineRequested
     launchExitCode = $launchResult.ExitCode
@@ -404,6 +533,7 @@ $summary = [pscustomobject]@{
     launched = $appPid.Length -gt 0
     fatalPatternCount = $fatalHits.Count
     currentFocusFound = $focusLines.Count -gt 0
+    packageFocused = $packageFocused
     saveReadable = $saveReadable
     screenshotCaptured = $screenshotCaptured
     screenshotWidth = $screenshotWidth
@@ -415,6 +545,7 @@ $summary = [pscustomobject]@{
     displayPath = $displayPath
     gfxInfoPath = $gfxInfoPath
     surfaceLatencyPath = $surfaceLatencyPath
+    graphicsPath = $graphicsPath
     screenshotPath = if ($screenshotCaptured) { $screenshotPath } else { "" }
     savePath = if ($saveReadable) { $savePath } else { "" }
     focusLines = $focusLines
@@ -425,6 +556,17 @@ $summary = [pscustomobject]@{
         minimumFrameSamples = $MinimumFrameSamples
         required = [bool]$RequirePerformance
     }
+    performanceContext = $PerformanceContext
+    samplingWindowSeconds = $LaunchWaitSeconds
+    releasePerformanceEvidenceRequired = [bool]$RequireReleasePerformanceEvidence
+    physicalDeviceRequired = [bool]$RequirePhysicalDevice
+    useRunningApp = [bool]$UseRunningApp
+    graphicsProvenance = $graphicsProvenance
+    runtimeCheckpointBeforePath = if ($null -ne $runtimeCheckpointBefore) { $runtimeCheckpointBeforePath } else { "" }
+    runtimeCheckpointBefore = $runtimeCheckpointBefore
+    runtimeCheckpointAfterPath = if ($null -ne $runtimeCheckpointAfter) { $runtimeCheckpointAfterPath } else { "" }
+    runtimeCheckpointAfter = $runtimeCheckpointAfter
+    releasePerformanceEvidenceEligible = $releasePerformanceEvidenceEligible
     performance = $performance
     fatalLines = $fatalHits
 }
@@ -441,11 +583,17 @@ Write-Host "Surface frame samples: $($performance.sampleCount)"
 Write-Host "Average FPS: $($performance.averageFps)"
 Write-Host "P95 frame time: $($performance.p95FrameTimeMs) ms"
 Write-Host "Performance threshold passed: $($performance.passed)"
+Write-Host "Graphics: $($graphicsProvenance.classification), renderer '$($graphicsProvenance.glesRenderer)'."
+Write-Host "Installed APK identity matched: $([bool]$apkIdentityMatched)"
+Write-Host "Runtime heavy-wave checkpoint before sample eligible: $([bool]($null -ne $runtimeCheckpointBefore -and $runtimeCheckpointBefore.heavyWaveEligible))"
+Write-Host "Runtime heavy-wave checkpoint after sample eligible: $([bool]($null -ne $runtimeCheckpointAfter -and $runtimeCheckpointAfter.heavyWaveEligible))"
+Write-Host "Release performance evidence eligible: $releasePerformanceEvidenceEligible"
 
 if ($appPid.Length -eq 0 `
     -or $fatalHits.Count -gt 0 `
     -or -not $landscapeConfirmed `
-    -or ($RequirePerformance -and -not $performance.passed)) {
+    -or ($RequirePerformance -and -not $performance.passed) `
+    -or ($RequireReleasePerformanceEvidence -and -not $releasePerformanceEvidenceEligible)) {
     exit 1
 }
 

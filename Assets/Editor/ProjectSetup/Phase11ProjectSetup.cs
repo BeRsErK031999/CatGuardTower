@@ -58,6 +58,26 @@ public static class Phase11ProjectSetup
         ConfigureStoreBuildSettings();
     }
 
+    public static void RunWithTemporaryStoreBuildSettings(Action validation)
+    {
+        if (validation == null)
+        {
+            throw new ArgumentNullException(nameof(validation));
+        }
+
+        var originalSettings = AndroidBuildSettingsSnapshot.Capture();
+        try
+        {
+            ConfigureStoreBuildSettings();
+            validation();
+        }
+        finally
+        {
+            originalSettings.Restore();
+            AssetDatabase.SaveAssets();
+        }
+    }
+
     public static void BuildSignedAab()
     {
         BuildSignedArtifact(StoreAabPath, true, null);
@@ -510,10 +530,14 @@ public static class Phase11ProjectSetup
             PlayerSettings.Android.forceInternetPermission = forceInternetPermission;
             PlayerSettings.Android.forceSDCardPermission = forceSdCardPermission;
             PlayerSettings.Android.useCustomKeystore = useCustomKeystore;
-            PlayerSettings.Android.keystoreName = keystoreName;
-            PlayerSettings.Android.keystorePass = keystorePassword;
-            PlayerSettings.Android.keyaliasName = keyAliasName;
-            PlayerSettings.Android.keyaliasPass = keyAliasPassword;
+            if (useCustomKeystore)
+            {
+                PlayerSettings.Android.keystoreName = keystoreName;
+                PlayerSettings.Android.keystorePass = keystorePassword;
+                PlayerSettings.Android.keyaliasName = keyAliasName;
+                PlayerSettings.Android.keyaliasPass = keyAliasPassword;
+            }
+
             EditorBuildSettings.scenes = scenes;
         }
     }

@@ -940,6 +940,7 @@ namespace CatGuard.Gameplay.Levels
 
         private void Update()
         {
+            ReleasePerformanceCheckpoint.TryWrite(this);
             if (Input.GetKeyDown(KeyCode.Escape)
                 && State is PrototypeLevelState.Preparing or PrototypeLevelState.Running)
             {

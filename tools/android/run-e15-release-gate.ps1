@@ -7,6 +7,7 @@ param(
     [string]$BaselineSaveFixturePath = "tools\android\fixtures\e15-schema-v4-save.json",
     [string]$PackageName = "com.berserk031999.catguardtower",
     [string]$DeviceSerial = "",
+    [string]$HeavyWavePerformanceEvidencePath = "",
     [string]$OutputDir = "Builds\Android\qa-device\e15-release",
     [int]$LaunchWaitSeconds = 25,
     [switch]$ArtifactOnly,
@@ -338,10 +339,207 @@ function Compare-SaveContinuity {
     }
 }
 
+function Test-HeavyWavePerformanceEvidence {
+    param(
+        [string]$Path,
+        [pscustomobject]$Candidate,
+        [pscustomobject]$Device
+    )
+
+    $reasons = New-Object System.Collections.Generic.List[string]
+    if (-not $Path -or -not (Test-Path -LiteralPath $Path -PathType Leaf)) {
+        $reasons.Add("Heavy-wave performance evidence JSON is missing.")
+        return [pscustomobject]@{
+            required = $true
+            passed = $false
+            path = $Path
+            sha256 = ""
+            reasons = $reasons.ToArray()
+            evidence = $null
+        }
+    }
+
+    try {
+        $evidence = Get-Content -LiteralPath $Path -Encoding UTF8 -Raw | ConvertFrom-Json
+    }
+    catch {
+        $reasons.Add("Heavy-wave performance evidence is not valid JSON: $($_.Exception.Message)")
+        return [pscustomobject]@{
+            required = $true
+            passed = $false
+            path = $Path
+            sha256 = (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash
+            reasons = $reasons.ToArray()
+            evidence = $null
+        }
+    }
+
+    $requiredTopLevelProperties = @(
+        "deviceKind",
+        "deviceSerial",
+        "packageName",
+        "apkSha256",
+        "installedApkSha256",
+        "apkIdentityMatched",
+        "skipInstall",
+        "performanceContext",
+        "samplingWindowSeconds",
+        "useRunningApp",
+        "packageFocused",
+        "runtimeCheckpointBefore",
+        "runtimeCheckpointAfter",
+        "releasePerformanceEvidenceEligible",
+        "graphicsProvenance",
+        "fatalPatternCount",
+        "landscapeConfirmed",
+        "performance"
+    )
+    $missingTopLevelProperties = @($requiredTopLevelProperties | Where-Object {
+        $null -eq $evidence.PSObject.Properties[$_]
+    })
+    if ($missingTopLevelProperties.Count -gt 0 `
+        -or $null -eq $evidence.runtimeCheckpointBefore `
+        -or $null -eq $evidence.runtimeCheckpointAfter `
+        -or $null -eq $evidence.graphicsProvenance `
+        -or $null -eq $evidence.performance) {
+        $reasons.Add("Performance evidence schema is incomplete: $($missingTopLevelProperties -join ', ').")
+        return [pscustomobject]@{
+            required = $true
+            passed = $false
+            path = $Path
+            sha256 = (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash
+            reasons = $reasons.ToArray()
+            evidence = $evidence
+        }
+    }
+
+    $checkpointProperties = @(
+        "capturedAtUtc",
+        "heavyWaveEligible",
+        "applicationIdentifier",
+        "applicationVersion",
+        "levelId",
+        "state",
+        "paused",
+        "towerCount",
+        "activeEnemyCount",
+        "bossActive",
+        "graphicsDeviceName",
+        "graphicsDeviceVendor",
+        "graphicsDeviceType"
+    )
+    $graphicsProperties = @("classification", "releaseAcceptanceEligible", "softwareRenderer")
+    $performanceProperties = @("passed", "sampleCount", "averageFps", "p95FrameTimeMs")
+    $nestedSchemaMissing = @(
+        @($evidence.runtimeCheckpointBefore, $evidence.runtimeCheckpointAfter) | Where-Object {
+            $checkpoint = $_
+            @($checkpointProperties | Where-Object { $null -eq $checkpoint.PSObject.Properties[$_] }).Count -gt 0
+        }
+    ).Count -gt 0 `
+        -or @($graphicsProperties | Where-Object { $null -eq $evidence.graphicsProvenance.PSObject.Properties[$_] }).Count -gt 0 `
+        -or @($performanceProperties | Where-Object { $null -eq $evidence.performance.PSObject.Properties[$_] }).Count -gt 0
+    if ($nestedSchemaMissing) {
+        $reasons.Add("Performance evidence nested checkpoint, graphics, or frame metrics schema is incomplete.")
+        return [pscustomobject]@{
+            required = $true
+            passed = $false
+            path = $Path
+            sha256 = (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash
+            reasons = $reasons.ToArray()
+            evidence = $evidence
+        }
+    }
+
+    if ($evidence.deviceKind -ne "physical" -or $evidence.deviceSerial -ne $Device.serial) {
+        $reasons.Add("Performance evidence must come from the selected physical device '$($Device.serial)'.")
+    }
+    if ($evidence.packageName -ne $PackageName) {
+        $reasons.Add("Performance evidence package does not match '$PackageName'.")
+    }
+    if ($evidence.apkSha256 -ine $Candidate.sha256 `
+        -or $evidence.installedApkSha256 -ine $Candidate.sha256 `
+        -or -not [bool]$evidence.apkIdentityMatched) {
+        $reasons.Add("Performance evidence is not bound to the exact candidate APK and installed base.apk hash.")
+    }
+    if ($evidence.performanceContext -ne "level_12-heavy-wave" `
+        -or -not [bool]$evidence.skipInstall `
+        -or -not [bool]$evidence.useRunningApp `
+        -or [int]$evidence.samplingWindowSeconds -lt 20 `
+        -or -not [bool]$evidence.packageFocused) {
+        $reasons.Add("Performance evidence must sample the foreground, already running level_12 heavy wave.")
+    }
+    $checkpointBeforeTime = [DateTime]::MinValue
+    $checkpointAfterTime = [DateTime]::MinValue
+    $checkpointTimesValid = [DateTime]::TryParse(
+        [string]$evidence.runtimeCheckpointBefore.capturedAtUtc,
+        [Globalization.CultureInfo]::InvariantCulture,
+        [Globalization.DateTimeStyles]::RoundtripKind,
+        [ref]$checkpointBeforeTime) `
+        -and [DateTime]::TryParse(
+            [string]$evidence.runtimeCheckpointAfter.capturedAtUtc,
+            [Globalization.CultureInfo]::InvariantCulture,
+            [Globalization.DateTimeStyles]::RoundtripKind,
+            [ref]$checkpointAfterTime)
+    if (-not $checkpointTimesValid `
+        -or ($checkpointAfterTime - $checkpointBeforeTime).TotalSeconds -lt 20) {
+        $reasons.Add("Performance evidence checkpoints do not span the required 20-second sampling window.")
+    }
+    foreach ($checkpoint in @($evidence.runtimeCheckpointBefore, $evidence.runtimeCheckpointAfter)) {
+        if ($null -eq $checkpoint `
+            -or -not [bool]$checkpoint.heavyWaveEligible `
+            -or $checkpoint.applicationIdentifier -ne $PackageName `
+            -or $checkpoint.applicationVersion -ne $Candidate.versionName `
+            -or $checkpoint.levelId -ne "level_12" `
+            -or $checkpoint.state -ne "running" `
+            -or [bool]$checkpoint.paused `
+            -or [int]$checkpoint.towerCount -lt 4 `
+            -or ([int]$checkpoint.activeEnemyCount -lt 8 `
+                -and -not [bool]$checkpoint.bossActive) `
+            -or [string]::IsNullOrWhiteSpace([string]$checkpoint.graphicsDeviceName) `
+            -or [string]::IsNullOrWhiteSpace([string]$checkpoint.graphicsDeviceVendor) `
+            -or [string]::IsNullOrWhiteSpace([string]$checkpoint.graphicsDeviceType) `
+            -or "$($checkpoint.graphicsDeviceName) $($checkpoint.graphicsDeviceVendor)" `
+                -match '(?i)swiftshader|llvmpipe|lavapipe|software\s+(rasterizer|renderer)') {
+            $reasons.Add("The app-authored checkpoints must prove an active level_12 heavy-wave load before and after sampling.")
+            break
+        }
+    }
+    if (-not [bool]$evidence.releasePerformanceEvidenceEligible `
+        -or $evidence.graphicsProvenance.classification -ne "physical-hardware" `
+        -or -not [bool]$evidence.graphicsProvenance.releaseAcceptanceEligible `
+        -or [bool]$evidence.graphicsProvenance.softwareRenderer) {
+        $reasons.Add("Performance evidence renderer is not eligible physical hardware.")
+    }
+    if ([int]$evidence.fatalPatternCount -gt 0 -or -not [bool]$evidence.landscapeConfirmed) {
+        $reasons.Add("Performance evidence contains a fatal pattern or is not landscape.")
+    }
+    if (-not [bool]$evidence.performance.passed `
+        -or [int]$evidence.performance.sampleCount -lt 30 `
+        -or [double]$evidence.performance.averageFps -lt 24 `
+        -or [double]$evidence.performance.p95FrameTimeMs -gt 70) {
+        $reasons.Add("Heavy-wave performance misses the 30-sample, 24 FPS, or 70 ms E15 budget.")
+    }
+
+    return [pscustomobject]@{
+        required = $true
+        passed = $reasons.Count -eq 0
+        path = $Path
+        sha256 = (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash
+        reasons = $reasons.ToArray()
+        evidence = $evidence
+    }
+}
+
 $resolvedBaselineApk = Resolve-ProjectPath $BaselineApkPath
 $resolvedCandidateApk = Resolve-ProjectPath $CandidateApkPath
 $resolvedCandidateAab = Resolve-ProjectPath $CandidateAabPath
 $resolvedBaselineSaveFixture = Resolve-ProjectPath $BaselineSaveFixturePath
+$resolvedHeavyWavePerformanceEvidence = if ($HeavyWavePerformanceEvidencePath) {
+    Resolve-ProjectPath $HeavyWavePerformanceEvidencePath
+}
+else {
+    ""
+}
 $resolvedOutputDir = Resolve-ProjectPath $OutputDir
 foreach ($path in @($resolvedBaselineApk, $resolvedCandidateApk, $resolvedCandidateAab)) {
     if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
@@ -350,6 +548,11 @@ foreach ($path in @($resolvedBaselineApk, $resolvedCandidateApk, $resolvedCandid
 }
 if (-not $ArtifactOnly -and -not $ConfirmPackageReset) {
     throw "E15 clean-install QA deletes app data for exactly '$PackageName'. Re-run with -ConfirmPackageReset after confirming the target."
+}
+if (-not $ArtifactOnly -and $RequirePerformance `
+    -and (-not $resolvedHeavyWavePerformanceEvidence `
+        -or -not (Test-Path -LiteralPath $resolvedHeavyWavePerformanceEvidence -PathType Leaf))) {
+    throw "E15 performance acceptance requires -HeavyWavePerformanceEvidencePath from tools/android/run-device-qa.ps1."
 }
 
 $script:Tools = Find-AndroidTools
@@ -394,6 +597,25 @@ if ($ArtifactOnly) {
 }
 
 $script:Device = Select-Device
+$performanceEvidence = if ($RequirePerformance) {
+    Test-HeavyWavePerformanceEvidence `
+        -Path $resolvedHeavyWavePerformanceEvidence `
+        -Candidate $candidate `
+        -Device $script:Device
+}
+else {
+    [pscustomobject]@{
+        required = $false
+        passed = $true
+        path = ""
+        sha256 = ""
+        reasons = @()
+        evidence = $null
+    }
+}
+if (-not [bool]$performanceEvidence.passed) {
+    throw "E15 heavy-wave performance evidence failed: $($performanceEvidence.reasons -join ' ')"
+}
 
 Write-Host "E15 target: $($script:Device.serial)"
 Write-Host "Package reset scope: $PackageName"
@@ -403,8 +625,7 @@ Invoke-Adb -Arguments @("uninstall", $PackageName) -AllowFailure | Out-Null
 $cleanSummary = Invoke-DeviceQa `
     -ApkPath $resolvedCandidateApk `
     -RunOutputDir (Join-Path $runRoot "clean-install-offline") `
-    -Offline `
-    -Performance:$RequirePerformance
+    -Offline
 
 Invoke-Adb -Arguments @("uninstall", $PackageName) -AllowFailure | Out-Null
 $baselineSummary = Invoke-DeviceQa `
@@ -419,8 +640,7 @@ if (Test-Path -LiteralPath $resolvedBaselineSaveFixture -PathType Leaf) {
 $upgradeSummary = Invoke-DeviceQa `
     -ApkPath $resolvedCandidateApk `
     -RunOutputDir (Join-Path $runRoot "upgrade-offline") `
-    -Offline `
-    -Performance:$RequirePerformance
+    -Offline
 
 $saveContinuity = Compare-SaveContinuity `
     -BeforePath $beforeSavePath `
@@ -432,7 +652,8 @@ $passed = [bool]$cleanSummary.launched `
     -and [bool]$upgradeSummary.launched `
     -and [bool]$upgradeSummary.landscapeConfirmed `
     -and [int]$upgradeSummary.fatalPatternCount -eq 0 `
-    -and [bool]$saveContinuity.passed
+    -and [bool]$saveContinuity.passed `
+    -and [bool]$performanceEvidence.passed
 
 $gate = [pscustomobject]@{
     generatedAtUtc = (Get-Date).ToUniversalTime().ToString("o")
@@ -448,11 +669,13 @@ $gate = [pscustomobject]@{
     baselineSummary = $baselineSummary
     upgradeSummary = $upgradeSummary
     saveContinuity = $saveContinuity
+    heavyWavePerformanceEvidence = $performanceEvidence
 }
 $gate | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $manifestPath -Encoding UTF8
 
 Write-Host "E15 release gate manifest: $manifestPath"
 Write-Host "Clean install passed: $([bool]$cleanSummary.launched -and [bool]$cleanSummary.landscapeConfirmed)"
 Write-Host "Upgrade save continuity passed: $($saveContinuity.passed)"
+Write-Host "Heavy-wave physical performance passed: $($performanceEvidence.passed)"
 Write-Host "E15 release gate passed: $passed"
 exit $(if ($passed) { 0 } else { 1 })

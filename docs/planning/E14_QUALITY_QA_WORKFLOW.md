@@ -31,6 +31,8 @@ Focused E14 runs then cover:
 
 The manifest is `Builds/Android/qa-device/e14-quality/e14-qa-manifest.json`. A run fails on a fatal log, portrait viewport, wrong result, pool overflow/drop, missing cleanup, settings mismatch, required boss/rule/ultimate failure, or missed performance budget.
 
+Every scenario summary also records graphics provenance (`emulator-software` or `emulator-host-gpu`) and labels its frame metrics as `emulator-diagnostic`. These thresholds protect relative regressions in the controlled E14 environment; emulator metrics are not physical-device or E15 release-performance acceptance evidence.
+
 The soak sequence is a repeated-session proxy on the same installed build and local save; the runner restarts the Android activity between battles to make cleanup and persistence observable. E15 may add longer physical-device thermal endurance, but E14 does not claim that optional evidence.
 
 ## Save migration

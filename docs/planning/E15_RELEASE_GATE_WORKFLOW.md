@@ -107,6 +107,47 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass `
 
 The ignored output contains artifact hashes, decoded AAB manifest, device identity, clean-install/offline evidence, baseline and upgrade summaries, screenshots, fatal logs, frame metrics, and `e15-release-gate.json`.
 
+### Physical level-12 performance evidence
+
+Emulator frame metrics are diagnostics only. They must record their GPU provenance, but neither SwiftShader nor host-GPU emulator results can satisfy E15 release performance acceptance.
+
+Before the destructive signed release gate, install the exact candidate APK on the selected physical device while preserving the playtest profile, manually enter `level_12`, place the intended stress loadout, start the wave, and leave the active heavy-wave battle in the foreground. While that battle is running, capture the checkpoint without reinstalling or relaunching the app:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass `
+  -File tools\android\run-device-qa.ps1 `
+  -ApkPath "Builds\Android\CatGuardTowerDefense-store.apk" `
+  -PackageName "com.berserk031999.catguardtower" `
+  -DeviceSerial "<physical-device-serial>" `
+  -SkipInstall `
+  -UseRunningApp `
+  -LaunchWaitSeconds 25 `
+  -PerformanceContext level_12-heavy-wave `
+  -RequirePhysicalDevice `
+  -RequirePerformance `
+  -RequireReleasePerformanceEvidence `
+  -MinimumAverageFps 24 `
+  -MaximumP95FrameTimeMs 70
+```
+
+The resulting `qa-summary.json` is admissible only when it identifies a foreground physical device with an eligible hardware renderer, spans at least 20 seconds, contains at least 30 frame samples, passes 24 FPS / 70 ms, has no fatal pattern, remains landscape, and binds both the supplied candidate file and the pulled installed `base.apk` to the same SHA-256. The non-development app also answers one-shot local checkpoint requests immediately before and after the sampling window with its actual level, battle state, active-enemy, tower, boss, pause, and Unity-renderer state; both checkpoints must report `level_12`, `running`, at least four towers, and either eight active enemies or the active boss. A battle that leaves the heavy-wave load during sampling is rejected. The checkpoints only report local state and cannot select a level, place a tower, start a wave, or call a network/SDK service.
+
+Pass that JSON to both the release runner and the complete block-gate orchestrator:
+
+```powershell
+-HeavyWavePerformanceEvidencePath "<evidence-dir>\qa-summary.json"
+```
+
+The GPU-classification contract has a desktop-only regression test and can be checked without Unity or Android runtime:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass `
+  -File tools\android\test-android-qa-provenance.ps1
+
+powershell.exe -NoProfile -ExecutionPolicy Bypass `
+  -File tools\android\test-e15-performance-evidence.ps1
+```
+
 ## Default-Economy Level 12 Companion Gate
 
 The E12/E14 campaign runners deliberately use elevated QA lives and Battle Fish to validate deterministic systems, so they cannot detect a default-economy progression wall. The complete E15 block gate therefore also requires a focused level-12 victory on an exact-source Development APK:
@@ -124,15 +165,38 @@ This is an automated balance regression, not store-artifact, physical-device, pe
 
 ## Complete E15 Block Test Gate
 
-After the release gate above passes:
+Use the orchestrator's read-only preflight before starting any Unity or Android work:
 
-1. Run all Phase 1–11 and E1–E15 Unity validators in a cold editor process. Every process must exit `0` and contain its validation-passed message.
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass `
+  -File tools\android\run-e15-block-gate.ps1 `
+  -PreflightOnly
+```
+
+The preflight writes `e15-block-gate-manifest.json` and exits before Unity, ADB, installation, or package reset unless all three external P0 blocks are `Completed`, the release owner is named, the worktree is clean, and `HEAD` equals its configured upstream. `E15_RELEASE_DECISION.md` may honestly remain `Status: blocked` until the technical gate succeeds; requiring approval earlier would create a circular release record.
+
+After preflight passes, run the complete technical gate with explicit emulator and physical-device targets. `-ConfirmStorePackageReset` authorizes deletion of local data for exactly the store package on the selected physical device:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass `
+  -File tools\android\run-e15-block-gate.ps1 `
+  -EmulatorSerial "<emulator-serial>" `
+  -PhysicalDeviceSerial "<physical-device-serial>" `
+  -HeavyWavePerformanceEvidencePath "<evidence-dir>\qa-summary.json" `
+  -ConfirmStorePackageReset
+```
+
+The orchestrator first runs the desktop GPU-provenance and performance-evidence contract regressions, then performs the following sequence and stops on the first failure:
+
+1. Run Phase 1–11 and E1–E14 validators plus `E15ProjectSetup.ValidateReadiness`, each in a cold editor process; require both exit code `0` and its `validation passed` Unity-log marker.
 2. Run the full E14 functional campaign/focused gate on the exact candidate code; do not reuse a stale ignored manifest.
 3. Run `tools/android/run-e15-default-economy-qa.ps1` on a Development APK built from the same exact source and require the level-12 victory manifest to pass.
 4. Run the E15 signed artifact clean install, offline first-session, upgrade/save, landscape, performance, and crash gate on the connected physical device.
 5. Manually traverse campaign, hub, quests, achievements, privacy, settings, both landscape directions, background/foreground, audio routing, and edge-touch placement on the same candidate.
 6. Validate store assets with `tools/store/validate-store-assets.ps1`.
 7. Inspect `git diff --check`, source/asset licenses, generated artifact hashes, and the exact scoped diff.
-8. Complete `E15_EXPANSION_RELEASE_REPORT.md`, mark E15 complete in the task board and roadmap, commit once, push `develop`, fetch, and verify `develop == origin/develop`.
+8. Require one `technical_gate_passed` manifest containing the exact Git HEAD, step results, logs, and APK/AAB hashes.
+9. Complete `E15_EXPANSION_RELEASE_REPORT.md`, readiness, backlog, task board, roadmap, and release-decision records; then run `E15ProjectSetup.Validate` in a final cold editor process.
+10. Commit once, push `develop`, fetch, and verify `develop == origin/develop`.
 
 Any failed numeric threshold, crash signature, unreadable save, signature mismatch, manifest discrepancy, missing owner input, incomplete external P0 block, or misleading store asset blocks release acceptance.

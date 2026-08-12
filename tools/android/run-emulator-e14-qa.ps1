@@ -169,6 +169,8 @@ foreach ($scenario in $scenarios) {
         landscapeConfirmed = $summary.landscapeConfirmed
         fatalPatternCount = $summary.fatalPatternCount
         performance = $summary.performance
+        performanceEvidenceKind = $summary.performanceEvidenceKind
+        graphicsProvenance = $summary.graphicsProvenance
         cameraShakeLevel = $summary.result.cameraShakeLevel
         reducedFlash = $summary.result.reducedFlash
         textScalePercent = $summary.result.textScalePercent
@@ -200,6 +202,10 @@ $manifest = [pscustomobject]@{
     worstCaseLevelId = "level_12"
     lowEndFloorFps = 24
     maximumP95FrameTimeMs = 70
+    performanceAcceptanceScope = "emulator diagnostic only; physical hardware evidence is required by E15"
+    graphicsProfiles = @($entries | ForEach-Object {
+        $_.graphicsProvenance
+    } | Sort-Object classification, glesVendor, glesRenderer -Unique)
     scenarioCount = $entries.Count
     allPassed = @($entries | Where-Object {
         $_.state -ne "won" `

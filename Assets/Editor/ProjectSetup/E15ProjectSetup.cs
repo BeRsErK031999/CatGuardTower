@@ -41,8 +41,8 @@ public static class E15ProjectSetup
     private static void ValidateAndExit(bool requireFinalApproval)
     {
         var errors = new List<string>();
-        Phase11ProjectSetup.ConfigureStoreBuildSettingsForRelease();
-        ValidateAndroidReleaseSettings(errors);
+        Phase11ProjectSetup.RunWithTemporaryStoreBuildSettings(
+            () => ValidateAndroidReleaseSettings(errors));
         ValidateSdkAndPermissionContract(errors);
         ValidateReleaseArtifacts(errors);
         ValidateNoCommittedSecrets(errors);
@@ -158,6 +158,7 @@ public static class E15ProjectSetup
         {
             [WorkflowPath] = new[] { "clean install", "upgrade install", "offline", "physical device", "run-e15-release-gate.ps1", "run-e15-default-economy-qa.ps1" },
             [ReadinessPath] = new[] { "Status:", "PLAYTEST-001", "DEVICE-QA-001", "STORE-ACCOUNT-001" },
+            [ReportPath] = new[] { "Status:", "PLAYTEST-001", "DEVICE-QA-001", "STORE-ACCOUNT-001", "technical_gate_passed", "Technical gate status:", "Remote verification:", "Completion rule" },
             [ReleaseNotesPath] = new[] { "0.2.0", "12", "landscape", "save schema v5" },
             [KnownIssuesPath] = new[] { "performance", "physical", "store" },
             [LicenseAuditPath] = new[] { "OpenAI image generation", "procedural", "third-party", "paid" },
@@ -172,8 +173,14 @@ public static class E15ProjectSetup
             ["Assets/_Project/Scripts/Core/Localization/LocalizationService.cs"] = new[] { "August 10, 2026", "10 августа 2026", "codex discoveries", "записи кодекса" },
             ["tools/android/build-signed-store-aab.ps1"] = new[] { "BuildSignedAab", "BuildSignedApk", "Artifact" },
             ["tools/android/build-e15-baseline-apk.ps1"] = new[] { "28f7e88", "worktree", "bundletool", "universal.apk" },
-            ["tools/android/run-e15-release-gate.ps1"] = new[] { "BaselineApkPath", "CandidateApkPath", "CandidateAabPath", "upgrade" },
+            ["tools/android/run-e15-release-gate.ps1"] = new[] { "BaselineApkPath", "CandidateApkPath", "CandidateAabPath", "HeavyWavePerformanceEvidencePath", "level_12-heavy-wave", "physical-hardware", "runtimeCheckpointBefore", "runtimeCheckpointAfter", "upgrade" },
             ["tools/android/run-e15-default-economy-qa.ps1"] = new[] { "level_12", "StartingLives = 0", "StartingBattleFish = 0", "RequireVictory", "com.catguard.towerdefense.qa" },
+            ["tools/android/run-e15-block-gate.ps1"] = new[] { "PreflightOnly", "PLAYTEST-001", "DEVICE-QA-001", "STORE-ACCOUNT-001", "ConfirmStorePackageReset", "test-android-qa-provenance.ps1", "test-e15-performance-evidence.ps1", "technical_gate_passed" },
+            ["tools/android/android-qa-provenance.ps1"] = new[] { "emulator-software", "emulator-host-gpu", "physical-hardware", "releaseAcceptanceEligible", "SwiftShader" },
+            ["tools/android/test-android-qa-provenance.ps1"] = new[] { "physical-software", "expectedEligible", "provenance tests passed" },
+            ["tools/android/test-e15-performance-evidence.ps1"] = new[] { "software-renderer", "short-window", "load-exited", "wrong-apk", "contract tests passed" },
+            ["tools/android/run-device-qa.ps1"] = new[] { "RequireReleasePerformanceEvidence", "level_12-heavy-wave", "installedApkSha256", "graphicsProvenance", "runtimeCheckpointBefore", "runtimeCheckpointAfter" },
+            ["Assets/_Project/Scripts/QA/ReleasePerformanceCheckpoint.cs"] = new[] { "level_12", "heavyWaveEligible", "activeEnemyCount", "graphicsDeviceName" },
             ["tools/store/validate-store-assets.ps1"] = new[] { "1920", "1080", "boss-combat" }
         };
 
@@ -236,7 +243,21 @@ public static class E15ProjectSetup
             errors.Add("E15 readiness document is not completed.");
         }
 
-        ValidateFileContains(ReportPath, new[] { "Status: completed", "develop == origin/develop" }, errors);
+        var report = ReadText(ReportPath);
+        if (!HasStatus(report, "completed"))
+        {
+            errors.Add("E15 expansion release report is not completed.");
+        }
+
+        if (!HasFieldValue(report, "Technical gate status", "passed"))
+        {
+            errors.Add("E15 expansion release report does not record a passed technical gate.");
+        }
+
+        if (!HasFieldValue(report, "Remote verification", "develop == origin/develop"))
+        {
+            errors.Add("E15 expansion release report does not confirm develop == origin/develop.");
+        }
 
         var backlog = ReadText(ExternalBacklogPath);
         foreach (var id in new[] { "PLAYTEST-001", "DEVICE-QA-001", "STORE-ACCOUNT-001" })
@@ -272,6 +293,23 @@ public static class E15ProjectSetup
 
         var status = statusLine.Substring("Status:".Length).Trim().Trim('`');
         return string.Equals(status, expectedStatus, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool HasFieldValue(string content, string fieldName, string expectedValue)
+    {
+        var prefix = fieldName + ":";
+        var fieldLine = content
+            .Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
+            .Select(line => line.Trim())
+            .FirstOrDefault(line => line.StartsWith(prefix, StringComparison.OrdinalIgnoreCase));
+
+        if (fieldLine == null)
+        {
+            return false;
+        }
+
+        var value = fieldLine.Substring(prefix.Length).Trim().Trim('`');
+        return string.Equals(value, expectedValue, StringComparison.OrdinalIgnoreCase);
     }
 
     private static void ValidateFileContains(string path, IEnumerable<string> tokens, ICollection<string> errors)

@@ -74,6 +74,7 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
 $repoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..\..")).Path
+. (Join-Path $PSScriptRoot "android-qa-provenance.ps1")
 $adbPath = Join-Path $env:LOCALAPPDATA "Android\Sdk\platform-tools\adb.exe"
 $resolvedApkPath = if ([System.IO.Path]::IsPathRooted($ApkPath)) {
     $ApkPath
@@ -277,6 +278,7 @@ $latencyPath = Join-Path $runDir "combat-surface-latency.txt"
 $combatScreenshotPath = Join-Path $runDir "combat-screen.png"
 $resultScreenshotPath = Join-Path $runDir "result-screen.png"
 $logcatPath = Join-Path $runDir "logcat.txt"
+$graphicsPath = Join-Path $runDir "graphics-provenance.txt"
 $summaryPath = Join-Path $runDir "qa-summary.json"
 $remoteCommandPath = "/data/local/tmp/catguard-qa-command.json"
 $externalFilesPath = "/sdcard/Android/data/$PackageName/files"
@@ -377,6 +379,17 @@ $landscapeConfirmed = $combatDimensions.landscape -and $resultDimensions.landsca
 
 $logcatLines = (Invoke-TargetAdb -Arguments @("logcat", "-d", "-v", "time") -AllowFailure).Output
 $logcatLines | Set-Content -LiteralPath $logcatPath -Encoding UTF8
+$surfaceFlingerLines = (Invoke-TargetAdb -Arguments @("shell", "dumpsys", "SurfaceFlinger") -AllowFailure).Output
+$surfaceFlingerLines | Set-Content -LiteralPath $graphicsPath -Encoding UTF8
+$hardwareEgl = ((Invoke-TargetAdb -Arguments @("shell", "getprop", "ro.hardware.egl") -AllowFailure).Output -join "").Trim()
+$hardwareVulkan = ((Invoke-TargetAdb -Arguments @("shell", "getprop", "ro.hardware.vulkan") -AllowFailure).Output -join "").Trim()
+$qemuGles = ((Invoke-TargetAdb -Arguments @("shell", "getprop", "ro.kernel.qemu.gles") -AllowFailure).Output -join "").Trim()
+$graphicsProvenance = Get-AndroidGraphicsProvenance `
+    -SurfaceFlingerLines $surfaceFlingerLines `
+    -HardwareEgl $hardwareEgl `
+    -HardwareVulkan $hardwareVulkan `
+    -QemuGles $qemuGles `
+    -IsEmulator $true
 $fatalPattern = "FATAL EXCEPTION|Fatal signal|Abort message|NullReferenceException|MissingMethodException|DllNotFoundException"
 $fatalLines = @($logcatLines | Where-Object { $_ -match $fatalPattern })
 $performance = Get-FrameMetrics -Lines $latencyLines
@@ -398,6 +411,9 @@ $summary = [pscustomobject]@{
     resultViewport = $resultDimensions
     performance = $performance
     performancePassed = $performancePassed
+    performanceEvidenceKind = "emulator-diagnostic"
+    graphicsProvenance = $graphicsProvenance
+    graphicsPath = $graphicsPath
     runDir = $runDir
 }
 $summary | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $summaryPath -Encoding UTF8

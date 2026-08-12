@@ -107,16 +107,32 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass `
 
 The ignored output contains artifact hashes, decoded AAB manifest, device identity, clean-install/offline evidence, baseline and upgrade summaries, screenshots, fatal logs, frame metrics, and `e15-release-gate.json`.
 
+## Default-Economy Level 12 Companion Gate
+
+The E12/E14 campaign runners deliberately use elevated QA lives and Battle Fish to validate deterministic systems, so they cannot detect a default-economy progression wall. The complete E15 block gate therefore also requires a focused level-12 victory on an exact-source Development APK:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass `
+  -File tools\android\run-e15-default-economy-qa.ps1 `
+  -ApkPath "Builds\Android\CatGuardTowerDefense-emulator.apk" `
+  -DeviceSerial "<emulator-serial>"
+```
+
+The companion runner accepts only the isolated `com.catguard.towerdefense.qa` package and an emulator. It clears that QA package before the scenario, passes `StartingLives = 0` and `StartingBattleFish = 0` so the level's configured values remain authoritative, buys additional towers only from earned Battle Fish, and requires a level-12 victory with the boss and map rules completing normally. Its manifest records the Git HEAD and Development APK hash.
+
+This is an automated balance regression, not store-artifact, physical-device, performance, human fairness, comprehension, or fun evidence. Do not enable QA commands in the non-development store candidate.
+
 ## Complete E15 Block Test Gate
 
 After the release gate above passes:
 
 1. Run all Phase 1–11 and E1–E15 Unity validators in a cold editor process. Every process must exit `0` and contain its validation-passed message.
 2. Run the full E14 functional campaign/focused gate on the exact candidate code; do not reuse a stale ignored manifest.
-3. Run the E15 signed artifact clean install, offline first-session, upgrade/save, landscape, performance, and crash gate on the connected physical device.
-4. Manually traverse campaign, hub, quests, achievements, privacy, settings, both landscape directions, background/foreground, audio routing, and edge-touch placement on the same candidate.
-5. Validate store assets with `tools/store/validate-store-assets.ps1`.
-6. Inspect `git diff --check`, source/asset licenses, generated artifact hashes, and the exact scoped diff.
-7. Complete `E15_EXPANSION_RELEASE_REPORT.md`, mark E15 complete in the task board and roadmap, commit once, push `develop`, fetch, and verify `develop == origin/develop`.
+3. Run `tools/android/run-e15-default-economy-qa.ps1` on a Development APK built from the same exact source and require the level-12 victory manifest to pass.
+4. Run the E15 signed artifact clean install, offline first-session, upgrade/save, landscape, performance, and crash gate on the connected physical device.
+5. Manually traverse campaign, hub, quests, achievements, privacy, settings, both landscape directions, background/foreground, audio routing, and edge-touch placement on the same candidate.
+6. Validate store assets with `tools/store/validate-store-assets.ps1`.
+7. Inspect `git diff --check`, source/asset licenses, generated artifact hashes, and the exact scoped diff.
+8. Complete `E15_EXPANSION_RELEASE_REPORT.md`, mark E15 complete in the task board and roadmap, commit once, push `develop`, fetch, and verify `develop == origin/develop`.
 
 Any failed numeric threshold, crash signature, unreadable save, signature mismatch, manifest discrepancy, missing owner input, incomplete external P0 block, or misleading store asset blocks release acceptance.

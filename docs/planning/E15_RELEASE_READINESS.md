@@ -10,6 +10,7 @@ Checked on: `2026-08-12`
 - Secret-free signing wrapper supports both APK and AAB output with an external keystore.
 - E15 release runner covers artifact identity/signature/manifest checks, clean install, offline launch, baseline upgrade, schema-v4 fixture migration, save continuity, landscape, crashes, and optional performance enforcement.
 - Store generation and validation contracts now require five `1920 x 1080` landscape captures.
+- A development-only level-12 default-economy companion gate is now part of the complete E15 workflow. It resets only the isolated QA package, leaves configured lives/Fish authoritative, requires earned-resource reinvestment and victory, and records the exact source/APK identity; it is intentionally not run as partial E15 evidence.
 - Release notes, known issues, source/asset license audit, release-decision record, and an E15 Unity readiness/final validator are present.
 - Google Play target API, Data Safety, preview-asset, and closed-testing references were rechecked against official sources on `2026-08-10`.
 - A same-key historical `0.1.0` universal baseline APK and signed non-development `0.2.0` ARM64 APK/AAB were reproduced. Artifact identity, versions, API 36 target, manifest permissions, certificate continuity, and hashes passed the desktop preflight.

@@ -156,7 +156,7 @@ public static class E15ProjectSetup
     {
         var requiredFiles = new Dictionary<string, string[]>
         {
-            [WorkflowPath] = new[] { "clean install", "upgrade install", "offline", "physical device", "run-e15-release-gate.ps1" },
+            [WorkflowPath] = new[] { "clean install", "upgrade install", "offline", "physical device", "run-e15-release-gate.ps1", "run-e15-default-economy-qa.ps1" },
             [ReadinessPath] = new[] { "Status:", "PLAYTEST-001", "DEVICE-QA-001", "STORE-ACCOUNT-001" },
             [ReleaseNotesPath] = new[] { "0.2.0", "12", "landscape", "save schema v5" },
             [KnownIssuesPath] = new[] { "performance", "physical", "store" },
@@ -173,6 +173,7 @@ public static class E15ProjectSetup
             ["tools/android/build-signed-store-aab.ps1"] = new[] { "BuildSignedAab", "BuildSignedApk", "Artifact" },
             ["tools/android/build-e15-baseline-apk.ps1"] = new[] { "28f7e88", "worktree", "bundletool", "universal.apk" },
             ["tools/android/run-e15-release-gate.ps1"] = new[] { "BaselineApkPath", "CandidateApkPath", "CandidateAabPath", "upgrade" },
+            ["tools/android/run-e15-default-economy-qa.ps1"] = new[] { "level_12", "StartingLives = 0", "StartingBattleFish = 0", "RequireVictory", "com.catguard.towerdefense.qa" },
             ["tools/store/validate-store-assets.ps1"] = new[] { "1920", "1080", "boss-combat" }
         };
 

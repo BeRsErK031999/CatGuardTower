@@ -66,7 +66,8 @@
     [switch]$RequireSettings,
     [switch]$RequirePooling,
     [switch]$RequireTimeControls,
-    [string]$ExpectedState = ""
+    [string]$ExpectedState = "",
+    [switch]$ReturnInsteadOfExit
 )
 
 Set-StrictMode -Version Latest
@@ -464,7 +465,15 @@ $failed = $scenarioResult.state -eq "error" `
         -or $scenarioResult.cachedAudioClips -lt 1 `
         -or $scenarioResult.cachedAudioClips -gt 11))
 if ($failed) {
+    if ($ReturnInsteadOfExit) {
+        return
+    }
+
     exit 1
+}
+
+if ($ReturnInsteadOfExit) {
+    return
 }
 
 exit 0

@@ -33,7 +33,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass `
   -KeyAlias "catguard-upload"
 ```
 
-The script creates an isolated temporary worktree, builds the historical signed `0.1.0` AAB, uses bundletool to create a same-key universal baseline APK, copies it to ignored `Builds/Android/baseline/`, deletes temporary password files, and removes only the verified temporary worktree.
+The script requires the current repository to be clean, creates an isolated detached worktree at the resolved historical commit, builds the signed `0.1.0` AAB, and uses bundletool to create a same-key universal baseline APK. It writes the ignored APK plus `CatGuardTowerDefense-0.1.0-universal.apk.provenance.json`, deletes temporary password files, and removes only the verified temporary worktree. The secret-free sidecar binds the final APK to the historical source commit, the current orchestration HEAD, the clean state of both worktrees, restored historical project settings, and SHA-256 values for the intermediate AAB, APKS archive, bundletool, and final APK.
 
 Do not run isolated Unity gameplay, Android, or emulator slices and call them E15 evidence. The full gate runs once all exit criteria are implemented.
 
@@ -54,12 +54,17 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass `
   -Artifact Aab
 ```
 
+Each successful clean-tree APK/AAB build also writes an ignored sibling `*.provenance.json`. The sidecar contains the artifact hash/size, exact Git HEAD and branch, Unity version, build method/timestamps, clean-worktree state before and after the build, and proof that `ProjectSettings.asset` was restored. It never contains a keystore path, alias, or password. `-AllowDirtyWorkingTree` is for non-release diagnostics only; its output cannot satisfy E15 artifact acceptance.
+
+The baseline APK and candidate APK/AAB used below must all have valid provenance bound to the current clean Git HEAD. Rebuild the baseline and both candidate artifacts after any source commit, then perform the physical heavy-wave capture against that exact candidate APK. The release gate does not rebuild artifacts after the physical capture because doing so would invalidate the installed-APK hash binding.
+
 For non-interactive automation, also inject `CATGUARD_ANDROID_KEYSTORE_PASSWORD` and `CATGUARD_ANDROID_KEY_PASSWORD` from a secret store and pass `-NonInteractive`. Never save them in a repository file, shell profile, build log, or command history.
 
 Outputs under ignored `Builds/Android/`:
 
 - `CatGuardTowerDefense-store.apk`;
 - `CatGuardTowerDefense-store.aab`;
+- matching `CatGuardTowerDefense-store.apk.provenance.json` and `CatGuardTowerDefense-store.aab.provenance.json`;
 - timestamped Unity build logs.
 
 ### Emulator-only store screenshot build
@@ -82,10 +87,12 @@ After the same-key baseline APK and candidate APK/AAB exist, validate their iden
 powershell.exe -NoProfile -ExecutionPolicy Bypass `
   -File tools\android\run-e15-release-gate.ps1 `
   -BaselineApkPath "Builds\Android\baseline\CatGuardTowerDefense-0.1.0-universal.apk" `
+  -BaselineApkProvenancePath "Builds\Android\baseline\CatGuardTowerDefense-0.1.0-universal.apk.provenance.json" `
+  -BaselineCommit 28f7e88 `
   -ArtifactOnly
 ```
 
-The command writes `e15-artifact-preflight.json` and `candidate-aab-manifest.xml` under the ignored evidence directory. It never installs or uninstalls the package and does not require `-ConfirmPackageReset`. A passing artifact preflight is desktop evidence only; it does not replace the complete install, upgrade, save, performance, or physical-device release gate.
+The command fails closed unless the baseline sidecar resolves to the expected historical source and the baseline plus candidate sidecars all resolve to the current orchestration HEAD and exact artifact bytes. It writes `e15-artifact-preflight.json` and `candidate-aab-manifest.xml` under the ignored evidence directory. It never installs or uninstalls the package and does not require `-ConfirmPackageReset`. A passing artifact preflight is desktop evidence only; it does not replace the complete install, upgrade, save, performance, or physical-device release gate.
 
 ## Artifact, Clean Install, Upgrade, And Offline Gate
 
@@ -94,7 +101,9 @@ The runner validates APK signatures and identities, validates and dumps the AAB 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass `
   -File tools\android\run-e15-release-gate.ps1 `
-  -BaselineApkPath "D:\Secure\CatGuard\baseline\CatGuardTowerDefense-0.1.0.apk" `
+  -BaselineApkPath "Builds\Android\baseline\CatGuardTowerDefense-0.1.0-universal.apk" `
+  -BaselineApkProvenancePath "Builds\Android\baseline\CatGuardTowerDefense-0.1.0-universal.apk.provenance.json" `
+  -BaselineCommit 28f7e88 `
   -CandidateApkPath "Builds\Android\CatGuardTowerDefense-store.apk" `
   -CandidateAabPath "Builds\Android\CatGuardTowerDefense-store.aab" `
   -DeviceSerial "<physical-device-serial>" `
@@ -145,6 +154,15 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass `
   -File tools\android\test-android-qa-provenance.ps1
 
 powershell.exe -NoProfile -ExecutionPolicy Bypass `
+  -File tools\android\test-e15-artifact-provenance.ps1
+
+powershell.exe -NoProfile -ExecutionPolicy Bypass `
+  -File tools\android\test-e15-baseline-provenance.ps1
+
+powershell.exe -NoProfile -ExecutionPolicy Bypass `
+  -File tools\android\test-e15-block-manifest.ps1
+
+powershell.exe -NoProfile -ExecutionPolicy Bypass `
   -File tools\android\test-e15-performance-evidence.ps1
 ```
 
@@ -186,7 +204,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass `
   -ConfirmStorePackageReset
 ```
 
-The orchestrator first runs the desktop GPU-provenance and performance-evidence contract regressions, then performs the following sequence and stops on the first failure:
+The orchestrator first runs the desktop GPU classification, candidate provenance, baseline provenance, final-manifest, and performance-evidence contract regressions, then performs the following sequence and stops on the first failure:
 
 1. Run Phase 1–11 and E1–E14 validators plus `E15ProjectSetup.ValidateReadiness`, each in a cold editor process; require both exit code `0` and its `validation passed` Unity-log marker.
 2. Run the full E14 functional campaign/focused gate on the exact candidate code; do not reuse a stale ignored manifest.
@@ -195,7 +213,7 @@ The orchestrator first runs the desktop GPU-provenance and performance-evidence 
 5. Manually traverse campaign, hub, quests, achievements, privacy, settings, both landscape directions, background/foreground, audio routing, and edge-touch placement on the same candidate.
 6. Validate store assets with `tools/store/validate-store-assets.ps1`.
 7. Inspect `git diff --check`, source/asset licenses, generated artifact hashes, and the exact scoped diff.
-8. Require one `technical_gate_passed` manifest containing the exact Git HEAD, step results, logs, and APK/AAB hashes.
+8. Require one `technical_gate_passed` manifest containing the exact Git HEAD, step results, and all APK/AAB/provenance hashes. Before success is reported, its contract validator requires every full-gate precondition and every expected step exactly once, verifies that every step passed, and re-hashes all evidence logs inside the declared run directory.
 9. Complete `E15_EXPANSION_RELEASE_REPORT.md`, readiness, backlog, task board, roadmap, and release-decision records; then run `E15ProjectSetup.Validate` in a final cold editor process.
 10. Commit once, push `develop`, fetch, and verify `develop == origin/develop`.
 

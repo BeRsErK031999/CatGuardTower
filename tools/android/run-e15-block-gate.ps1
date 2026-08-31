@@ -1,8 +1,12 @@
 [CmdletBinding()]
 param(
     [string]$BaselineApkPath = "Builds\Android\baseline\CatGuardTowerDefense-0.1.0-universal.apk",
+    [string]$BaselineApkProvenancePath = "Builds\Android\baseline\CatGuardTowerDefense-0.1.0-universal.apk.provenance.json",
+    [string]$BaselineCommit = "28f7e88",
     [string]$CandidateApkPath = "Builds\Android\CatGuardTowerDefense-store.apk",
     [string]$CandidateAabPath = "Builds\Android\CatGuardTowerDefense-store.aab",
+    [string]$CandidateApkProvenancePath = "Builds\Android\CatGuardTowerDefense-store.apk.provenance.json",
+    [string]$CandidateAabProvenancePath = "Builds\Android\CatGuardTowerDefense-store.aab.provenance.json",
     [string]$PhysicalDeviceSerial = "",
     [string]$EmulatorSerial = "",
     [string]$HeavyWavePerformanceEvidencePath = "",
@@ -16,6 +20,7 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
 $script:RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..\..")).Path
+. (Join-Path $PSScriptRoot "e15-block-manifest.ps1")
 $script:Steps = New-Object System.Collections.Generic.List[object]
 $script:Preconditions = New-Object System.Collections.Generic.List[object]
 $script:CandidateBase = ""
@@ -102,6 +107,7 @@ function Write-Manifest {
         @()
     }
     $manifest = [pscustomobject]@{
+        schemaVersion = 1
         generatedAtUtc = (Get-Date).ToUniversalTime().ToString("o")
         state = $State
         passed = $Passed
@@ -186,7 +192,7 @@ function Invoke-GateStep {
         $ErrorActionPreference = $previousPreference
     }
 
-    $output | Set-Content -LiteralPath $LogPath -Encoding UTF8
+    Set-Content -LiteralPath $LogPath -Encoding UTF8 -Value ($output -join [Environment]::NewLine)
     $evidencePassed = $true
     if ($RequiredPattern) {
         $evidencePassed = $EvidenceLogPath `
@@ -194,6 +200,13 @@ function Invoke-GateStep {
             -and [bool](Select-String -LiteralPath $EvidenceLogPath -Pattern $RequiredPattern -Quiet)
     }
     $passed = $exitCode -eq 0 -and $evidencePassed
+    $logSha256 = (Get-FileHash -LiteralPath $LogPath -Algorithm SHA256).Hash
+    $evidenceLogSha256 = if ($EvidenceLogPath -and (Test-Path -LiteralPath $EvidenceLogPath -PathType Leaf)) {
+        (Get-FileHash -LiteralPath $EvidenceLogPath -Algorithm SHA256).Hash
+    }
+    else {
+        ""
+    }
     $script:Steps.Add([pscustomobject]@{
         id = $Id
         passed = $passed
@@ -201,8 +214,10 @@ function Invoke-GateStep {
         requiredPattern = $RequiredPattern
         evidencePassed = $evidencePassed
         evidenceLogPath = $EvidenceLogPath
+        evidenceLogSha256 = $evidenceLogSha256
         durationSeconds = [Math]::Round(((Get-Date) - $started).TotalSeconds, 2)
         logPath = $LogPath
+        logSha256 = $logSha256
     })
     Write-Manifest -Passed:$false -State $(if ($passed) { "running" } else { "failed" })
     if (-not $passed) {
@@ -315,7 +330,13 @@ if (-not $PreflightOnly) {
             -Actual $physicalTarget.description
     }
 
-    foreach ($artifact in @($BaselineApkPath, $CandidateApkPath, $CandidateAabPath)) {
+    foreach ($artifact in @(
+        $BaselineApkPath,
+        $BaselineApkProvenancePath,
+        $CandidateApkPath,
+        $CandidateAabPath,
+        $CandidateApkProvenancePath,
+        $CandidateAabProvenancePath)) {
         $resolved = Resolve-ProjectPath $artifact
         Add-Precondition `
             -Id "artifact:$artifact" `
@@ -352,6 +373,9 @@ $unity = Find-UnityExecutable
 $developmentApk = Join-Path $script:RepoRoot "Builds\Android\CatGuardTowerDefense-emulator.apk"
 $desktopRegressionScripts = @(
     "test-android-qa-provenance.ps1",
+    "test-e15-artifact-provenance.ps1",
+    "test-e15-baseline-provenance.ps1",
+    "test-e15-block-manifest.ps1",
     "test-e15-performance-evidence.ps1"
 )
 foreach ($scriptName in $desktopRegressionScripts) {
@@ -442,8 +466,12 @@ Invoke-GateStep `
         "-NoProfile", "-ExecutionPolicy", "Bypass",
         "-File", (Join-Path $PSScriptRoot "run-e15-release-gate.ps1"),
         "-BaselineApkPath", (Resolve-ProjectPath $BaselineApkPath),
+        "-BaselineApkProvenancePath", (Resolve-ProjectPath $BaselineApkProvenancePath),
+        "-BaselineCommit", $BaselineCommit,
         "-CandidateApkPath", (Resolve-ProjectPath $CandidateApkPath),
         "-CandidateAabPath", (Resolve-ProjectPath $CandidateAabPath),
+        "-CandidateApkProvenancePath", (Resolve-ProjectPath $CandidateApkProvenancePath),
+        "-CandidateAabProvenancePath", (Resolve-ProjectPath $CandidateAabProvenancePath),
         "-HeavyWavePerformanceEvidencePath", (Resolve-ProjectPath $HeavyWavePerformanceEvidencePath),
         "-DeviceSerial", $PhysicalDeviceSerial,
         "-OutputDir", $releaseOutput,
@@ -471,13 +499,18 @@ Invoke-GateStep `
 $postGateStatus = @(& git -C $script:RepoRoot status --porcelain=v1)
 $postGateClean = $postGateStatus.Count -eq 0
 $postGateStatusLog = Join-Path $script:RunRoot "git-post-gate-status.log"
-$postGateStatus | Set-Content -LiteralPath $postGateStatusLog -Encoding UTF8
+Set-Content -LiteralPath $postGateStatusLog -Encoding UTF8 -Value ($postGateStatus -join [Environment]::NewLine)
 $script:Steps.Add([pscustomobject]@{
     id = "git:post-gate-clean-worktree"
     passed = $postGateClean
     exitCode = if ($postGateClean) { 0 } else { 1 }
+    requiredPattern = ""
+    evidencePassed = $true
+    evidenceLogPath = ""
+    evidenceLogSha256 = ""
     durationSeconds = 0
     logPath = $postGateStatusLog
+    logSha256 = (Get-FileHash -LiteralPath $postGateStatusLog -Algorithm SHA256).Hash
 })
 if (-not $postGateClean) {
     Write-Manifest -Passed:$false -State "failed"
@@ -487,18 +520,39 @@ if (-not $postGateClean) {
 $artifactHashes = [ordered]@{
     developmentApk = (Get-FileHash -LiteralPath $developmentApk -Algorithm SHA256).Hash
     baselineApk = (Get-FileHash -LiteralPath (Resolve-ProjectPath $BaselineApkPath) -Algorithm SHA256).Hash
+    baselineApkProvenance = (Get-FileHash -LiteralPath (Resolve-ProjectPath $BaselineApkProvenancePath) -Algorithm SHA256).Hash
     candidateApk = (Get-FileHash -LiteralPath (Resolve-ProjectPath $CandidateApkPath) -Algorithm SHA256).Hash
     candidateAab = (Get-FileHash -LiteralPath (Resolve-ProjectPath $CandidateAabPath) -Algorithm SHA256).Hash
+    candidateApkProvenance = (Get-FileHash -LiteralPath (Resolve-ProjectPath $CandidateApkProvenancePath) -Algorithm SHA256).Hash
+    candidateAabProvenance = (Get-FileHash -LiteralPath (Resolve-ProjectPath $CandidateAabProvenancePath) -Algorithm SHA256).Hash
 }
 $script:Steps.Add([pscustomobject]@{
     id = "artifact:hashes"
     passed = $true
     exitCode = 0
+    requiredPattern = ""
+    evidencePassed = $true
+    evidenceLogPath = ""
+    evidenceLogSha256 = ""
     durationSeconds = 0
     logPath = ""
+    logSha256 = ""
     hashes = $artifactHashes
 })
 Write-Manifest -Passed:$true -State "technical_gate_passed"
+
+$licenseAuditPath = Join-Path $script:RepoRoot "docs\release\SOURCE_ASSET_LICENSE_AUDIT.md"
+$manifestContract = Test-E15TechnicalGateManifest `
+    -ManifestPath $script:ManifestPath `
+    -ExpectedGitHead $head `
+    -ExpectedCandidateBase $script:CandidateBase `
+    -ExpectedArtifactHashes $artifactHashes `
+    -ExpectedSourceAssetLicenseAuditSha256 (Get-FileHash -LiteralPath $licenseAuditPath -Algorithm SHA256).Hash `
+    -RequireEvidenceFiles
+if (-not [bool]$manifestContract.passed) {
+    Write-Manifest -Passed:$false -State "failed_manifest_contract"
+    throw "E15 technical manifest contract failed: $($manifestContract.reasons -join ' ')"
+}
 
 Write-Host "E15 technical block gate passed."
 Write-Host "Complete the release report/readiness/decision records, then run E15ProjectSetup.Validate in a cold Unity process."

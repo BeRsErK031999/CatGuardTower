@@ -1,6 +1,6 @@
 # E15 Desktop Preflight Report
 
-Status: passed for desktop scope; E15 remains blocked
+Status: historical desktop preparation passed; current-source artifact provenance and E15 remain blocked
 
 Checked on: `2026-08-10`
 
@@ -18,6 +18,8 @@ The signing material is outside Git under `%USERPROFILE%\.catguard\release-signi
 ## Artifact-only gate
 
 `tools/android/run-e15-release-gate.ps1 -ArtifactOnly` passed and wrote ignored evidence to `Builds/Android/qa-device/e15-release/20260810-162440/`.
+
+This run predates the current baseline and candidate provenance sidecar requirements. It remains valid historical identity/signature evidence for the listed bytes, but it cannot satisfy the current reproducible-build or final block gate. The baseline APK must be reproduced from commit `28f7e88` through the current clean orchestration HEAD, and the candidate APK/AAB must be rebuilt from that same current HEAD. All three artifacts need matching `*.provenance.json` sidecars before a new artifact-only pass or physical capture.
 
 Validated results:
 

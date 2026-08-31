@@ -23,7 +23,7 @@ This report is the final E15 evidence index. It must remain `in progress` while 
 | Android profile | ARM64, IL2CPP, min API 25, target API 36 | Rechecked from final signed artifacts |
 | Orientation | Landscape Left and Landscape Right | Confirmed on physical hardware |
 | Candidate source revision | pending final clean commit | Exact Git HEAD recorded by the block manifest |
-| Baseline APK | prepared from public/QA `0.1.0` source | Same signing certificate as candidate APK |
+| Baseline APK | prepared from historical `0.1.0` source | Same signing certificate as candidate APK; provenance binds commit `28f7e88`, the current orchestration HEAD, and AAB-to-APKS-to-APK hashes |
 | Candidate APK/AAB | prepared pre-final artifacts | Rebuilt or explicitly matched to final source before acceptance |
 | Upload certificate | candidate certificate prepared outside Git | Owner-approved and independently recoverable |
 
@@ -41,8 +41,8 @@ The E15 gate must rerun the configured cold validators and exact-candidate Andro
 
 ## Prepared internal release scope
 
-- The signed-artifact runner verifies package/version, SDK levels, ABI, certificate continuity, AAB validation, manifest permissions, clean install, offline launch, baseline upgrade, save migration, landscape, crashes, and physical performance evidence.
-- The complete block orchestrator fails before Unity or ADB mutation unless external P0, owner, clean-worktree, and upstream conditions are satisfied. A successful run writes one `technical_gate_passed` manifest bound to Git HEAD and artifact hashes.
+- The signed candidate wrapper writes secret-free APK/AAB provenance bound to a clean Git HEAD, Unity version, artifact hash, and restored project settings. The baseline wrapper separately binds the universal `0.1.0` APK to historical commit `28f7e88`, the current clean orchestration HEAD, clean/restored historical sources, and the intermediate AAB/APKS transformation. The signed-artifact runner verifies all three sidecars plus package/version, SDK levels, ABI, certificate continuity, AAB validation, manifest permissions, clean install, offline launch, baseline upgrade, save migration, landscape, crashes, and physical performance evidence.
+- The complete block orchestrator fails before Unity or ADB mutation unless external P0, owner, clean-worktree, and upstream conditions are satisfied. A successful run writes one `technical_gate_passed` manifest bound to Git HEAD, all artifact/provenance hashes, the exact required step set, and SHA-256 values for its evidence logs; the manifest validates itself before success is reported.
 - Physical performance acceptance requires the exact candidate APK installed on a non-emulated hardware renderer. App-authored checkpoints must prove an active `level_12` heavy wave before and after a sampling interval of at least 20 seconds.
 - Emulator SwiftShader and host-GPU performance results are diagnostic only.
 - Store listing, privacy, Data Safety, release notes, known issues, source/asset provenance, five landscape screenshots, and owner handoffs are prepared.
@@ -56,7 +56,7 @@ The E15 gate must rerun the configured cold validators and exact-candidate Andro
 | `PLAYTEST-001` | in progress | completed owner ratings, required cohorts, level-12 disposition, and findings record |
 | `DEVICE-QA-001` | blocked until device connection | physical clean/upgrade/offline/save/rotation/touch/audio/background/thermal/battery/crash/performance evidence |
 | `STORE-ACCOUNT-001` | not started | owner/legal/contact, public privacy URL, Play Console forms, listing approval, and upload-key recovery record |
-| Reproducible build | pending | clean-source APK/AAB build and hashes in the final block manifest |
+| Reproducible build | pending | matching baseline/APK/AAB provenance sidecars and hashes in the final block manifest |
 | Clean install | pending final physical gate | passed clean-install summary |
 | Upgrade and save migration | pending final physical gate | same-key `0.1.0` upgrade and schema/save continuity summary |
 | Offline first-session loop | pending final physical gate | passed offline clean-install summary |
@@ -89,13 +89,17 @@ Remote verification: pending
 | Field | Final value |
 | --- | --- |
 | `technical_gate_passed` manifest | pending |
+| `technical_gate_passed` manifest SHA-256 | pending |
 | Candidate Git branch | pending |
 | Candidate Git HEAD | pending |
 | Candidate merge base | pending |
 | Development APK SHA-256 | pending |
 | Baseline APK SHA-256 | pending |
+| Baseline APK provenance SHA-256 | pending |
 | Candidate APK SHA-256 | pending |
 | Candidate AAB SHA-256 | pending |
+| Candidate APK provenance SHA-256 | pending |
+| Candidate AAB provenance SHA-256 | pending |
 | Physical device/model/API | pending |
 | Hardware renderer | pending |
 | Heavy-wave FPS / P95 / samples | pending |

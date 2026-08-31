@@ -80,6 +80,21 @@ function Test-PathInsideDirectory {
     return $candidate.StartsWith($directory, [StringComparison]::OrdinalIgnoreCase)
 }
 
+function Get-RepositoryRelativePath {
+    param(
+        [string]$Path,
+        [string]$RepositoryRoot
+    )
+
+    $root = [IO.Path]::GetFullPath($RepositoryRoot).TrimEnd('\', '/') + [IO.Path]::DirectorySeparatorChar
+    $fullPath = [IO.Path]::GetFullPath($Path)
+    if (-not $fullPath.StartsWith($root, [StringComparison]::OrdinalIgnoreCase)) {
+        throw "Path is outside the Git repository: $fullPath"
+    }
+
+    return $fullPath.Substring($root.Length).Replace('\', '/')
+}
+
 $repoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..\..")).Path
 $projectSettingsPath = Join-Path $repoRoot "ProjectSettings\ProjectSettings.asset"
 $projectSettingsSnapshot = [IO.File]::ReadAllBytes($projectSettingsPath)
@@ -87,6 +102,16 @@ $resolvedKeystorePath = $null
 $keystorePasswordPlain = $env:CATGUARD_ANDROID_KEYSTORE_PASSWORD
 $keyPasswordPlain = $env:CATGUARD_ANDROID_KEY_PASSWORD
 $originalEnvironment = @{}
+$buildStartedAtUtc = $null
+$buildCompletedAtUtc = $null
+$outputPath = $null
+$provenancePath = $null
+$executeMethod = $null
+$unityVersion = $null
+$gitHeadBefore = $null
+$gitBranch = $null
+$cleanWorkingTreeBefore = $false
+$projectSettingsSha256Before = (Get-FileHash -LiteralPath $projectSettingsPath -Algorithm SHA256).Hash
 
 foreach ($name in $environmentNames) {
     $originalEnvironment[$name] = [Environment]::GetEnvironmentVariable($name, "Process")
@@ -134,24 +159,20 @@ try {
         $keyPasswordPlain = ConvertTo-PlainText -Value $KeyPassword
     }
 
-    if (-not $AllowDirtyWorkingTree) {
-        Push-Location $repoRoot
-        try {
-            $trackedChanges = @(& git status --porcelain --untracked-files=no)
-            if ($LASTEXITCODE -ne 0) {
-                throw "Could not inspect the Git working tree."
-            }
-
-            if ($trackedChanges.Count -gt 0) {
-                throw "Tracked files are modified. Commit or stash them before building a store AAB."
-            }
-        }
-        finally {
-            Pop-Location
-        }
+    $gitStatusBefore = @(& git -C $repoRoot status --porcelain=v1)
+    if ($LASTEXITCODE -ne 0) {
+        throw "Could not inspect the Git working tree."
+    }
+    $cleanWorkingTreeBefore = $gitStatusBefore.Count -eq 0
+    if (-not $AllowDirtyWorkingTree -and -not $cleanWorkingTreeBefore) {
+        throw "The Git working tree is not clean. Commit or stash tracked and untracked source files before building a store artifact."
     }
 
+    $gitHeadBefore = (& git -C $repoRoot rev-parse HEAD).Trim()
+    $gitBranch = (& git -C $repoRoot branch --show-current).Trim()
+
     $resolvedUnityPath = Resolve-UnityExecutable -RequestedPath $UnityPath -ProjectRoot $repoRoot
+    $unityVersion = ((Get-Content -LiteralPath (Join-Path $repoRoot "ProjectSettings\ProjectVersion.txt") -Encoding UTF8 | Select-Object -First 1) -replace '^m_EditorVersion:\s*', '').Trim()
     $logDirectory = Join-Path $repoRoot "Builds\Android\logs"
     New-Item -ItemType Directory -Force -Path $logDirectory | Out-Null
     $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
@@ -168,9 +189,13 @@ try {
     }
     $logPath = Join-Path $logDirectory "signed-store-$artifactLabel-$timestamp.log"
     $outputPath = Join-Path $repoRoot "Builds\Android\$outputFileName"
+    $provenancePath = "$outputPath.provenance.json"
 
     if (Test-Path -LiteralPath $outputPath) {
         Remove-Item -LiteralPath $outputPath -Force
+    }
+    if (Test-Path -LiteralPath $provenancePath) {
+        Remove-Item -LiteralPath $provenancePath -Force
     }
 
     [Environment]::SetEnvironmentVariable("CATGUARD_ANDROID_KEYSTORE_PATH", $resolvedKeystorePath, "Process")
@@ -181,6 +206,7 @@ try {
     Write-Host "Building signed store $($Artifact.ToUpperInvariant()) with Unity..."
     Write-Host "Output: $outputPath"
     Write-Host "Log: $logPath"
+    $buildStartedAtUtc = (Get-Date).ToUniversalTime()
 
     $unityArguments = @(
         "-batchmode",
@@ -209,6 +235,7 @@ try {
         throw "Unity reported success but the store $Artifact was not created: $outputPath"
     }
 
+    $buildCompletedAtUtc = (Get-Date).ToUniversalTime()
     $artifactFile = Get-Item -LiteralPath $outputPath
     Write-Host "Signed store $Artifact created: $($artifactFile.FullName) ($($artifactFile.Length) bytes)"
 }
@@ -224,3 +251,46 @@ finally {
     $keystorePasswordPlain = $null
     $keyPasswordPlain = $null
 }
+
+$projectSettingsSha256After = (Get-FileHash -LiteralPath $projectSettingsPath -Algorithm SHA256).Hash
+$gitHeadAfter = (& git -C $repoRoot rev-parse HEAD).Trim()
+$gitStatusAfter = @(& git -C $repoRoot status --porcelain=v1)
+if ($LASTEXITCODE -ne 0) {
+    throw "Could not inspect the Git working tree after the signed build."
+}
+$cleanWorkingTreeAfter = $gitStatusAfter.Count -eq 0
+$projectSettingsRestored = $projectSettingsSha256Before -eq $projectSettingsSha256After
+if ($gitHeadAfter -ne $gitHeadBefore) {
+    throw "Git HEAD changed during the signed artifact build. Provenance was not written."
+}
+if (-not $projectSettingsRestored) {
+    throw "ProjectSettings.asset was not restored after the signed artifact build. Provenance was not written."
+}
+if (-not $AllowDirtyWorkingTree -and -not $cleanWorkingTreeAfter) {
+    throw "The signed artifact build left source changes in the Git working tree. Provenance was not written."
+}
+
+$artifactFile = Get-Item -LiteralPath $outputPath
+$provenance = [pscustomobject]@{
+    schemaVersion = 1
+    passed = $true
+    artifact = $Artifact
+    artifactRelativePath = Get-RepositoryRelativePath -Path $outputPath -RepositoryRoot $repoRoot
+    artifactSha256 = (Get-FileHash -LiteralPath $outputPath -Algorithm SHA256).Hash
+    artifactBytes = $artifactFile.Length
+    buildMethod = $executeMethod
+    buildStartedAtUtc = $buildStartedAtUtc.ToString("o")
+    buildCompletedAtUtc = $buildCompletedAtUtc.ToString("o")
+    gitHeadBefore = $gitHeadBefore
+    gitHeadAfter = $gitHeadAfter
+    gitBranch = $gitBranch
+    cleanWorkingTreeBefore = $cleanWorkingTreeBefore
+    cleanWorkingTreeAfter = $cleanWorkingTreeAfter
+    allowDirtyWorkingTree = [bool]$AllowDirtyWorkingTree
+    projectSettingsRestored = $projectSettingsRestored
+    projectSettingsSha256Before = $projectSettingsSha256Before
+    projectSettingsSha256After = $projectSettingsSha256After
+    unityVersion = $unityVersion
+}
+$provenance | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $provenancePath -Encoding UTF8
+Write-Host "Build provenance: $provenancePath"

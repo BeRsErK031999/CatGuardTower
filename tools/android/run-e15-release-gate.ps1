@@ -2,8 +2,12 @@
 param(
     [Parameter(Mandatory = $true)]
     [string]$BaselineApkPath,
+    [string]$BaselineApkProvenancePath = "Builds\Android\baseline\CatGuardTowerDefense-0.1.0-universal.apk.provenance.json",
+    [string]$BaselineCommit = "28f7e88",
     [string]$CandidateApkPath = "Builds\Android\CatGuardTowerDefense-store.apk",
     [string]$CandidateAabPath = "Builds\Android\CatGuardTowerDefense-store.aab",
+    [string]$CandidateApkProvenancePath = "Builds\Android\CatGuardTowerDefense-store.apk.provenance.json",
+    [string]$CandidateAabProvenancePath = "Builds\Android\CatGuardTowerDefense-store.aab.provenance.json",
     [string]$BaselineSaveFixturePath = "tools\android\fixtures\e15-schema-v4-save.json",
     [string]$PackageName = "com.berserk031999.catguardtower",
     [string]$DeviceSerial = "",
@@ -22,6 +26,7 @@ $ErrorActionPreference = "Stop"
 $script:RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..\..")).Path
 $script:DeviceQaScript = Join-Path $PSScriptRoot "run-device-qa.ps1"
 $script:TargetArgs = @()
+. (Join-Path $PSScriptRoot "e15-artifact-provenance.ps1")
 
 function Resolve-ProjectPath {
     param([string]$Path)
@@ -31,6 +36,18 @@ function Resolve-ProjectPath {
     }
 
     return [IO.Path]::GetFullPath((Join-Path $script:RepoRoot $Path))
+}
+
+function Get-RepositoryRelativePath {
+    param([string]$Path)
+
+    $root = [IO.Path]::GetFullPath($script:RepoRoot).TrimEnd('\', '/') + [IO.Path]::DirectorySeparatorChar
+    $fullPath = [IO.Path]::GetFullPath($Path)
+    if (-not $fullPath.StartsWith($root, [StringComparison]::OrdinalIgnoreCase)) {
+        throw "Path is outside the Git repository: $fullPath"
+    }
+
+    return $fullPath.Substring($root.Length).Replace('\', '/')
 }
 
 function Find-FirstTool {
@@ -531,8 +548,11 @@ function Test-HeavyWavePerformanceEvidence {
 }
 
 $resolvedBaselineApk = Resolve-ProjectPath $BaselineApkPath
+$resolvedBaselineApkProvenance = Resolve-ProjectPath $BaselineApkProvenancePath
 $resolvedCandidateApk = Resolve-ProjectPath $CandidateApkPath
 $resolvedCandidateAab = Resolve-ProjectPath $CandidateAabPath
+$resolvedCandidateApkProvenance = Resolve-ProjectPath $CandidateApkProvenancePath
+$resolvedCandidateAabProvenance = Resolve-ProjectPath $CandidateAabProvenancePath
 $resolvedBaselineSaveFixture = Resolve-ProjectPath $BaselineSaveFixturePath
 $resolvedHeavyWavePerformanceEvidence = if ($HeavyWavePerformanceEvidencePath) {
     Resolve-ProjectPath $HeavyWavePerformanceEvidencePath
@@ -562,6 +582,38 @@ $baseline = Get-ApkMetadata $resolvedBaselineApk
 $candidate = Get-ApkMetadata $resolvedCandidateApk
 $bundle = Get-AabMetadata $resolvedCandidateAab
 Assert-ArtifactContract -Baseline $baseline -Candidate $candidate -Bundle $bundle
+$gitHead = (& git -C $script:RepoRoot rev-parse HEAD).Trim()
+$gitBranch = (& git -C $script:RepoRoot branch --show-current).Trim()
+$baselineCommitResolved = (& git -C $script:RepoRoot rev-parse "$BaselineCommit^{commit}").Trim()
+if ($LASTEXITCODE -ne 0 -or $baselineCommitResolved -notmatch '^[0-9a-f]{40}$') {
+    throw "Could not resolve expected baseline commit: $BaselineCommit"
+}
+$unityVersion = ((Get-Content -LiteralPath (Join-Path $script:RepoRoot "ProjectSettings\ProjectVersion.txt") -Encoding UTF8 | Select-Object -First 1) -replace '^m_EditorVersion:\s*', '').Trim()
+$baselineBuildProvenance = Test-E15BaselineBuildProvenance `
+    -ProvenancePath $resolvedBaselineApkProvenance `
+    -ArtifactPath $resolvedBaselineApk `
+    -ExpectedBaselineCommit $baselineCommitResolved `
+    -ExpectedOrchestratorGitHead $gitHead `
+    -ExpectedUnityVersion $unityVersion
+$candidateApkBuildProvenance = Test-E15ArtifactBuildProvenance `
+    -ProvenancePath $resolvedCandidateApkProvenance `
+    -ArtifactPath $resolvedCandidateApk `
+    -ExpectedArtifact "Apk" `
+    -ExpectedGitHead $gitHead `
+    -ExpectedUnityVersion $unityVersion `
+    -ExpectedArtifactRelativePath (Get-RepositoryRelativePath $resolvedCandidateApk)
+$candidateAabBuildProvenance = Test-E15ArtifactBuildProvenance `
+    -ProvenancePath $resolvedCandidateAabProvenance `
+    -ArtifactPath $resolvedCandidateAab `
+    -ExpectedArtifact "Aab" `
+    -ExpectedGitHead $gitHead `
+    -ExpectedUnityVersion $unityVersion `
+    -ExpectedArtifactRelativePath (Get-RepositoryRelativePath $resolvedCandidateAab)
+if (-not [bool]$baselineBuildProvenance.passed `
+    -or -not [bool]$candidateApkBuildProvenance.passed `
+    -or -not [bool]$candidateAabBuildProvenance.passed) {
+    throw "E15 artifacts are not bound to reproducible sources. Baseline: $($baselineBuildProvenance.reasons -join ' ') APK: $($candidateApkBuildProvenance.reasons -join ' ') AAB: $($candidateAabBuildProvenance.reasons -join ' ')"
+}
 
 $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
 $runRoot = Join-Path $resolvedOutputDir $timestamp
@@ -573,8 +625,6 @@ $bundle.manifestText | Set-Content -LiteralPath $aabManifestPath -Encoding UTF8
 $bundle.manifestPath = $aabManifestPath
 $bundle.PSObject.Properties.Remove("manifestText")
 
-$gitHead = (& git -C $script:RepoRoot rev-parse HEAD).Trim()
-$gitBranch = (& git -C $script:RepoRoot branch --show-current).Trim()
 if ($ArtifactOnly) {
     $preflight = [pscustomobject]@{
         generatedAtUtc = (Get-Date).ToUniversalTime().ToString("o")
@@ -585,8 +635,11 @@ if ($ArtifactOnly) {
         gitHead = $gitHead
         packageName = $PackageName
         baselineApk = $baseline
+        baselineBuildProvenance = $baselineBuildProvenance
         candidateApk = $candidate
         candidateAab = $bundle
+        candidateApkBuildProvenance = $candidateApkBuildProvenance
+        candidateAabBuildProvenance = $candidateAabBuildProvenance
     }
     $preflight | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $manifestPath -Encoding UTF8
 
@@ -663,8 +716,11 @@ $gate = [pscustomobject]@{
     packageName = $PackageName
     device = $script:Device
     baselineApk = $baseline
+    baselineBuildProvenance = $baselineBuildProvenance
     candidateApk = $candidate
     candidateAab = $bundle
+    candidateApkBuildProvenance = $candidateApkBuildProvenance
+    candidateAabBuildProvenance = $candidateAabBuildProvenance
     cleanInstallSummary = $cleanSummary
     baselineSummary = $baselineSummary
     upgradeSummary = $upgradeSummary

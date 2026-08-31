@@ -41,6 +41,24 @@ Do not run isolated Unity gameplay, Android, or emulator slices and call them E1
 
 Set signing values through secure process environment variables or enter passwords as secure prompts:
 
+The preferred release preparation path builds the historical baseline and both current candidates from one clean pushed HEAD, then immediately runs the artifact-only gate:
+
+```powershell
+$env:CATGUARD_ANDROID_KEYSTORE_PATH = "D:\Secure\CatGuard\catguard-upload.jks"
+$env:CATGUARD_ANDROID_KEY_ALIAS = "catguard-upload"
+
+powershell.exe -NoProfile -ExecutionPolicy Bypass `
+  -File tools\android\prepare-e15-release-artifacts.ps1 `
+  -PreflightOnly
+
+powershell.exe -NoProfile -ExecutionPolicy Bypass `
+  -File tools\android\prepare-e15-release-artifacts.ps1
+```
+
+The preflight is read-only and requires a clean worktree, `HEAD == upstream`, a resolvable baseline commit, Unity, and a keystore outside the repository. Interactive mode securely prompts once for any missing passwords; non-interactive automation must inject both password environment variables and pass `-NonInteractive`. A successful run writes `e15-artifact-set.json`, the artifact-only gate manifest/log hashes, and hashes for the baseline APK, candidate APK/AAB, and all three provenance sidecars under ignored `Builds/Android/qa-device/e15-artifact-set/`.
+
+The individual build commands remain available for diagnostics or rebuilding one artifact while developing the workflow:
+
 ```powershell
 $env:CATGUARD_ANDROID_KEYSTORE_PATH = "D:\Secure\CatGuard\catguard-upload.jks"
 $env:CATGUARD_ANDROID_KEY_ALIAS = "catguard-upload"

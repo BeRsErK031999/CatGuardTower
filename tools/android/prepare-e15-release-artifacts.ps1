@@ -171,6 +171,7 @@ Add-Precondition `
 
 foreach ($scriptName in @(
     "build-e15-baseline-apk.ps1",
+    "e15-baseline-build-diagnostics.ps1",
     "build-signed-store-aab.ps1",
     "run-e15-release-gate.ps1")) {
     $scriptPath = Join-Path $PSScriptRoot $scriptName

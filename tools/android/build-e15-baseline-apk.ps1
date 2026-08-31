@@ -14,6 +14,8 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
+. (Join-Path $PSScriptRoot "e15-baseline-build-diagnostics.ps1")
+
 function ConvertTo-PlainText {
     param([System.Security.SecureString]$Value)
 
@@ -173,6 +175,7 @@ $artifactSha256 = ""
 $artifactBytes = 0L
 $bundletoolSha256 = (Get-FileHash -LiteralPath $bundletool -Algorithm SHA256).Hash
 $unityVersion = ((Get-Content -LiteralPath (Join-Path $script:RepoRoot "ProjectSettings\ProjectVersion.txt") -Encoding UTF8 | Select-Object -First 1) -replace '^m_EditorVersion:\s*', '').Trim()
+$diagnosticRoot = Join-Path $script:RepoRoot "Builds\Android\logs\e15-baseline"
 
 try {
     & git -C $script:RepoRoot worktree add --detach $worktreePath $baselineCommitResolved
@@ -197,7 +200,15 @@ try {
 
     $baselineBuilder = Join-Path $worktreePath "tools\android\build-signed-store-aab.ps1"
     & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $baselineBuilder -NonInteractive -UnityPath $unity
-    if ($LASTEXITCODE -ne 0) { throw "The 0.1.0 baseline AAB build failed." }
+    if ($LASTEXITCODE -ne 0) {
+        $diagnostics = Copy-E15BaselineBuildDiagnostics `
+            -SourceDirectory (Join-Path $worktreePath "Builds\Android\logs") `
+            -DestinationRoot $diagnosticRoot
+        if ([bool]$diagnostics.passed) {
+            throw "The 0.1.0 baseline AAB build failed. Preserved diagnostics: $($diagnostics.runRoot)"
+        }
+        throw "The 0.1.0 baseline AAB build failed. $($diagnostics.reason)"
+    }
 
     $baselineAab = Join-Path $worktreePath "Builds\Android\CatGuardTowerDefense-store.aab"
     if (-not (Test-Path -LiteralPath $baselineAab -PathType Leaf)) {

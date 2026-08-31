@@ -27,6 +27,7 @@ function Get-E15RequiredTechnicalGateStepIds {
         "test-android-qa-provenance",
         "test-e15-artifact-provenance",
         "test-e15-artifact-set-manifest",
+        "test-e15-baseline-build-diagnostics",
         "test-e15-baseline-provenance",
         "test-e15-block-manifest",
         "test-e15-performance-evidence")) {

@@ -418,6 +418,7 @@ $desktopRegressionScripts = @(
     "test-android-qa-provenance.ps1",
     "test-e15-artifact-provenance.ps1",
     "test-e15-artifact-set-manifest.ps1",
+    "test-e15-baseline-build-diagnostics.ps1",
     "test-e15-baseline-provenance.ps1",
     "test-e15-block-manifest.ps1",
     "test-e15-performance-evidence.ps1"

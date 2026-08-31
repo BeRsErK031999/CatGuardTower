@@ -33,7 +33,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass `
   -KeyAlias "catguard-upload"
 ```
 
-The script requires the current repository to be clean, creates an isolated detached worktree at the resolved historical commit, builds the signed `0.1.0` AAB, and uses bundletool to create a same-key universal baseline APK. It writes the ignored APK plus `CatGuardTowerDefense-0.1.0-universal.apk.provenance.json`, deletes temporary password files, and removes only the verified temporary worktree. The secret-free sidecar binds the final APK to the historical source commit, the current orchestration HEAD, the clean state of both worktrees, restored historical project settings, and SHA-256 values for the intermediate AAB, APKS archive, bundletool, and final APK.
+The script requires the current repository to be clean, creates an isolated detached worktree at the resolved historical commit, builds the signed `0.1.0` AAB, and uses bundletool to create a same-key universal baseline APK. It writes the ignored APK plus `CatGuardTowerDefense-0.1.0-universal.apk.provenance.json`, deletes temporary password files, and removes only the verified temporary worktree. If the historical Unity build fails, only its `*.log` files are copied first to an ignored timestamped directory under `Builds/Android/logs/e15-baseline/`; non-log files are not preserved. The secret-free sidecar binds the final APK to the historical source commit, the current orchestration HEAD, the clean state of both worktrees, restored historical project settings, and SHA-256 values for the intermediate AAB, APKS archive, bundletool, and final APK.
 
 Do not run isolated Unity gameplay, Android, or emulator slices and call them E15 evidence. The full gate runs once all exit criteria are implemented.
 
@@ -176,6 +176,9 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass `
 
 powershell.exe -NoProfile -ExecutionPolicy Bypass `
   -File tools\android\test-e15-artifact-set-manifest.ps1
+
+powershell.exe -NoProfile -ExecutionPolicy Bypass `
+  -File tools\android\test-e15-baseline-build-diagnostics.ps1
 
 powershell.exe -NoProfile -ExecutionPolicy Bypass `
   -File tools\android\test-e15-baseline-provenance.ps1

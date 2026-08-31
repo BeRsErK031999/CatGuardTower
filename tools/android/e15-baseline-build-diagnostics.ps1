@@ -1,8 +1,11 @@
+. (Join-Path $PSScriptRoot "e15-build-log-redaction.ps1")
+
 function Copy-E15BaselineBuildDiagnostics {
     [CmdletBinding()]
     param(
         [string]$SourceDirectory,
-        [string]$DestinationRoot
+        [string]$DestinationRoot,
+        [string[]]$SensitiveValues = @()
     )
 
     $sourceLogs = @()
@@ -27,7 +30,11 @@ function Copy-E15BaselineBuildDiagnostics {
     $copiedFiles = New-Object System.Collections.Generic.List[object]
     foreach ($sourceLog in $sourceLogs) {
         $destination = Join-Path $runRoot $sourceLog.Name
-        Copy-Item -LiteralPath $sourceLog.FullName -Destination $destination -Force
+        $sourceContent = Get-Content -LiteralPath $sourceLog.FullName -Encoding UTF8 -Raw
+        $redactedContent = Protect-E15BuildLogText `
+            -Content $sourceContent `
+            -SensitiveValues $SensitiveValues
+        [IO.File]::WriteAllText($destination, $redactedContent, [Text.UTF8Encoding]::new($false))
         $copied = Get-Item -LiteralPath $destination
         $copiedFiles.Add([pscustomobject]@{
             name = $copied.Name

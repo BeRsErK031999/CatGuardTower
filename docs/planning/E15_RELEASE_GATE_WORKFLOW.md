@@ -33,7 +33,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass `
   -KeyAlias "catguard-upload"
 ```
 
-The script requires the current repository to be clean, creates an isolated detached worktree at the resolved historical commit, builds the signed `0.1.0` AAB, and uses bundletool to create a same-key universal baseline APK. It writes the ignored APK plus `CatGuardTowerDefense-0.1.0-universal.apk.provenance.json`, deletes temporary password files, and removes only the verified temporary worktree. If the historical Unity build fails, only its `*.log` files are copied first to an ignored timestamped directory under `Builds/Android/logs/e15-baseline/`; non-log files are not preserved. The secret-free sidecar binds the final APK to the historical source commit, the current orchestration HEAD, the clean state of both worktrees, restored historical project settings, and SHA-256 values for the intermediate AAB, APKS archive, bundletool, and final APK.
+The script requires the current repository to be clean, creates an isolated detached worktree at the resolved historical commit, builds the signed `0.1.0` AAB, and uses bundletool to create a same-key universal baseline APK. Windows Unity/Gradle children receive a unique directory below the short `C:\cgjtmp` root by default because the JDK AF_UNIX selector can reject the desktop agent's effective `%TEMP%` path; override only with `-JavaTempRoot` or `CATGUARD_JAVA_TEMP_ROOT`, keeping the absolute root at 32 characters or fewer. The process restores `TEMP`/`TMP` and removes its owned directory afterward. It writes the ignored APK plus `CatGuardTowerDefense-0.1.0-universal.apk.provenance.json`, deletes temporary password files, and removes only the verified temporary worktree. If the historical Unity build fails, only its `*.log` files are copied first to an ignored timestamped directory under `Builds/Android/logs/e15-baseline/`; known signing values and environment fields named like passwords, tokens, secrets, or private keys are replaced with `[REDACTED]`, and non-log files are not preserved. The secret-free sidecar binds the final APK to the historical source commit, the current orchestration HEAD, the clean state of both worktrees, restored historical project settings, and SHA-256 values for the intermediate AAB, APKS archive, bundletool, and final APK.
 
 Do not run isolated Unity gameplay, Android, or emulator slices and call them E15 evidence. The full gate runs once all exit criteria are implemented.
 
@@ -185,6 +185,9 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass `
 
 powershell.exe -NoProfile -ExecutionPolicy Bypass `
   -File tools\android\test-e15-block-manifest.ps1
+
+powershell.exe -NoProfile -ExecutionPolicy Bypass `
+  -File tools\android\test-e15-java-temp.ps1
 
 powershell.exe -NoProfile -ExecutionPolicy Bypass `
   -File tools\android\test-e15-performance-evidence.ps1

@@ -14,11 +14,21 @@ try {
     $source = Join-Path $tempRoot "source"
     $destination = Join-Path $tempRoot "destination"
     New-Item -ItemType Directory -Force -Path $source | Out-Null
-    "first Unity log" | Set-Content -LiteralPath (Join-Path $source "first.log") -Encoding UTF8
+    $keystoreSecret = "fixture-keystore-secret"
+    $keySecret = "fixture-key-secret"
+    @(
+        "FAILURE: Unable to establish loopback connection",
+        "CATGUARD_ANDROID_KEYSTORE_PASSWORD = $keystoreSecret",
+        "unstructured signing value: $keySecret",
+        "GITHUB_TOKEN = fixture-token"
+    ) | Set-Content -LiteralPath (Join-Path $source "first.log") -Encoding UTF8
     "second Unity log" | Set-Content -LiteralPath (Join-Path $source "second.log") -Encoding UTF8
     "must not be copied" | Set-Content -LiteralPath (Join-Path $source "password.txt") -Encoding UTF8
 
-    $copied = Copy-E15BaselineBuildDiagnostics -SourceDirectory $source -DestinationRoot $destination
+    $copied = Copy-E15BaselineBuildDiagnostics `
+        -SourceDirectory $source `
+        -DestinationRoot $destination `
+        -SensitiveValues @($keystoreSecret, $keySecret)
     if (-not [bool]$copied.passed -or @($copied.files).Count -ne 2) {
         throw "valid expected two preserved logs: $($copied | ConvertTo-Json -Depth 6 -Compress)"
     }
@@ -33,6 +43,16 @@ try {
             -or $file.bytes -le 0) {
             throw "valid produced invalid preserved-log evidence."
         }
+    }
+    $preservedText = @($copied.files | ForEach-Object {
+        Get-Content -LiteralPath $_.path -Encoding UTF8 -Raw
+    }) -join [Environment]::NewLine
+    if ($preservedText -match [regex]::Escape($keystoreSecret) `
+        -or $preservedText -match [regex]::Escape($keySecret) `
+        -or $preservedText -match "fixture-token" `
+        -or $preservedText -notmatch "Unable to establish loopback connection" `
+        -or $preservedText -notmatch "\[REDACTED\]") {
+        throw "valid did not redact secrets while preserving diagnostic evidence."
     }
     if (Test-Path -LiteralPath (Join-Path $copied.runRoot "password.txt") -PathType Leaf) {
         throw "valid copied a non-log file."

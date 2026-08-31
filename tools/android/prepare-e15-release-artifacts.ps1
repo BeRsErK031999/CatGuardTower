@@ -6,6 +6,7 @@ param(
     [System.Security.SecureString]$KeystorePassword,
     [System.Security.SecureString]$KeyPassword,
     [string]$UnityPath,
+    [string]$JavaTempRoot = $env:CATGUARD_JAVA_TEMP_ROOT,
     [string]$OutputDir = "Builds\Android\qa-device\e15-artifact-set",
     [switch]$NonInteractive,
     [switch]$PreflightOnly
@@ -16,6 +17,7 @@ $ErrorActionPreference = "Stop"
 
 $script:RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..\..")).Path
 . (Join-Path $PSScriptRoot "e15-artifact-set-manifest.ps1")
+. (Join-Path $PSScriptRoot "e15-java-temp.ps1")
 $script:Preconditions = New-Object System.Collections.Generic.List[object]
 
 function Add-Precondition {
@@ -161,6 +163,14 @@ Add-Precondition `
     -Expected "configured Unity executable" `
     -Actual $unity
 
+$effectiveJavaTempRoot = if ($JavaTempRoot) { $JavaTempRoot } else { "C:\cgjtmp" }
+$javaTempValidation = Test-E15JavaTempRoot -Root $effectiveJavaTempRoot
+Add-Precondition `
+    -Id "java-temp-root" `
+    -Passed:([bool]$javaTempValidation.passed) `
+    -Expected "absolute Windows Java temp root of at most 32 characters" `
+    -Actual $(if ([bool]$javaTempValidation.passed) { $javaTempValidation.root } else { $javaTempValidation.reason })
+
 $passwordsConfigured = ([bool]$env:CATGUARD_ANDROID_KEYSTORE_PASSWORD -or $null -ne $KeystorePassword) `
     -and ([bool]$env:CATGUARD_ANDROID_KEY_PASSWORD -or $null -ne $KeyPassword)
 Add-Precondition `
@@ -171,7 +181,9 @@ Add-Precondition `
 
 foreach ($scriptName in @(
     "build-e15-baseline-apk.ps1",
+    "e15-build-log-redaction.ps1",
     "e15-baseline-build-diagnostics.ps1",
+    "e15-java-temp.ps1",
     "build-signed-store-aab.ps1",
     "run-e15-release-gate.ps1")) {
     $scriptPath = Join-Path $PSScriptRoot $scriptName
@@ -205,6 +217,7 @@ $buildArguments = @{
     KeystorePath = $resolvedKeystore
     KeyAlias = $KeyAlias
     UnityPath = $unity
+    JavaTempRoot = $effectiveJavaTempRoot
     NonInteractive = $true
 }
 if ($null -ne $KeystorePassword) {

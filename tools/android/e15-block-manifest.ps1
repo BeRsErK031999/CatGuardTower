@@ -30,6 +30,7 @@ function Get-E15RequiredTechnicalGateStepIds {
         "test-e15-baseline-build-diagnostics",
         "test-e15-baseline-provenance",
         "test-e15-block-manifest",
+        "test-e15-java-temp",
         "test-e15-performance-evidence")) {
         $ids.Add("desktop:$name")
     }

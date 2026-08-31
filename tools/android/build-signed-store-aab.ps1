@@ -7,6 +7,7 @@ param(
     [System.Security.SecureString]$KeystorePassword,
     [System.Security.SecureString]$KeyPassword,
     [string]$UnityPath,
+    [string]$JavaTempRoot = $env:CATGUARD_JAVA_TEMP_ROOT,
     [switch]$NonInteractive,
     [switch]$AllowDirtyWorkingTree
 )
@@ -14,11 +15,16 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
+. (Join-Path $PSScriptRoot "e15-build-log-redaction.ps1")
+. (Join-Path $PSScriptRoot "e15-java-temp.ps1")
+
 $environmentNames = @(
     "CATGUARD_ANDROID_KEYSTORE_PATH",
     "CATGUARD_ANDROID_KEYSTORE_PASSWORD",
     "CATGUARD_ANDROID_KEY_ALIAS",
-    "CATGUARD_ANDROID_KEY_PASSWORD"
+    "CATGUARD_ANDROID_KEY_PASSWORD",
+    "TEMP",
+    "TMP"
 )
 
 function ConvertTo-PlainText {
@@ -106,12 +112,15 @@ $buildStartedAtUtc = $null
 $buildCompletedAtUtc = $null
 $outputPath = $null
 $provenancePath = $null
+$logPath = $null
 $executeMethod = $null
 $unityVersion = $null
 $gitHeadBefore = $null
 $gitBranch = $null
 $cleanWorkingTreeBefore = $false
 $projectSettingsSha256Before = (Get-FileHash -LiteralPath $projectSettingsPath -Algorithm SHA256).Hash
+$effectiveJavaTempRoot = if ($JavaTempRoot) { $JavaTempRoot } else { "C:\cgjtmp" }
+$javaTempDirectory = $null
 
 foreach ($name in $environmentNames) {
     $originalEnvironment[$name] = [Environment]::GetEnvironmentVariable($name, "Process")
@@ -202,6 +211,9 @@ try {
     [Environment]::SetEnvironmentVariable("CATGUARD_ANDROID_KEYSTORE_PASSWORD", $keystorePasswordPlain, "Process")
     [Environment]::SetEnvironmentVariable("CATGUARD_ANDROID_KEY_ALIAS", $KeyAlias.Trim(), "Process")
     [Environment]::SetEnvironmentVariable("CATGUARD_ANDROID_KEY_PASSWORD", $keyPasswordPlain, "Process")
+    $javaTempDirectory = New-E15JavaTempDirectory -Root $effectiveJavaTempRoot
+    [Environment]::SetEnvironmentVariable("TEMP", $javaTempDirectory.path, "Process")
+    [Environment]::SetEnvironmentVariable("TMP", $javaTempDirectory.path, "Process")
 
     Write-Host "Building signed store $($Artifact.ToUpperInvariant()) with Unity..."
     Write-Host "Output: $outputPath"
@@ -240,6 +252,21 @@ try {
     Write-Host "Signed store $Artifact created: $($artifactFile.FullName) ($($artifactFile.Length) bytes)"
 }
 finally {
+    $cleanupFailure = ""
+    if ($logPath -and (Test-Path -LiteralPath $logPath -PathType Leaf)) {
+        try {
+            $redaction = Protect-E15BuildLogFile `
+                -Path $logPath `
+                -SensitiveValues @($keystorePasswordPlain, $keyPasswordPlain)
+            if (-not [bool]$redaction.passed) {
+                throw $redaction.reason
+            }
+        }
+        catch {
+            [IO.File]::Delete($logPath)
+            $cleanupFailure = "The Unity build log could not be redacted and was deleted: $($_.Exception.Message)"
+        }
+    }
     foreach ($name in $environmentNames) {
         [Environment]::SetEnvironmentVariable($name, $originalEnvironment[$name], "Process")
     }
@@ -250,6 +277,19 @@ finally {
 
     $keystorePasswordPlain = $null
     $keyPasswordPlain = $null
+    if ($null -ne $javaTempDirectory) {
+        try {
+            Remove-E15JavaTempDirectory -Path $javaTempDirectory.path -Root $effectiveJavaTempRoot
+        }
+        catch {
+            if (-not $cleanupFailure) {
+                $cleanupFailure = $_.Exception.Message
+            }
+        }
+    }
+    if ($cleanupFailure) {
+        throw $cleanupFailure
+    }
 }
 
 $projectSettingsSha256After = (Get-FileHash -LiteralPath $projectSettingsPath -Algorithm SHA256).Hash

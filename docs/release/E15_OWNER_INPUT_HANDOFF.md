@@ -70,6 +70,7 @@ Candidate certificate SHA-256:
 
 Before the first Play upload, the owner must choose either to approve this key or replace it and rebuild both baseline/candidate evidence. If approved:
 
+- rotate both JKS store/key passwords and refresh the machine-bound DPAPI convenience credential before another signed build;
 - copy the JKS to an independent encrypted backup outside this PC;
 - store alias and passwords in an owner-controlled password manager;
 - verify that the backup can list the certificate without altering the original;

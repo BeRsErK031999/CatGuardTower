@@ -8,6 +8,7 @@ param(
     [System.Security.SecureString]$KeystorePassword,
     [System.Security.SecureString]$KeyPassword,
     [string]$UnityPath,
+    [string]$JavaTempRoot = $env:CATGUARD_JAVA_TEMP_ROOT,
     [switch]$NonInteractive
 )
 
@@ -15,6 +16,7 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
 . (Join-Path $PSScriptRoot "e15-baseline-build-diagnostics.ps1")
+. (Join-Path $PSScriptRoot "e15-java-temp.ps1")
 
 function ConvertTo-PlainText {
     param([System.Security.SecureString]$Value)
@@ -159,6 +161,8 @@ $originalEnvironment = @{
     CATGUARD_ANDROID_KEYSTORE_PASSWORD = [Environment]::GetEnvironmentVariable("CATGUARD_ANDROID_KEYSTORE_PASSWORD", "Process")
     CATGUARD_ANDROID_KEY_ALIAS = [Environment]::GetEnvironmentVariable("CATGUARD_ANDROID_KEY_ALIAS", "Process")
     CATGUARD_ANDROID_KEY_PASSWORD = [Environment]::GetEnvironmentVariable("CATGUARD_ANDROID_KEY_PASSWORD", "Process")
+    TEMP = [Environment]::GetEnvironmentVariable("TEMP", "Process")
+    TMP = [Environment]::GetEnvironmentVariable("TMP", "Process")
 }
 $worktreeAdded = $false
 $buildStartedAtUtc = (Get-Date).ToUniversalTime()
@@ -176,6 +180,8 @@ $artifactBytes = 0L
 $bundletoolSha256 = (Get-FileHash -LiteralPath $bundletool -Algorithm SHA256).Hash
 $unityVersion = ((Get-Content -LiteralPath (Join-Path $script:RepoRoot "ProjectSettings\ProjectVersion.txt") -Encoding UTF8 | Select-Object -First 1) -replace '^m_EditorVersion:\s*', '').Trim()
 $diagnosticRoot = Join-Path $script:RepoRoot "Builds\Android\logs\e15-baseline"
+$effectiveJavaTempRoot = if ($JavaTempRoot) { $JavaTempRoot } else { "C:\cgjtmp" }
+$javaTempDirectory = $null
 
 try {
     & git -C $script:RepoRoot worktree add --detach $worktreePath $baselineCommitResolved
@@ -197,13 +203,17 @@ try {
     [Environment]::SetEnvironmentVariable("CATGUARD_ANDROID_KEYSTORE_PASSWORD", $keystorePasswordPlain, "Process")
     [Environment]::SetEnvironmentVariable("CATGUARD_ANDROID_KEY_ALIAS", $KeyAlias, "Process")
     [Environment]::SetEnvironmentVariable("CATGUARD_ANDROID_KEY_PASSWORD", $keyPasswordPlain, "Process")
+    $javaTempDirectory = New-E15JavaTempDirectory -Root $effectiveJavaTempRoot
+    [Environment]::SetEnvironmentVariable("TEMP", $javaTempDirectory.path, "Process")
+    [Environment]::SetEnvironmentVariable("TMP", $javaTempDirectory.path, "Process")
 
     $baselineBuilder = Join-Path $worktreePath "tools\android\build-signed-store-aab.ps1"
     & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $baselineBuilder -NonInteractive -UnityPath $unity
     if ($LASTEXITCODE -ne 0) {
         $diagnostics = Copy-E15BaselineBuildDiagnostics `
             -SourceDirectory (Join-Path $worktreePath "Builds\Android\logs") `
-            -DestinationRoot $diagnosticRoot
+            -DestinationRoot $diagnosticRoot `
+            -SensitiveValues @($keystorePasswordPlain, $keyPasswordPlain)
         if ([bool]$diagnostics.passed) {
             throw "The 0.1.0 baseline AAB build failed. Preserved diagnostics: $($diagnostics.runRoot)"
         }
@@ -284,6 +294,9 @@ try {
         if ($LASTEXITCODE -ne 0 -or [IO.Directory]::Exists($worktreePath)) {
             throw "Could not clean the verified baseline worktree: $worktreePath"
         }
+    }
+    if ($null -ne $javaTempDirectory) {
+        Remove-E15JavaTempDirectory -Path $javaTempDirectory.path -Root $effectiveJavaTempRoot
     }
 }
 

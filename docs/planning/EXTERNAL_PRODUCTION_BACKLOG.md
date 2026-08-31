@@ -544,7 +544,7 @@ Priority: `P0` for E15
 
 Owner: product owner provides connected device
 
-Status: `Blocked until device connection`
+Status: `In progress; realme RMX3393 connected and ADB-authorized, exact-candidate gate pending`
 
 ### Required scenarios
 
@@ -578,7 +578,7 @@ Priority: `P0` for E15
 
 Owner: product owner
 
-Status: `Not started`
+Status: `In progress; signing password rotation and keytool-verified external record completed, owner/store/recovery actions remain open`
 
 Execution handoff: `docs/release/E15_OWNER_INPUT_HANDOFF.md`
 

@@ -72,6 +72,8 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass `
 
 The transaction accepts only the exact machine-blocked legacy JKS/`PSCredential` pair, verifies the approved certificate before mutation, creates a timestamped pre-rotation JKS backup, changes the private-key and store passwords through child-only environment variables, and proves the private-key password by changing it to a random in-memory probe and back. Any failure restores the original JKS and removes only outputs created by that attempt. Keep the backup offline until the rotated JKS has an independently verified encrypted recovery copy.
 
+When the owner explicitly authorizes automatic local generation, add `-GeneratePasswords -RecoveryFilePath <external-path>`. The transaction then creates two independent random 256-bit passwords without sending them through the command line, writes them only after all cryptographic checks pass, and removes inherited ACLs so only the current Windows account can read the plaintext recovery file. This convenience file must remain outside Git and should be moved to an offline encrypted password manager or recovery medium after the owner records it.
+
 If the JKS was rotated separately by the owner, `new-e15-signing-credential-bundle.ps1` and `register-e15-signing-credential-rotation.ps1` remain available as two explicit steps. The legacy one-password `PSCredential` format is rejected by all signed builders:
 
 ```powershell

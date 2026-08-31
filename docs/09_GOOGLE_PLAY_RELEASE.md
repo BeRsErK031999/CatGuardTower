@@ -37,12 +37,12 @@ powershell -ExecutionPolicy Bypass -File tools\android\build-signed-store.ps1 `
   -Artifact Aab `
   -KeystorePath "D:\Secure\CatGuard\catguard-upload.jks" `
   -KeyAlias "catguard-upload" `
-  -SigningCredentialPath "D:\Secure\CatGuard\catguard-upload.dpapi.xml" `
+  -SigningCredentialPath "D:\Secure\CatGuard\catguard-upload.v2.dpapi.xml" `
   -SigningCredentialRotationRecordPath "D:\Secure\CatGuard\catguard-upload.rotation.json" `
   -NonInteractive
 ```
 
-Before the first signed E15 build, follow `docs/planning/E15_RELEASE_GATE_WORKFLOW.md`: rotate both JKS passwords, create the schema-v1 DPAPI bundle with `tools/android/new-e15-signing-credential-bundle.ps1`, and register it with `tools/android/register-e15-signing-credential-rotation.ps1`. The bundle stores the store and private-key passwords as independent current-user `SecureString` values. The legacy one-password `PSCredential`, retired file fingerprints, explicit password parameters, and password environment variables are rejected.
+Before the first signed E15 build, follow `docs/planning/E15_RELEASE_GATE_WORKFLOW.md`. Prefer the rollback-safe `tools/android/rotate-e15-signing-credentials.ps1` transaction: it rotates both JKS passwords, creates the schema-v1 dual-password DPAPI bundle, verifies the private key and certificate, and registers the hash-bound rotation record. The separate bundle/registration scripts remain available when the owner rotates the JKS independently. The legacy one-password `PSCredential`, retired file fingerprints, explicit password parameters, and password environment variables are rejected.
 
 The build wrapper accepts only these non-secret path/identity variables for a non-interactive local process:
 

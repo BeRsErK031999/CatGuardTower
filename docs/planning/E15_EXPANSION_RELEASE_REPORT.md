@@ -25,7 +25,7 @@ This report is the final E15 evidence index. It must remain `in progress` while 
 | Candidate source revision | pending final clean commit | Exact Git HEAD recorded by the block manifest |
 | Baseline APK | prepared from historical `0.1.0` source | Same signing certificate as candidate APK; provenance binds commit `28f7e88`, the current orchestration HEAD, and AAB-to-APKS-to-APK hashes |
 | Candidate APK/AAB | prepared pre-final artifacts | Rebuilt or explicitly matched to final source before acceptance |
-| Upload certificate | candidate certificate prepared outside Git | Owner-approved and independently recoverable |
+| Upload certificate | certificate preserved through verified password rotation outside Git | Owner-approved and independently recoverable |
 
 The ignored APK/AAB files and desktop preflight produced before the final E15 source state are preparation evidence, not proof that the final working tree is reproducible. Artifact hashes in the final section must come from the complete block gate.
 
@@ -55,8 +55,8 @@ The E15 gate must rerun the configured cold validators and exact-candidate Andro
 | --- | --- | --- |
 | Prior E0-E14 reports complete | prepared; exact-candidate rerun pending | cold validator and Android step logs in the final block manifest |
 | `PLAYTEST-001` | in progress | completed owner ratings, required cohorts, level-12 disposition, and findings record |
-| `DEVICE-QA-001` | blocked until device connection | physical clean/upgrade/offline/save/rotation/touch/audio/background/thermal/battery/crash/performance evidence |
-| `STORE-ACCOUNT-001` | not started; retired credentials machine-blocked | rotated upload-key passwords, new dual-password DPAPI bundle, external rotation record, owner/legal/contact, public privacy URL, Play Console forms, listing approval, and upload-key recovery record |
+| `DEVICE-QA-001` | in progress; realme RMX3393 connected and authorized | exact-candidate physical clean/upgrade/offline/save/rotation/touch/audio/background/thermal/battery/crash/performance evidence |
+| `STORE-ACCOUNT-001` | in progress; credential rotation verified | owner/legal/contact, public privacy URL, Play Console forms, listing approval, encrypted independent upload-key recovery, password-manager transfer, and explicit key approval |
 | Reproducible build | pending | matching baseline/APK/AAB provenance sidecars and hashes in the final block manifest |
 | Clean install | pending final physical gate | passed clean-install summary |
 | Upgrade and save migration | pending final physical gate | same-key `0.1.0` upgrade and schema/save continuity summary |

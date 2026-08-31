@@ -15,7 +15,9 @@ Candidate source: branch `codex/e15-release-gate`, starting commit `b70a8fddfdb7
 
 The signing material is outside Git under `%USERPROFILE%\.catguard\release-signing`. The certificate SHA-256 digest used for the baseline and candidates is `204C558297B3ACA278537D3F02794F87965E5CC2684FB5A7E563A9C4565894D7`. The key is still a candidate until the owner approves it and verifies an independent recoverable backup.
 
-Current E15 tooling retires the JKS/DPAPI fingerprints involved in the later diagnostic incident. A new artifact build is blocked until the owner rotates both passwords, creates a schema-v1 DPAPI bundle containing independent store/key `SecureString` values, and registers an external record that proves the selected alias and this certificate digest through Unity's bundled `keytool`. The legacy one-password `PSCredential` and manual/environment password sources are rejected. This safeguard does not retroactively change the historical artifact evidence below.
+Current E15 tooling retires the JKS/DPAPI fingerprints involved in the later diagnostic incident. The required technical rotation was completed and reverified on `2026-08-31`: both passwords changed independently, a schema-v1 dual-password DPAPI bundle and external `keytool`-verified record were created, and the certificate digest above was preserved. The legacy one-password `PSCredential` and manual/environment password sources remain rejected. This safeguard does not retroactively change the historical artifact evidence below.
+
+The exact-source baseline/candidate artifact set still must be rebuilt; independent encrypted recovery and explicit owner approval remain open.
 
 ## Artifact-only gate
 

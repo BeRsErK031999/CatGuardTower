@@ -70,14 +70,20 @@ Candidate certificate SHA-256:
 
 Before the first Play upload, the owner must choose either to approve this key or replace it and rebuild both baseline/candidate evidence. If approved:
 
-- rotate both JKS store/key passwords before another signed build;
-- run `tools/android/new-e15-signing-credential-bundle.ps1` to create an external schema-v1 DPAPI bundle with the rotated store and private-key passwords entered separately; the script refuses overwrite, and the legacy one-password `PSCredential` format is rejected;
-- run `tools/android/register-e15-signing-credential-rotation.ps1` with the external JKS, new DPAPI bundle, alias, and external record paths; registration must prove through Unity's bundled `keytool` that the bundle opens that alias and that its actual certificate matches the candidate digest, while signed builders reject manual/environment password sources, the retired fingerprints, and records stored inside the repository;
+- technical rotation completed `2026-08-31`: both passwords are independent, the external schema-v1 DPAPI bundle and schema-v2 rotation record pass Unity `keytool` alias/certificate verification, and signed builders reject manual/environment password sources plus the retired fingerprints;
 - copy the JKS to an independent encrypted backup outside this PC;
 - store alias and passwords in an owner-controlled password manager;
 - verify that the backup can list the certificate without altering the original;
 - keep the DPAPI bundle only as a machine/user-bound convenience, not as the sole recovery method;
 - record who controls the backup and the verification date without recording secrets here.
+
+The current rotated evidence hashes are secret-free and may be used for owner verification:
+
+```text
+Rotated JKS SHA-256: DE72A0F76E759E7A8170B0169EFF898ADCCFDF83293C605ECD219992093353D8
+DPAPI bundle SHA-256: B412FA0287B047277C34B5F7D96E45C531117672C4CFDA3C2193CC4F430F83B9
+Rotation record SHA-256: B474C3CE0A70039B345AC7C8A8C96AE5AE26D887A1C30BF19CF55E62F88E86C6
+```
 
 ```text
 Candidate key approved: yes / replace

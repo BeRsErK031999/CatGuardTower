@@ -28,12 +28,21 @@ function Test-E15ArtifactSetManifest {
 
     $reasons = New-Object System.Collections.Generic.List[string]
     $manifest = $null
+    $manifestJson = ""
+    $rotationTimestampText = ""
     if (-not $ManifestPath -or -not (Test-Path -LiteralPath $ManifestPath -PathType Leaf)) {
         $reasons.Add("E15 artifact-set manifest is missing: $ManifestPath")
     }
     else {
         try {
-            $manifest = Get-Content -LiteralPath $ManifestPath -Encoding UTF8 -Raw | ConvertFrom-Json
+            $manifestJson = Get-Content -LiteralPath $ManifestPath -Encoding UTF8 -Raw
+            $manifest = $manifestJson | ConvertFrom-Json
+            $rotationTimestampMatch = [regex]::Match(
+                $manifestJson,
+                '(?m)"rotatedAtUtc"\s*:\s*"([^"]+)"')
+            if ($rotationTimestampMatch.Success) {
+                $rotationTimestampText = $rotationTimestampMatch.Groups[1].Value
+            }
         }
         catch {
             $reasons.Add("E15 artifact-set manifest is not valid JSON: $($_.Exception.Message)")
@@ -141,7 +150,7 @@ function Test-E15ArtifactSetManifest {
                     }
                     $rotationTimestamp = [DateTimeOffset]::MinValue
                     if (-not [DateTimeOffset]::TryParse(
-                        [string]$rotation.rotatedAtUtc,
+                        $rotationTimestampText,
                         [Globalization.CultureInfo]::InvariantCulture,
                         [Globalization.DateTimeStyles]::RoundtripKind,
                         [ref]$rotationTimestamp) `

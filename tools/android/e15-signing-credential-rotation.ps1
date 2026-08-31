@@ -407,9 +407,18 @@ function Test-E15SigningCredentialRotationRecord {
     }
 
     $record = $null
+    $recordJson = ""
+    $rotatedAtText = ""
     if ($resolved.record -and (Test-Path -LiteralPath $resolved.record -PathType Leaf)) {
         try {
-            $record = Get-Content -LiteralPath $resolved.record -Encoding UTF8 -Raw | ConvertFrom-Json
+            $recordJson = Get-Content -LiteralPath $resolved.record -Encoding UTF8 -Raw
+            $record = $recordJson | ConvertFrom-Json
+            $rotatedAtMatch = [regex]::Match(
+                $recordJson,
+                '(?m)"rotatedAtUtc"\s*:\s*"([^"]+)"')
+            if ($rotatedAtMatch.Success) {
+                $rotatedAtText = $rotatedAtMatch.Groups[1].Value
+            }
         }
         catch {
             $reasons.Add("E15 signing rotation record is not valid JSON: $($_.Exception.Message)")
@@ -444,7 +453,7 @@ function Test-E15SigningCredentialRotationRecord {
                 $reasons.Add("E15 signing rotation record does not represent a completed credential rotation.")
             }
             $timestampValid = [DateTimeOffset]::TryParse(
-                [string]$record.rotatedAtUtc,
+                $rotatedAtText,
                 [Globalization.CultureInfo]::InvariantCulture,
                 [Globalization.DateTimeStyles]::RoundtripKind,
                 [ref]$rotatedAt)

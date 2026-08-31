@@ -70,11 +70,13 @@ Candidate certificate SHA-256:
 
 Before the first Play upload, the owner must choose either to approve this key or replace it and rebuild both baseline/candidate evidence. If approved:
 
-- rotate both JKS store/key passwords and refresh the machine-bound DPAPI convenience credential before another signed build;
+- rotate both JKS store/key passwords before another signed build;
+- run `tools/android/new-e15-signing-credential-bundle.ps1` to create an external schema-v1 DPAPI bundle with the rotated store and private-key passwords entered separately; the script refuses overwrite, and the legacy one-password `PSCredential` format is rejected;
+- run `tools/android/register-e15-signing-credential-rotation.ps1` with the external JKS, new DPAPI bundle, alias, and external record paths; registration must prove through Unity's bundled `keytool` that the bundle opens that alias and that its actual certificate matches the candidate digest, while signed builders reject manual/environment password sources, the retired fingerprints, and records stored inside the repository;
 - copy the JKS to an independent encrypted backup outside this PC;
 - store alias and passwords in an owner-controlled password manager;
 - verify that the backup can list the certificate without altering the original;
-- keep the DPAPI credential file only as a machine/user-bound convenience, not as the sole recovery method;
+- keep the DPAPI bundle only as a machine/user-bound convenience, not as the sole recovery method;
 - record who controls the backup and the verification date without recording secrets here.
 
 ```text
@@ -84,6 +86,8 @@ Password-manager record owner:
 Backup certificate verified: yes / no
 Verified SHA-256 matches: yes / no
 Verification date:
+External rotation record path owner:
+External rotation record SHA-256:
 ```
 
 ## Completion rule

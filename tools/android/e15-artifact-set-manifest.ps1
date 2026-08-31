@@ -1,3 +1,5 @@
+. (Join-Path $PSScriptRoot "e15-signing-credential-rotation.ps1")
+
 function Test-E15ArtifactSetPathInsideDirectory {
     param(
         [string]$Path,
@@ -55,7 +57,8 @@ function Test-E15ArtifactSetManifest {
             "artifactPreflightManifestPath",
             "artifactPreflightManifestSha256",
             "artifactPreflightLogPath",
-            "artifactPreflightLogSha256"
+            "artifactPreflightLogSha256",
+            "signingCredentialRotation"
         )
         $missingProperties = @($requiredProperties | Where-Object {
             $null -eq $manifest.PSObject.Properties[$_]
@@ -64,7 +67,7 @@ function Test-E15ArtifactSetManifest {
             $reasons.Add("E15 artifact-set manifest schema is incomplete: $($missingProperties -join ', ').")
         }
         else {
-            if ([int]$manifest.schemaVersion -ne 1 `
+            if ([int]$manifest.schemaVersion -ne 2 `
                 -or $manifest.state -ne "artifact_set_prepared" `
                 -or -not [bool]$manifest.passed) {
                 $reasons.Add("E15 artifact-set manifest does not represent a successful preparation run.")
@@ -97,6 +100,56 @@ function Test-E15ArtifactSetManifest {
                     [ref]$generatedAt)
             if (-not $timestampsValid -or $generatedAt -lt $startedAt) {
                 $reasons.Add("E15 artifact-set timestamps are invalid.")
+            }
+
+            if ($null -eq $manifest.signingCredentialRotation) {
+                $reasons.Add("E15 artifact-set signing rotation metadata is missing.")
+            }
+            else {
+                $rotationProperties = @(
+                    "recordSha256",
+                    "keystoreSha256",
+                    "credentialFileSha256",
+                    "certificateSha256",
+                    "credentialVerification",
+                    "keytoolSha256",
+                    "rotatedAtUtc"
+                )
+                $missingRotationProperties = @($rotationProperties | Where-Object {
+                    $null -eq $manifest.signingCredentialRotation.PSObject.Properties[$_]
+                })
+                if ($missingRotationProperties.Count -gt 0) {
+                    $reasons.Add("E15 artifact-set signing rotation metadata is incomplete: $($missingRotationProperties -join ', ').")
+                }
+                else {
+                    $rotation = $manifest.signingCredentialRotation
+                    $rotationPolicy = Get-E15SigningCredentialRotationPolicy
+                    foreach ($property in @("recordSha256", "keystoreSha256", "credentialFileSha256", "keytoolSha256")) {
+                        if ([string]$rotation.$property -notmatch '^[0-9A-Fa-f]{64}$') {
+                            $reasons.Add("E15 artifact-set signing rotation hash '$property' is invalid.")
+                        }
+                    }
+                    if ([string]$rotation.keystoreSha256 -ieq $rotationPolicy.retiredKeystoreSha256 `
+                        -or [string]$rotation.credentialFileSha256 -ieq $rotationPolicy.retiredCredentialFileSha256) {
+                        $reasons.Add("E15 artifact set references retired pre-rotation signing material.")
+                    }
+                    if ([string]$rotation.certificateSha256 -ine $rotationPolicy.certificateSha256) {
+                        $reasons.Add("E15 artifact-set signing certificate fingerprint is not the approved candidate key.")
+                    }
+                    if ([string]$rotation.credentialVerification -cne $rotationPolicy.credentialVerification) {
+                        $reasons.Add("E15 artifact-set signing credential verification method is invalid.")
+                    }
+                    $rotationTimestamp = [DateTimeOffset]::MinValue
+                    if (-not [DateTimeOffset]::TryParse(
+                        [string]$rotation.rotatedAtUtc,
+                        [Globalization.CultureInfo]::InvariantCulture,
+                        [Globalization.DateTimeStyles]::RoundtripKind,
+                        [ref]$rotationTimestamp) `
+                        -or $rotationTimestamp.Offset -ne [TimeSpan]::Zero `
+                        -or $rotationTimestamp -le $rotationPolicy.incidentCutoffUtc) {
+                        $reasons.Add("E15 artifact-set signing rotation timestamp is invalid or stale.")
+                    }
+                }
             }
 
             $manifestDirectory = [IO.Path]::GetDirectoryName([IO.Path]::GetFullPath($ManifestPath))

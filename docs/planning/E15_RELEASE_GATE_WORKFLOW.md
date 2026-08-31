@@ -13,14 +13,14 @@ Status: implementation in progress. This workflow is the authoritative technical
 - Orientation: automatic rotation between Landscape Left and Landscape Right; portrait is disabled.
 - Current privacy boundary: local save only, no live analytics, ads, IAP, crash-reporting, account, cloud-save, or backend SDK.
 
-The real upload keystore must remain outside Git. A temporary key may prove that the workflow works, but it is not a releasable signing identity and cannot close `STORE-ACCOUNT-001`.
+The real upload keystore must remain outside Git. A temporary key may prove that the workflow works, but it is not a releasable signing identity and cannot close `STORE-ACCOUNT-001`. The JKS and machine-bound DPAPI credential used before the `2026-08-31T05:07:26Z` diagnostic incident are retired: E15 signed builders reject both fingerprints and require an external post-incident rotation record before reading passwords or starting Unity.
 
 ## Preconditions
 
 Before the complete block test gate runs:
 
 1. `PLAYTEST-001`, `DEVICE-QA-001`, and `STORE-ACCOUNT-001` have completion evidence in `EXTERNAL_PRODUCTION_BACKLOG.md`.
-2. The owner has supplied the final developer display/legal name, privacy contact, public privacy-policy URL, target-audience/content-rating decisions, Play Console access, and upload key.
+2. The owner has supplied the final developer display/legal name, privacy contact, public privacy-policy URL, target-audience/content-rating decisions, Play Console access, and upload key. Both JKS passwords have been changed, the dual-password DPAPI bundle has been recreated, and the external hash-bound rotation record has been registered.
 3. Five non-development `1920 x 1080` landscape screenshots have been captured from the candidate and imported through `tools/store/generate-store-assets.ps1`.
 4. `docs/release/E15_RELEASE_DECISION.md` records the owner decision and remaining risks.
 5. A same-package `0.1.0` baseline APK and the `0.2.0` candidate APK are signed by the same certificate. Reproduce the baseline from the pre-expansion commit instead of rebuilding current code under an old version number:
@@ -39,14 +39,38 @@ Do not run isolated Unity gameplay, Android, or emulator slices and call them E1
 
 ## Build Signed APK And AAB
 
-Set signing values through secure process environment variables or enter passwords as secure prompts:
+### Signing credential rotation
+
+Set signing paths through process environment variables. The credential and rotation record must remain outside the repository:
+
+```powershell
+$env:CATGUARD_ANDROID_KEYSTORE_PATH = "$env:USERPROFILE\.catguard\release-signing\catguard-upload.jks"
+$env:CATGUARD_ANDROID_KEY_ALIAS = "catguard-upload"
+$env:CATGUARD_SIGNING_CREDENTIAL_PATH = "$env:USERPROFILE\.catguard\release-signing\catguard-upload.dpapi.xml"
+$env:CATGUARD_SIGNING_ROTATION_RECORD_PATH = "$env:USERPROFILE\.catguard\release-signing\catguard-upload.rotation.json"
+# Optional only when Unity's bundled keytool cannot be discovered:
+# $env:CATGUARD_KEYTOOL_PATH = "D:\Tools\JDK\bin\keytool.exe"
+```
+
+The owner must first change both JKS passwords. Then create a schema-v1 dual-password DPAPI bundle under the current Windows user; the command prompts independently for the rotated store and private-key passwords and refuses to overwrite an existing file:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass `
+  -File tools\android\new-e15-signing-credential-bundle.ps1
+```
+
+The legacy one-password `PSCredential` format is rejected. Only after the JKS and bundle are ready, register their new file fingerprints:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass `
+  -File tools\android\register-e15-signing-credential-rotation.ps1
+```
+
+Registration writes no password. Before writing anything, it decrypts the dual-password bundle as the current Windows user, requires its alias to equal the selected alias, and asks Unity's bundled `keytool` to open that alias with the bundle's store password. The password is passed only through a uniquely named environment variable on the `keytool` child process, never through arguments or captured output. Registration then requires the actual JKS certificate SHA-256 to equal the prepared upload certificate, records the `keytool` binary hash and verification method, and refuses the retired JKS or DPAPI fingerprint, a record inside Git, or a stale timestamp. Artifact preparation and both direct E15 signed builders repeat the credential/certificate check and require the current `keytool` hash to equal the record. They reject password parameters and `CATGUARD_ANDROID_*_PASSWORD` variables, loading the independent store/key SecureStrings only from the hash-bound bundle. The subsequent artifact-only gate independently proves the signing certificate from the built artifacts.
 
 The preferred release preparation path builds the historical baseline and both current candidates from one clean pushed HEAD, then immediately runs the artifact-only gate:
 
 ```powershell
-$env:CATGUARD_ANDROID_KEYSTORE_PATH = "D:\Secure\CatGuard\catguard-upload.jks"
-$env:CATGUARD_ANDROID_KEY_ALIAS = "catguard-upload"
-
 powershell.exe -NoProfile -ExecutionPolicy Bypass `
   -File tools\android\prepare-e15-release-artifacts.ps1 `
   -PreflightOnly
@@ -55,7 +79,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass `
   -File tools\android\prepare-e15-release-artifacts.ps1
 ```
 
-The preflight is read-only and requires a clean worktree, `HEAD == upstream`, the historical `0.1.0` (`1`) baseline source, Unity, and a keystore outside the repository. Interactive mode securely prompts once for any missing passwords; non-interactive automation must inject both password environment variables and pass `-NonInteractive`. A successful run writes `e15-artifact-set.json`, the artifact-only gate manifest/log hashes, and hashes for the baseline APK, candidate APK/AAB, and all three provenance sidecars under ignored `Builds/Android/qa-device/e15-artifact-set/`. Before reporting success, the artifact-set contract re-hashes all six files and both preflight evidence files, verifies their paths, and cross-checks the nested artifact-only manifest against the pushed source revision.
+The preflight is read-only and requires a clean worktree, `HEAD == upstream`, the historical `0.1.0` (`1`) baseline source, Unity, a keystore outside the repository, a valid dual-password DPAPI bundle, and a rotation record bound to the selected external files. Manual password parameters and environment variables fail preflight. A successful run writes schema-v2 `e15-artifact-set.json`, the secret-free signing-rotation hashes, the artifact-only gate manifest/log hashes, and hashes for the baseline APK, candidate APK/AAB, and all three provenance sidecars under ignored `Builds/Android/qa-device/e15-artifact-set/`. Before reporting success, the artifact-set contract rejects retired signing hashes, re-hashes all six files and both preflight evidence files, verifies their paths, and cross-checks the nested artifact-only manifest against the pushed source revision.
 
 The individual build commands remain available for diagnostics or rebuilding one artifact while developing the workflow:
 
@@ -76,7 +100,7 @@ Each successful clean-tree APK/AAB build also writes an ignored sibling `*.prove
 
 The baseline APK and candidate APK/AAB used below must all have valid provenance bound to the current clean Git HEAD. Rebuild the baseline and both candidate artifacts after any source commit, then perform the physical heavy-wave capture against that exact candidate APK. The release gate does not rebuild artifacts after the physical capture because doing so would invalidate the installed-APK hash binding.
 
-For non-interactive automation, also inject `CATGUARD_ANDROID_KEYSTORE_PASSWORD` and `CATGUARD_ANDROID_KEY_PASSWORD` from a secret store and pass `-NonInteractive`. Never save them in a repository file, shell profile, build log, or command history.
+For non-interactive automation, supply only the external path/alias/rotation variables. `CATGUARD_ANDROID_KEYSTORE_PASSWORD` and `CATGUARD_ANDROID_KEY_PASSWORD` are forbidden because process-level values can leak into child diagnostics. Never save passwords in a repository file, shell profile, build argument, log, or command history.
 
 Outputs under ignored `Builds/Android/`:
 
@@ -188,6 +212,15 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass `
 
 powershell.exe -NoProfile -ExecutionPolicy Bypass `
   -File tools\android\test-e15-java-temp.ps1
+
+powershell.exe -NoProfile -ExecutionPolicy Bypass `
+  -File tools\android\test-e15-signing-credential-bundle.ps1
+
+powershell.exe -NoProfile -ExecutionPolicy Bypass `
+  -File tools\android\test-e15-signing-credential-access.ps1
+
+powershell.exe -NoProfile -ExecutionPolicy Bypass `
+  -File tools\android\test-e15-signing-credential-rotation.ps1
 
 powershell.exe -NoProfile -ExecutionPolicy Bypass `
   -File tools\android\test-e15-performance-evidence.ps1

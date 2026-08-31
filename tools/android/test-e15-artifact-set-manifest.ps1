@@ -97,7 +97,7 @@ try {
     "Artifact preflight passed." | Set-Content -LiteralPath $preflightLogPath -Encoding UTF8
 
     $valid = [pscustomobject]@{
-        schemaVersion = 1
+        schemaVersion = 2
         state = "artifact_set_prepared"
         passed = $true
         generatedAtUtc = "2026-08-31T08:05:00.0000000Z"
@@ -113,6 +113,15 @@ try {
         artifactPreflightManifestSha256 = (Get-FileHash -LiteralPath $preflightPath -Algorithm SHA256).Hash
         artifactPreflightLogPath = $preflightLogPath
         artifactPreflightLogSha256 = (Get-FileHash -LiteralPath $preflightLogPath -Algorithm SHA256).Hash
+        signingCredentialRotation = [pscustomobject]@{
+            recordSha256 = "6" * 64
+            keystoreSha256 = "7" * 64
+            credentialFileSha256 = "8" * 64
+            certificateSha256 = (Get-E15SigningCredentialRotationPolicy).certificateSha256
+            credentialVerification = (Get-E15SigningCredentialRotationPolicy).credentialVerification
+            keytoolSha256 = "9" * 64
+            rotatedAtUtc = "2026-08-31T08:00:00.0000000Z"
+        }
     }
 
     Invoke-Fixture -Name "valid" -Evidence (Copy-Evidence $valid) -ExpectedPassed $true
@@ -145,6 +154,14 @@ try {
     $wrongHash.hashes.candidateApk = "4" * 64
     Invoke-Fixture -Name "wrong-hash" -Evidence $wrongHash -ExpectedPassed $false -ExpectedReason "candidateApk.*hash"
 
+    $retiredSigning = Copy-Evidence $valid
+    $retiredSigning.signingCredentialRotation.keystoreSha256 = (Get-E15SigningCredentialRotationPolicy).retiredKeystoreSha256
+    Invoke-Fixture -Name "retired-signing" -Evidence $retiredSigning -ExpectedPassed $false -ExpectedReason "retired pre-rotation signing material"
+
+    $wrongVerifier = Copy-Evidence $valid
+    $wrongVerifier.signingCredentialRotation.credentialVerification = "manual"
+    Invoke-Fixture -Name "wrong-signing-verifier" -Evidence $wrongVerifier -ExpectedPassed $false -ExpectedReason "credential verification method"
+
     $wrongPreflight = Copy-Evidence $valid
     $modifiedPreflight = Copy-Evidence $preflight
     $modifiedPreflight.gitHead = "5" * 40
@@ -163,4 +180,4 @@ finally {
     }
 }
 
-Write-Host "E15 artifact-set manifest contract tests passed: 7/7."
+Write-Host "E15 artifact-set manifest contract tests passed: 9/9."

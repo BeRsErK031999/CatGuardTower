@@ -4,6 +4,8 @@ param(
     [string]$Artifact = "Aab",
     [string]$KeystorePath = $env:CATGUARD_ANDROID_KEYSTORE_PATH,
     [string]$KeyAlias = $env:CATGUARD_ANDROID_KEY_ALIAS,
+    [string]$SigningCredentialPath = $env:CATGUARD_SIGNING_CREDENTIAL_PATH,
+    [string]$SigningCredentialRotationRecordPath = $env:CATGUARD_SIGNING_ROTATION_RECORD_PATH,
     [System.Security.SecureString]$KeystorePassword,
     [System.Security.SecureString]$KeyPassword,
     [string]$UnityPath,
@@ -17,6 +19,7 @@ $ErrorActionPreference = "Stop"
 
 . (Join-Path $PSScriptRoot "e15-build-log-redaction.ps1")
 . (Join-Path $PSScriptRoot "e15-java-temp.ps1")
+. (Join-Path $PSScriptRoot "e15-signing-credential-rotation.ps1")
 
 $environmentNames = @(
     "CATGUARD_ANDROID_KEYSTORE_PATH",
@@ -105,8 +108,8 @@ $repoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..\..")).Path
 $projectSettingsPath = Join-Path $repoRoot "ProjectSettings\ProjectSettings.asset"
 $projectSettingsSnapshot = [IO.File]::ReadAllBytes($projectSettingsPath)
 $resolvedKeystorePath = $null
-$keystorePasswordPlain = $env:CATGUARD_ANDROID_KEYSTORE_PASSWORD
-$keyPasswordPlain = $env:CATGUARD_ANDROID_KEY_PASSWORD
+$keystorePasswordPlain = ""
+$keyPasswordPlain = ""
 $originalEnvironment = @{}
 $buildStartedAtUtc = $null
 $buildCompletedAtUtc = $null
@@ -144,29 +147,42 @@ try {
         throw "Pass -KeyAlias or set CATGUARD_ANDROID_KEY_ALIAS."
     }
 
-    if (-not $keystorePasswordPlain) {
-        if (-not $KeystorePassword) {
-            if ($NonInteractive) {
-                throw "Set CATGUARD_ANDROID_KEYSTORE_PASSWORD for a non-interactive build."
-            }
-
-            $KeystorePassword = Read-Host "Android keystore password" -AsSecureString
-        }
-
-        $keystorePasswordPlain = ConvertTo-PlainText -Value $KeystorePassword
+    $signingRotation = Test-E15SigningCredentialRotationRecord `
+        -RecordPath $SigningCredentialRotationRecordPath `
+        -KeystorePath $resolvedKeystorePath `
+        -CredentialPath $SigningCredentialPath `
+        -KeyAlias $KeyAlias `
+        -RepositoryRoot $repoRoot
+    if (-not [bool]$signingRotation.passed) {
+        throw "E15 signing credential rotation is incomplete: $($signingRotation.reasons -join ' ')"
+    }
+    if ($env:CATGUARD_ANDROID_KEYSTORE_PASSWORD `
+        -or $env:CATGUARD_ANDROID_KEY_PASSWORD `
+        -or $null -ne $KeystorePassword `
+        -or $null -ne $KeyPassword) {
+        throw "E15 signed builds accept passwords only from the hash-bound DPAPI credential bundle."
     }
 
-    if (-not $keyPasswordPlain) {
-        if (-not $KeyPassword) {
-            if ($NonInteractive) {
-                throw "Set CATGUARD_ANDROID_KEY_PASSWORD for a non-interactive build."
-            }
-
-            $KeyPassword = Read-Host "Android key password" -AsSecureString
-        }
-
-        $keyPasswordPlain = ConvertTo-PlainText -Value $KeyPassword
+    $resolvedUnityPath = Resolve-UnityExecutable -RequestedPath $UnityPath -ProjectRoot $repoRoot
+    $keytoolPath = Join-Path (Split-Path -Parent $resolvedUnityPath) "Data\PlaybackEngines\AndroidPlayer\OpenJDK\bin\keytool.exe"
+    $signingCredentialAccess = Test-E15SigningCredentialAccess `
+        -KeystorePath $resolvedKeystorePath `
+        -CredentialPath $SigningCredentialPath `
+        -KeyAlias $KeyAlias `
+        -KeytoolPath $keytoolPath `
+        -ExpectedCertificateSha256 (Get-E15SigningCredentialRotationPolicy).certificateSha256 `
+        -ExpectedKeytoolSha256 $signingRotation.keytoolSha256
+    if (-not [bool]$signingCredentialAccess.passed) {
+        throw "E15 signing DPAPI credential or keytool binding is invalid: $($signingCredentialAccess.reasons -join ' ')"
     }
+    $credentialBundle = Get-E15SigningCredentialBundle `
+        -CredentialPath $SigningCredentialPath `
+        -ExpectedKeyAlias $KeyAlias
+    if (-not [bool]$credentialBundle.passed) {
+        throw "E15 signing DPAPI credential bundle is invalid: $($credentialBundle.reasons -join ' ')"
+    }
+    $keystorePasswordPlain = ConvertTo-PlainText -Value $credentialBundle.keystorePassword
+    $keyPasswordPlain = ConvertTo-PlainText -Value $credentialBundle.keyPassword
 
     $gitStatusBefore = @(& git -C $repoRoot status --porcelain=v1)
     if ($LASTEXITCODE -ne 0) {
@@ -180,7 +196,6 @@ try {
     $gitHeadBefore = (& git -C $repoRoot rev-parse HEAD).Trim()
     $gitBranch = (& git -C $repoRoot branch --show-current).Trim()
 
-    $resolvedUnityPath = Resolve-UnityExecutable -RequestedPath $UnityPath -ProjectRoot $repoRoot
     $unityVersion = ((Get-Content -LiteralPath (Join-Path $repoRoot "ProjectSettings\ProjectVersion.txt") -Encoding UTF8 | Select-Object -First 1) -replace '^m_EditorVersion:\s*', '').Trim()
     $logDirectory = Join-Path $repoRoot "Builds\Android\logs"
     New-Item -ItemType Directory -Force -Path $logDirectory | Out-Null

@@ -15,6 +15,8 @@ Candidate source: branch `codex/e15-release-gate`, starting commit `b70a8fddfdb7
 
 The signing material is outside Git under `%USERPROFILE%\.catguard\release-signing`. The certificate SHA-256 digest used for the baseline and candidates is `204C558297B3ACA278537D3F02794F87965E5CC2684FB5A7E563A9C4565894D7`. The key is still a candidate until the owner approves it and verifies an independent recoverable backup.
 
+Current E15 tooling retires the JKS/DPAPI fingerprints involved in the later diagnostic incident. A new artifact build is blocked until the owner rotates both passwords, creates a schema-v1 DPAPI bundle containing independent store/key `SecureString` values, and registers an external record that proves the selected alias and this certificate digest through Unity's bundled `keytool`. The legacy one-password `PSCredential` and manual/environment password sources are rejected. This safeguard does not retroactively change the historical artifact evidence below.
+
 ## Artifact-only gate
 
 `tools/android/run-e15-release-gate.ps1 -ArtifactOnly` passed and wrote ignored evidence to `Builds/Android/qa-device/e15-release/20260810-162440/`.

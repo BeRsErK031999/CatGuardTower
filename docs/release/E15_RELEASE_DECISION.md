@@ -32,7 +32,7 @@ Candidate: `0.2.0` (`versionCode` `2`), package `com.berserk031999.catguardtower
 
 - Current emulator performance evidence is inconsistent with the historical E14 report.
 - The owner-support emulator walkthrough has objective evidence through level 12. The exact rebuilt store-signed capture no longer reproduces the original opening wall, but level-12 victory/fairness acceptance, subjective owner ratings, broader tester cohorts, and physical-device evidence are still missing.
-- Candidate upload-key store/key passwords require rotation and the machine-bound DPAPI convenience credential must be refreshed before another signed build or release approval.
+- Candidate upload-key store/key passwords require owner rotation, a schema-v1 machine-bound DPAPI bundle with independent store/key `SecureString` values must be created, and the external hash-bound rotation record must pass alias/certificate verification through Unity's bundled `keytool`. The legacy one-password `PSCredential`, manual/environment password sources, and both retired fingerprints are rejected by every E15 signed builder.
 - Store/account/legal decisions require the owner and cannot be automated.
 
 When every item is complete, replace the status with exactly `Status: approved`, record the owner and date, state the chosen track, and link the immutable release evidence. Approval must not conceal accepted risks.

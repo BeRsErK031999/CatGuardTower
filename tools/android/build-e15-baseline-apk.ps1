@@ -5,6 +5,8 @@ param(
     [string]$ProvenancePath = "",
     [string]$KeystorePath = $env:CATGUARD_ANDROID_KEYSTORE_PATH,
     [string]$KeyAlias = $env:CATGUARD_ANDROID_KEY_ALIAS,
+    [string]$SigningCredentialPath = $env:CATGUARD_SIGNING_CREDENTIAL_PATH,
+    [string]$SigningCredentialRotationRecordPath = $env:CATGUARD_SIGNING_ROTATION_RECORD_PATH,
     [System.Security.SecureString]$KeystorePassword,
     [System.Security.SecureString]$KeyPassword,
     [string]$UnityPath,
@@ -17,6 +19,7 @@ $ErrorActionPreference = "Stop"
 
 . (Join-Path $PSScriptRoot "e15-baseline-build-diagnostics.ps1")
 . (Join-Path $PSScriptRoot "e15-java-temp.ps1")
+. (Join-Path $PSScriptRoot "e15-signing-credential-rotation.ps1")
 
 function ConvertTo-PlainText {
     param([System.Security.SecureString]$Value)
@@ -94,6 +97,41 @@ if (-not $KeyAlias) {
 if (Test-PathInsideDirectory -CandidatePath $resolvedKeystore -DirectoryPath $script:RepoRoot) {
     throw "Keystore must be stored outside the Git repository."
 }
+$signingRotation = Test-E15SigningCredentialRotationRecord `
+    -RecordPath $SigningCredentialRotationRecordPath `
+    -KeystorePath $resolvedKeystore `
+    -CredentialPath $SigningCredentialPath `
+    -KeyAlias $KeyAlias `
+    -RepositoryRoot $script:RepoRoot
+if (-not [bool]$signingRotation.passed) {
+    throw "E15 signing credential rotation is incomplete: $($signingRotation.reasons -join ' ')"
+}
+if ($env:CATGUARD_ANDROID_KEYSTORE_PASSWORD `
+    -or $env:CATGUARD_ANDROID_KEY_PASSWORD `
+    -or $null -ne $KeystorePassword `
+    -or $null -ne $KeyPassword) {
+    throw "E15 signed builds accept passwords only from the hash-bound DPAPI credential bundle."
+}
+$unity = Resolve-UnityExecutable $UnityPath
+$editorRoot = Split-Path -Parent $unity
+$androidPlayer = Join-Path $editorRoot "Data\PlaybackEngines\AndroidPlayer"
+$keytoolPath = Join-Path $androidPlayer "OpenJDK\bin\keytool.exe"
+$signingCredentialAccess = Test-E15SigningCredentialAccess `
+    -KeystorePath $resolvedKeystore `
+    -CredentialPath $SigningCredentialPath `
+    -KeyAlias $KeyAlias `
+    -KeytoolPath $keytoolPath `
+    -ExpectedCertificateSha256 (Get-E15SigningCredentialRotationPolicy).certificateSha256 `
+    -ExpectedKeytoolSha256 $signingRotation.keytoolSha256
+if (-not [bool]$signingCredentialAccess.passed) {
+    throw "E15 signing DPAPI credential or keytool binding is invalid: $($signingCredentialAccess.reasons -join ' ')"
+}
+$credentialBundle = Get-E15SigningCredentialBundle `
+    -CredentialPath $SigningCredentialPath `
+    -ExpectedKeyAlias $KeyAlias
+if (-not [bool]$credentialBundle.passed) {
+    throw "E15 signing DPAPI credential bundle is invalid: $($credentialBundle.reasons -join ' ')"
+}
 
 $currentStatusBefore = @(& git -C $script:RepoRoot status --porcelain=v1)
 if ($LASTEXITCODE -ne 0) {
@@ -113,22 +151,8 @@ if (Test-Path -LiteralPath $resolvedProvenance -PathType Leaf) {
     Remove-Item -LiteralPath $resolvedProvenance -Force
 }
 
-$keystorePasswordPlain = $env:CATGUARD_ANDROID_KEYSTORE_PASSWORD
-$keyPasswordPlain = $env:CATGUARD_ANDROID_KEY_PASSWORD
-if (-not $keystorePasswordPlain) {
-    if (-not $KeystorePassword) {
-        if ($NonInteractive) { throw "Set CATGUARD_ANDROID_KEYSTORE_PASSWORD." }
-        $KeystorePassword = Read-Host "Android keystore password" -AsSecureString
-    }
-    $keystorePasswordPlain = ConvertTo-PlainText $KeystorePassword
-}
-if (-not $keyPasswordPlain) {
-    if (-not $KeyPassword) {
-        if ($NonInteractive) { throw "Set CATGUARD_ANDROID_KEY_PASSWORD." }
-        $KeyPassword = Read-Host "Android key password" -AsSecureString
-    }
-    $keyPasswordPlain = ConvertTo-PlainText $KeyPassword
-}
+$keystorePasswordPlain = ConvertTo-PlainText $credentialBundle.keystorePassword
+$keyPasswordPlain = ConvertTo-PlainText $credentialBundle.keyPassword
 
 $phase11Source = @(& git -C $script:RepoRoot show "$baselineCommitResolved`:Assets/Editor/ProjectSetup/Phase11ProjectSetup.cs") -join [Environment]::NewLine
 if ($LASTEXITCODE -ne 0 `
@@ -137,9 +161,6 @@ if ($LASTEXITCODE -ne 0 `
     throw "Baseline commit $BaselineCommit is not the expected 0.1.0 (1) store source."
 }
 
-$unity = Resolve-UnityExecutable $UnityPath
-$editorRoot = Split-Path -Parent $unity
-$androidPlayer = Join-Path $editorRoot "Data\PlaybackEngines\AndroidPlayer"
 $java = Join-Path $androidPlayer "OpenJDK\bin\java.exe"
 $bundletool = Get-ChildItem `
     -LiteralPath $androidPlayer `

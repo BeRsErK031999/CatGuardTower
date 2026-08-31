@@ -3,6 +3,8 @@ param(
     [string]$BaselineCommit = "28f7e88",
     [string]$KeystorePath = $env:CATGUARD_ANDROID_KEYSTORE_PATH,
     [string]$KeyAlias = $env:CATGUARD_ANDROID_KEY_ALIAS,
+    [string]$SigningCredentialPath = $env:CATGUARD_SIGNING_CREDENTIAL_PATH,
+    [string]$SigningCredentialRotationRecordPath = $env:CATGUARD_SIGNING_ROTATION_RECORD_PATH,
     [System.Security.SecureString]$KeystorePassword,
     [System.Security.SecureString]$KeyPassword,
     [string]$UnityPath,
@@ -18,6 +20,7 @@ $ErrorActionPreference = "Stop"
 $script:RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..\..")).Path
 . (Join-Path $PSScriptRoot "e15-artifact-set-manifest.ps1")
 . (Join-Path $PSScriptRoot "e15-java-temp.ps1")
+. (Join-Path $PSScriptRoot "e15-signing-credential-rotation.ps1")
 $script:Preconditions = New-Object System.Collections.Generic.List[object]
 
 function Add-Precondition {
@@ -150,6 +153,18 @@ Add-Precondition `
     -Expected "non-empty signing key alias" `
     -Actual $(if ($KeyAlias) { "configured" } else { "missing" })
 
+$signingRotation = Test-E15SigningCredentialRotationRecord `
+    -RecordPath $SigningCredentialRotationRecordPath `
+    -KeystorePath $resolvedKeystore `
+    -CredentialPath $SigningCredentialPath `
+    -KeyAlias $KeyAlias `
+    -RepositoryRoot $script:RepoRoot
+Add-Precondition `
+    -Id "signing-credential-rotation" `
+    -Passed:([bool]$signingRotation.passed) `
+    -Expected "external post-incident record bound to a rotated JKS and refreshed DPAPI credential" `
+    -Actual $(if ([bool]$signingRotation.passed) { "record SHA256=$($signingRotation.recordSha256)" } else { $signingRotation.reasons -join " " })
+
 $unity = ""
 try {
     $unity = Resolve-UnityExecutable -RequestedPath $UnityPath
@@ -163,6 +178,46 @@ Add-Precondition `
     -Expected "configured Unity executable" `
     -Actual $unity
 
+$keytool = if ($unity -ne "missing") {
+    Join-Path (Split-Path -Parent $unity) "Data\PlaybackEngines\AndroidPlayer\OpenJDK\bin\keytool.exe"
+}
+else {
+    "missing"
+}
+$manualPasswordsConfigured = [bool]$env:CATGUARD_ANDROID_KEYSTORE_PASSWORD `
+    -or [bool]$env:CATGUARD_ANDROID_KEY_PASSWORD `
+    -or $null -ne $KeystorePassword `
+    -or $null -ne $KeyPassword
+$signingCredentialAccess = if ($manualPasswordsConfigured) {
+    [pscustomobject]@{
+        passed = $false
+        reasons = @("Manual or environment password input is forbidden before credential access is checked.")
+        keytoolSha256 = ""
+    }
+}
+elseif ([bool]$signingRotation.passed -and $keytool -ne "missing") {
+    Test-E15SigningCredentialAccess `
+        -KeystorePath $resolvedKeystore `
+        -CredentialPath $SigningCredentialPath `
+        -KeyAlias $KeyAlias `
+        -KeytoolPath $keytool `
+        -ExpectedCertificateSha256 (Get-E15SigningCredentialRotationPolicy).certificateSha256 `
+        -ExpectedKeytoolSha256 $signingRotation.keytoolSha256
+}
+else {
+    [pscustomobject]@{
+        passed = $false
+        reasons = @("Signing rotation record and Unity keytool must pass before credential access is checked.")
+        keytoolSha256 = ""
+    }
+}
+$signingVerifierBound = [bool]$signingCredentialAccess.passed
+Add-Precondition `
+    -Id "signing-credential-access" `
+    -Passed:$signingVerifierBound `
+    -Expected "DPAPI credential opens the selected alias and certificate through the recorded keytool binary" `
+    -Actual $(if ($signingVerifierBound) { "verified keytool SHA256=$($signingCredentialAccess.keytoolSha256)" } else { $signingCredentialAccess.reasons -join " " })
+
 $effectiveJavaTempRoot = if ($JavaTempRoot) { $JavaTempRoot } else { "C:\cgjtmp" }
 $javaTempValidation = Test-E15JavaTempRoot -Root $effectiveJavaTempRoot
 Add-Precondition `
@@ -171,19 +226,18 @@ Add-Precondition `
     -Expected "absolute Windows Java temp root of at most 32 characters" `
     -Actual $(if ([bool]$javaTempValidation.passed) { $javaTempValidation.root } else { $javaTempValidation.reason })
 
-$passwordsConfigured = ([bool]$env:CATGUARD_ANDROID_KEYSTORE_PASSWORD -or $null -ne $KeystorePassword) `
-    -and ([bool]$env:CATGUARD_ANDROID_KEY_PASSWORD -or $null -ne $KeyPassword)
 Add-Precondition `
-    -Id "signing-password-input" `
-    -Passed:($passwordsConfigured -or -not $NonInteractive) `
-    -Expected $(if ($NonInteractive) { "both signing passwords injected" } else { "injected passwords or secure interactive prompts" }) `
-    -Actual $(if ($passwordsConfigured) { "configured" } elseif ($NonInteractive) { "missing" } else { "secure prompts required" })
+    -Id "signing-password-source" `
+    -Passed:([bool]$signingCredentialAccess.passed -and -not $manualPasswordsConfigured) `
+    -Expected "both passwords loaded only from the verified DPAPI credential bundle" `
+    -Actual $(if ($manualPasswordsConfigured) { "manual or environment password input is forbidden" } elseif ([bool]$signingCredentialAccess.passed) { "verified DPAPI bundle" } else { "bundle verification failed" })
 
 foreach ($scriptName in @(
     "build-e15-baseline-apk.ps1",
     "e15-build-log-redaction.ps1",
     "e15-baseline-build-diagnostics.ps1",
     "e15-java-temp.ps1",
+    "e15-signing-credential-rotation.ps1",
     "build-signed-store-aab.ps1",
     "run-e15-release-gate.ps1")) {
     $scriptPath = Join-Path $PSScriptRoot $scriptName
@@ -206,25 +260,14 @@ if (-not $preflightPassed) {
     throw "E15 artifact preparation prerequisites are incomplete."
 }
 
-if (-not $env:CATGUARD_ANDROID_KEYSTORE_PASSWORD -and $null -eq $KeystorePassword) {
-    $KeystorePassword = Read-Host "Android keystore password" -AsSecureString
-}
-if (-not $env:CATGUARD_ANDROID_KEY_PASSWORD -and $null -eq $KeyPassword) {
-    $KeyPassword = Read-Host "Android key password" -AsSecureString
-}
-
 $buildArguments = @{
     KeystorePath = $resolvedKeystore
     KeyAlias = $KeyAlias
+    SigningCredentialPath = $SigningCredentialPath
+    SigningCredentialRotationRecordPath = $SigningCredentialRotationRecordPath
     UnityPath = $unity
     JavaTempRoot = $effectiveJavaTempRoot
     NonInteractive = $true
-}
-if ($null -ne $KeystorePassword) {
-    $buildArguments.KeystorePassword = $KeystorePassword
-}
-if ($null -ne $KeyPassword) {
-    $buildArguments.KeyPassword = $KeyPassword
 }
 
 $startedAtUtc = (Get-Date).ToUniversalTime()
@@ -308,7 +351,7 @@ foreach ($name in $artifacts.Keys) {
 
 $manifestPath = Join-Path $runRoot "e15-artifact-set.json"
 $manifest = [pscustomobject]@{
-    schemaVersion = 1
+    schemaVersion = 2
     state = "artifact_set_prepared"
     passed = $true
     generatedAtUtc = (Get-Date).ToUniversalTime().ToString("o")
@@ -324,6 +367,15 @@ $manifest = [pscustomobject]@{
     artifactPreflightManifestSha256 = (Get-FileHash -LiteralPath $preflightManifest.FullName -Algorithm SHA256).Hash
     artifactPreflightLogPath = $releaseGateLog
     artifactPreflightLogSha256 = (Get-FileHash -LiteralPath $releaseGateLog -Algorithm SHA256).Hash
+    signingCredentialRotation = [pscustomobject]@{
+        recordSha256 = $signingRotation.recordSha256
+        keystoreSha256 = $signingRotation.keystoreSha256
+        credentialFileSha256 = $signingRotation.credentialFileSha256
+        certificateSha256 = $signingRotation.certificateSha256
+        credentialVerification = $signingRotation.credentialVerification
+        keytoolSha256 = $signingRotation.keytoolSha256
+        rotatedAtUtc = $signingRotation.rotatedAtUtc
+    }
 }
 $manifest | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $manifestPath -Encoding UTF8
 $manifestContract = Test-E15ArtifactSetManifest `

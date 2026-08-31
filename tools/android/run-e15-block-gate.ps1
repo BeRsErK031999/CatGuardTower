@@ -422,6 +422,9 @@ $desktopRegressionScripts = @(
     "test-e15-baseline-provenance.ps1",
     "test-e15-block-manifest.ps1",
     "test-e15-java-temp.ps1",
+    "test-e15-signing-credential-bundle.ps1",
+    "test-e15-signing-credential-access.ps1",
+    "test-e15-signing-credential-rotation.ps1",
     "test-e15-performance-evidence.ps1"
 )
 foreach ($scriptName in $desktopRegressionScripts) {

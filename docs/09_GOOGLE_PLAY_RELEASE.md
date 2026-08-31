@@ -10,7 +10,7 @@ The first public path is Android closed testing, then a small soft launch.
 - Package name selected.
 - Landscape-only Auto Rotation is configured: `Landscape Left` and `Landscape Right` are allowed, while both portrait directions are disabled.
 - Version code and version name set.
-- Keystore created and stored safely outside Git.
+- Owner-approved upload keystore, dual-password DPAPI bundle, and rotation record stored safely outside Git.
 - Basic privacy declarations prepared.
 - Store listing draft prepared in RU/EN if needed.
 
@@ -36,21 +36,26 @@ Use the dedicated wrapper to build Google Play artifacts with the store package 
 powershell -ExecutionPolicy Bypass -File tools\android\build-signed-store.ps1 `
   -Artifact Aab `
   -KeystorePath "D:\Secure\CatGuard\catguard-upload.jks" `
-  -KeyAlias "catguard-upload"
+  -KeyAlias "catguard-upload" `
+  -SigningCredentialPath "D:\Secure\CatGuard\catguard-upload.dpapi.xml" `
+  -SigningCredentialRotationRecordPath "D:\Secure\CatGuard\catguard-upload.rotation.json" `
+  -NonInteractive
 ```
 
-The script prompts for the keystore and key passwords as secure input. It does not accept or persist passwords in Unity project files, restores the previous Android build settings, and restores the exact pre-build `ProjectSettings.asset` bytes after Unity exits. The keystore must be outside the repository, and the default release workflow refuses to run while tracked files are modified.
+Before the first signed E15 build, follow `docs/planning/E15_RELEASE_GATE_WORKFLOW.md`: rotate both JKS passwords, create the schema-v1 DPAPI bundle with `tools/android/new-e15-signing-credential-bundle.ps1`, and register it with `tools/android/register-e15-signing-credential-rotation.ps1`. The bundle stores the store and private-key passwords as independent current-user `SecureString` values. The legacy one-password `PSCredential`, retired file fingerprints, explicit password parameters, and password environment variables are rejected.
 
-For a non-interactive local/CI process, inject these variables through the secret store of that process rather than a committed file:
+The build wrapper accepts only these non-secret path/identity variables for a non-interactive local process:
 
 ```text
 CATGUARD_ANDROID_KEYSTORE_PATH
-CATGUARD_ANDROID_KEYSTORE_PASSWORD
 CATGUARD_ANDROID_KEY_ALIAS
-CATGUARD_ANDROID_KEY_PASSWORD
+CATGUARD_SIGNING_CREDENTIAL_PATH
+CATGUARD_SIGNING_ROTATION_RECORD_PATH
 ```
 
-Then run the wrapper with `-NonInteractive`. Build `-Artifact Apk` for E15 install/upgrade evidence and `-Artifact Aab` for Google Play. Both outputs are ignored by Git:
+Do not set `CATGUARD_ANDROID_KEYSTORE_PASSWORD` or `CATGUARD_ANDROID_KEY_PASSWORD`; process-level password values are forbidden. The wrapper revalidates the bundle, alias, certificate, record hashes, and Unity `keytool` binding before loading both passwords for the build. It does not persist passwords in Unity project files, restores the previous Android build settings, and restores the exact pre-build `ProjectSettings.asset` bytes after Unity exits. The keystore, bundle, and record must be outside the repository, and the default release workflow refuses to run while source files are modified.
+
+Build `-Artifact Apk` for E15 install/upgrade evidence and `-Artifact Aab` for Google Play. Both outputs are ignored by Git:
 
 ```text
 Builds/Android/CatGuardTowerDefense-store.aab

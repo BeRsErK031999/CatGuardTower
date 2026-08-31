@@ -10,7 +10,7 @@ The first public path is Android closed testing, then a small soft launch.
 - Package name selected.
 - Landscape-only Auto Rotation is configured: `Landscape Left` and `Landscape Right` are allowed, while both portrait directions are disabled.
 - Version code and version name set.
-- Keystore created and stored safely outside Git.
+- Owner-approved upload keystore, dual-password DPAPI bundle, and rotation record stored safely outside Git.
 - Basic privacy declarations prepared.
 - Store listing draft prepared in RU/EN if needed.
 
@@ -18,7 +18,7 @@ The first public path is Android closed testing, then a small soft launch.
 
 Use Android App Bundle (`.aab`) for Google Play. Do not commit generated `.apk` or `.aab` files.
 
-The initial store package name is `com.berserk031999.catguardtower`, with `versionName` `0.1.0` and `versionCode` `1`. This can still be changed before the first Play Console upload, but not after the package is created in Google Play.
+The store package name is `com.berserk031999.catguardtower`. The historical baseline is `0.1.0` (`versionCode` `1`); the E15 landscape expansion candidate is `0.2.0` (`versionCode` `2`). The package name must not change after the Play Console app is created.
 
 Current QA artifacts are generated locally through `Phase10ProjectSetup` into `Builds/Android/`:
 
@@ -28,31 +28,38 @@ Current QA artifacts are generated locally through `Phase10ProjectSetup` into `B
 
 These files are ignored by Git. The QA application id is `com.catguard.towerdefense.qa`; it is intentionally separate from the store package.
 
-## Signed Store AAB
+## Signed Store APK And AAB
 
-Use the dedicated wrapper to build the Google Play artifact with the store package and an upload key:
+Use the dedicated wrapper to build Google Play artifacts with the store package and an upload key:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File tools\android\build-signed-store-aab.ps1 `
+powershell -ExecutionPolicy Bypass -File tools\android\build-signed-store.ps1 `
+  -Artifact Aab `
   -KeystorePath "D:\Secure\CatGuard\catguard-upload.jks" `
-  -KeyAlias "catguard-upload"
+  -KeyAlias "catguard-upload" `
+  -SigningCredentialPath "D:\Secure\CatGuard\catguard-upload.v2.dpapi.xml" `
+  -SigningCredentialRotationRecordPath "D:\Secure\CatGuard\catguard-upload.rotation.json" `
+  -NonInteractive
 ```
 
-The script prompts for the keystore and key passwords as secure input. It does not accept or persist passwords in Unity project files, restores the previous Android build settings, and restores the exact pre-build `ProjectSettings.asset` bytes after Unity exits. The keystore must be outside the repository, and the default release workflow refuses to run while tracked files are modified.
+Before the first signed E15 build, follow `docs/planning/E15_RELEASE_GATE_WORKFLOW.md`. Prefer the rollback-safe `tools/android/rotate-e15-signing-credentials.ps1` transaction: it rotates both JKS passwords, creates the schema-v1 dual-password DPAPI bundle, verifies the private key and certificate, and registers the hash-bound rotation record. The separate bundle/registration scripts remain available when the owner rotates the JKS independently. The legacy one-password `PSCredential`, retired file fingerprints, explicit password parameters, and password environment variables are rejected.
 
-For a non-interactive local/CI process, inject these variables through the secret store of that process rather than a committed file:
+The build wrapper accepts only these non-secret path/identity variables for a non-interactive local process:
 
 ```text
 CATGUARD_ANDROID_KEYSTORE_PATH
-CATGUARD_ANDROID_KEYSTORE_PASSWORD
 CATGUARD_ANDROID_KEY_ALIAS
-CATGUARD_ANDROID_KEY_PASSWORD
+CATGUARD_SIGNING_CREDENTIAL_PATH
+CATGUARD_SIGNING_ROTATION_RECORD_PATH
 ```
 
-Then run the wrapper with `-NonInteractive`. The output is ignored by Git:
+Do not set `CATGUARD_ANDROID_KEYSTORE_PASSWORD` or `CATGUARD_ANDROID_KEY_PASSWORD`; process-level password values are forbidden. The wrapper revalidates the bundle, alias, certificate, record hashes, and Unity `keytool` binding before loading both passwords for the build. It does not persist passwords in Unity project files, restores the previous Android build settings, and restores the exact pre-build `ProjectSettings.asset` bytes after Unity exits. The keystore, bundle, and record must be outside the repository, and the default release workflow refuses to run while source files are modified.
+
+Build `-Artifact Apk` for E15 install/upgrade evidence and `-Artifact Aab` for Google Play. Both outputs are ignored by Git:
 
 ```text
 Builds/Android/CatGuardTowerDefense-store.aab
+Builds/Android/CatGuardTowerDefense-store.apk
 ```
 
 Do not reuse the temporary validation key from development checks for Google Play. The owner must create and back up the real upload keystore before the first closed-testing upload.

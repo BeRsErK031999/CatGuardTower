@@ -158,7 +158,7 @@ public static class E13ProjectSetup
 
         AttachBoss(level04, captainEncounter, "orchard_boss", 1.8f);
         AttachBoss(level08, owlEncounter, "main", 2f);
-        AttachBoss(level12, kingEncounter, "blue", 2.2f);
+        AttachBoss(level12, kingEncounter, "blue", 12f, false);
         ExtendCodex(captain, owl, king);
 
         AssetDatabase.SaveAssets();
@@ -297,7 +297,12 @@ public static class E13ProjectSetup
         EditorUtility.SetDirty(level);
     }
 
-    private static void AttachBoss(LevelConfig level, BossEncounterConfig encounter, string routeId, float delay)
+    private static void AttachBoss(
+        LevelConfig level,
+        BossEncounterConfig encounter,
+        string routeId,
+        float delay,
+        bool concurrentGroups = true)
     {
         if (level?.WaveConfig == null)
         {
@@ -310,7 +315,7 @@ public static class E13ProjectSetup
             .ToList();
         standardGroups.Add(new WaveEnemyGroup(encounter.BossEnemy, 1, 1f, delay, 1f, 1f, routeId));
         level.WaveConfig.Configure(standardGroups.ToArray());
-        level.WaveConfig.ConfigureConcurrentGroups(true);
+        level.WaveConfig.ConfigureConcurrentGroups(concurrentGroups);
         EditorUtility.SetDirty(level.WaveConfig);
         EditorUtility.SetDirty(level);
     }

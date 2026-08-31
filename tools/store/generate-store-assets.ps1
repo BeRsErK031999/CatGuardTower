@@ -116,11 +116,11 @@ function Import-RuntimeScreenshot {
 
     $source = [System.Drawing.Image]::FromFile($SourcePath)
     try {
-        if ($source.Width -ne 1080 -or $source.Height -ne 1920) {
-            throw "Runtime screenshot must be exactly 1080 x 1920: $SourcePath ($($source.Width) x $($source.Height))"
+        if ($source.Width -ne 1920 -or $source.Height -ne 1080) {
+            throw "Runtime screenshot must be exactly 1920 x 1080: $SourcePath ($($source.Width) x $($source.Height))"
         }
 
-        $canvas = New-Canvas 1080 1920
+        $canvas = New-Canvas 1920 1080
         try {
             $canvas.Graphics.DrawImageUnscaled($source, 0, 0)
             $canvas.Bitmap.Save($DestinationPath, [System.Drawing.Imaging.ImageFormat]::Png)
@@ -175,11 +175,11 @@ if ($ScreenshotSourceDir) {
     }
 
     $screenshotAssets = @(
-        @{ Source = "01-main-menu.png"; Destination = "01-main-menu-level-select-1080x1920.png" },
-        @{ Source = "02-level-placement.png"; Destination = "02-level-placement-1080x1920.png" },
-        @{ Source = "03-wave-combat.png"; Destination = "03-wave-combat-1080x1920.png" },
-        @{ Source = "04-victory.png"; Destination = "04-victory-upgrades-1080x1920.png" },
-        @{ Source = "05-daily.png"; Destination = "05-daily-loop-1080x1920.png" }
+        @{ Source = "01-home-hub-campaign.png"; Destination = "01-home-hub-campaign-1920x1080.png" },
+        @{ Source = "02-tower-placement.png"; Destination = "02-tower-placement-1920x1080.png" },
+        @{ Source = "03-boss-combat.png"; Destination = "03-boss-combat-1920x1080.png" },
+        @{ Source = "04-victory-progression.png"; Destination = "04-victory-progression-1920x1080.png" },
+        @{ Source = "05-quests-achievements.png"; Destination = "05-quests-achievements-1920x1080.png" }
     )
 
     foreach ($asset in $screenshotAssets) {
@@ -190,5 +190,5 @@ if ($ScreenshotSourceDir) {
         Write-Host "$($file.FullName) $($file.Length) bytes"
     }
 } else {
-    Write-Host "Runtime screenshots were preserved. Pass -ScreenshotSourceDir to import a validated 1080 x 1920 capture set."
+    Write-Host "Runtime screenshots were preserved. Pass -ScreenshotSourceDir to import a validated 1920 x 1080 landscape capture set."
 }

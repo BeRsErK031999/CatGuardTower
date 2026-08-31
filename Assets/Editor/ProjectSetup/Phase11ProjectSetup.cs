@@ -11,12 +11,14 @@ using UnityEngine;
 
 public static class Phase11ProjectSetup
 {
-    private const string StoreApplicationIdentifier = "com.berserk031999.catguardtower";
+    public const string StoreApplicationIdentifier = "com.berserk031999.catguardtower";
     private const string QaApplicationIdentifier = "com.catguard.towerdefense.qa";
-    private const string StoreVersionName = "0.1.0";
-    private const int StoreVersionCode = 1;
+    public const string StoreVersionName = "0.2.0";
+    public const int StoreVersionCode = 2;
     private const string BuildFolder = "Builds/Android";
+    private const string StoreApkPath = BuildFolder + "/CatGuardTowerDefense-store.apk";
     private const string StoreAabPath = BuildFolder + "/CatGuardTowerDefense-store.aab";
+    private const string StoreCaptureApkPath = BuildFolder + "/CatGuardTowerDefense-store-capture-x86_64.apk";
     private const string KeystorePathVariable = "CATGUARD_ANDROID_KEYSTORE_PATH";
     private const string KeystorePasswordVariable = "CATGUARD_ANDROID_KEYSTORE_PASSWORD";
     private const string KeyAliasVariable = "CATGUARD_ANDROID_KEY_ALIAS";
@@ -51,7 +53,50 @@ public static class Phase11ProjectSetup
         ValidateAndExit();
     }
 
+    public static void ConfigureStoreBuildSettingsForRelease()
+    {
+        ConfigureStoreBuildSettings();
+    }
+
+    public static void RunWithTemporaryStoreBuildSettings(Action validation)
+    {
+        if (validation == null)
+        {
+            throw new ArgumentNullException(nameof(validation));
+        }
+
+        var originalSettings = AndroidBuildSettingsSnapshot.Capture();
+        try
+        {
+            ConfigureStoreBuildSettings();
+            validation();
+        }
+        finally
+        {
+            originalSettings.Restore();
+            AssetDatabase.SaveAssets();
+        }
+    }
+
     public static void BuildSignedAab()
+    {
+        BuildSignedArtifact(StoreAabPath, true, null);
+    }
+
+    public static void BuildSignedApk()
+    {
+        BuildSignedArtifact(StoreApkPath, false, null);
+    }
+
+    public static void BuildSignedStoreCaptureApk()
+    {
+        BuildSignedArtifact(StoreCaptureApkPath, false, AndroidArchitecture.X86_64);
+    }
+
+    private static void BuildSignedArtifact(
+        string artifactPath,
+        bool appBundle,
+        AndroidArchitecture? architectureOverride)
     {
         var originalSettings = AndroidBuildSettingsSnapshot.Capture();
         var exitCode = 1;
@@ -72,17 +117,22 @@ public static class Phase11ProjectSetup
                 throw new InvalidOperationException(string.Join(" ", errors));
             }
 
-            signingConfiguration.Apply();
-            if (!BuildStoreAab(StoreAabPath))
+            if (architectureOverride.HasValue)
             {
-                throw new InvalidOperationException("Signed store AAB build did not complete successfully.");
+                PlayerSettings.Android.targetArchitectures = architectureOverride.Value;
+            }
+
+            signingConfiguration.Apply();
+            if (!BuildStoreArtifact(artifactPath, appBundle))
+            {
+                throw new InvalidOperationException("Signed store Android build did not complete successfully.");
             }
 
             exitCode = 0;
         }
         catch (Exception exception)
         {
-            Debug.LogError($"Signed store AAB build failed: {exception.Message}");
+            Debug.LogError($"Signed store Android build failed: {exception.Message}");
         }
         finally
         {
@@ -313,7 +363,7 @@ public static class Phase11ProjectSetup
         return normalizedCandidate.StartsWith(normalizedDirectory, StringComparison.OrdinalIgnoreCase);
     }
 
-    private static bool BuildStoreAab(string path)
+    private static bool BuildStoreArtifact(string path, bool appBundle)
     {
         Directory.CreateDirectory(Path.GetDirectoryName(path) ?? BuildFolder);
         if (File.Exists(path))
@@ -321,25 +371,26 @@ public static class Phase11ProjectSetup
             File.Delete(path);
         }
 
-        EditorUserBuildSettings.buildAppBundle = true;
+        EditorUserBuildSettings.buildAppBundle = appBundle;
         EditorUserBuildSettings.development = false;
 
         var report = BuildPipeline.BuildPlayer(RequiredScenes, path, BuildTarget.Android, BuildOptions.None);
+        var label = appBundle ? "AAB" : "APK";
         if (report.summary.result != BuildResult.Succeeded)
         {
-            Debug.LogError($"Signed store AAB build failed: {report.summary.result}.");
+            Debug.LogError($"Signed store {label} build failed: {report.summary.result}.");
             return false;
         }
 
         if (!File.Exists(path))
         {
-            Debug.LogError($"Signed store AAB build succeeded but output was not created: {path}");
+            Debug.LogError($"Signed store {label} build succeeded but output was not created: {path}");
             return false;
         }
 
         var fileInfo = new FileInfo(path);
         var sizeMiB = fileInfo.Length / 1024f / 1024f;
-        Debug.Log($"Signed store AAB created at {path} ({sizeMiB:F2} MiB).");
+        Debug.Log($"Signed store {label} created at {path} ({sizeMiB:F2} MiB).");
         return true;
     }
 
@@ -479,10 +530,14 @@ public static class Phase11ProjectSetup
             PlayerSettings.Android.forceInternetPermission = forceInternetPermission;
             PlayerSettings.Android.forceSDCardPermission = forceSdCardPermission;
             PlayerSettings.Android.useCustomKeystore = useCustomKeystore;
-            PlayerSettings.Android.keystoreName = keystoreName;
-            PlayerSettings.Android.keystorePass = keystorePassword;
-            PlayerSettings.Android.keyaliasName = keyAliasName;
-            PlayerSettings.Android.keyaliasPass = keyAliasPassword;
+            if (useCustomKeystore)
+            {
+                PlayerSettings.Android.keystoreName = keystoreName;
+                PlayerSettings.Android.keystorePass = keystorePassword;
+                PlayerSettings.Android.keyaliasName = keyAliasName;
+                PlayerSettings.Android.keyaliasPass = keyAliasPassword;
+            }
+
             EditorBuildSettings.scenes = scenes;
         }
     }

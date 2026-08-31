@@ -1113,7 +1113,7 @@ namespace CatGuard.UI.Screens
                 eyebrowStyle);
 
             var viewport = new Rect(rect.x + 10f, rect.y + 48f, rect.width - 20f, rect.height - 58f);
-            const float cardHeight = 214f;
+            const float cardHeight = 234f;
             const float spacing = 10f;
             var contentWidth = viewport.width - 20f;
             var contentHeight = Mathf.Max(viewport.height, (quests.Length * (cardHeight + spacing)) - spacing);
@@ -1161,11 +1161,11 @@ namespace CatGuard.UI.Screens
                     quest.Reward.FishCoins,
                     quest.Reward.PlayerExperience);
                 GUI.Label(
-                    new Rect(16f, y + 132f, contentWidth - 32f, 28f),
+                    new Rect(16f, y + 132f, contentWidth - 32f, 44f),
                     progressText,
                     eyebrowStyle);
 
-                var actionRect = new Rect(16f, y + 164f, contentWidth - 32f, 40f);
+                var actionRect = new Rect(16f, y + 182f, contentWidth - 32f, 40f);
                 GUI.enabled = uiInteractionEnabled && state.CanClaim;
                 var actionLabel = state.Status switch
                 {

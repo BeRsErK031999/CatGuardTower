@@ -201,6 +201,7 @@ public static class E12ProjectSetup
         for (var index = 0; index < maps.Count; index++)
         {
             var routes = maps[index].Routes.Select(route => route.RouteId).ToArray();
+            var isFinalMap = index == maps.Count - 1;
             var speedScale = 1f + index * 0.035f;
             var scoutCount = 8 + index * 2;
             var tankCount = 2 + index;
@@ -213,11 +214,19 @@ public static class E12ProjectSetup
             var healthScale = index == 0
                 ? 1f
                 : Mathf.Max(1f + index * 0.12f, previousThreat * 1.14f / unscaledThreat);
+            // Preserve level 12's final threat while giving default-economy towers time to earn reinvestment Fish.
+            var scoutSpawnInterval = isFinalMap ? 0.42f : Mathf.Max(0.2f, 0.62f - index * 0.025f);
+            var scoutHealthScale = isFinalMap ? 1.8f : healthScale;
+            var scoutSpeedScale = isFinalMap ? 1.25f : speedScale;
+            var tankStartDelay = isFinalMap ? 6f : 0.35f;
+            var specialistStartDelay = isFinalMap ? 10f : 0.45f;
+            var reinforcementHealthScale = isFinalMap ? 3.4f : healthScale;
+            var reinforcementSpeedScale = isFinalMap ? 1.35f : speedScale;
             var groups = new[]
             {
-                new WaveEnemyGroup(enemies[0], scoutCount, Mathf.Max(0.2f, 0.62f - index * 0.025f), 0f, healthScale, speedScale, routes[0]),
-                new WaveEnemyGroup(enemies[4], tankCount, Mathf.Max(0.32f, 1f - index * 0.04f), 0.35f, healthScale, speedScale, routes[^1]),
-                new WaveEnemyGroup(specialist, specialistCount, Mathf.Max(0.22f, 0.74f - index * 0.03f), 0.45f, healthScale, speedScale, routes[0])
+                new WaveEnemyGroup(enemies[0], scoutCount, scoutSpawnInterval, 0f, scoutHealthScale, scoutSpeedScale, routes[0]),
+                new WaveEnemyGroup(enemies[4], tankCount, Mathf.Max(0.32f, 1f - index * 0.04f), tankStartDelay, reinforcementHealthScale, reinforcementSpeedScale, routes[^1]),
+                new WaveEnemyGroup(specialist, specialistCount, Mathf.Max(0.22f, 0.74f - index * 0.03f), specialistStartDelay, reinforcementHealthScale, reinforcementSpeedScale, routes[0])
             };
             if (routes.Length > 1)
             {

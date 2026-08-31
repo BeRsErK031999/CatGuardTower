@@ -329,11 +329,11 @@ Source of truth: `EXPANSION_ROADMAP.md`.
 
 ### Todo
 
-* [ ] E15 — Expansion Release Gate.
+* [ ] None.
 
 ### In Progress
 
-* [ ] None.
+* [ ] E15 — Expansion Release Gate; signed artifacts, desktop preflight, and final landscape captures are prepared, while human playtest, physical-device QA, store/account approval, the complete block gate, and release approval remain blocking.
 
 ### Done
 

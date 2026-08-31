@@ -55,7 +55,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass `
   -File tools\android\prepare-e15-release-artifacts.ps1
 ```
 
-The preflight is read-only and requires a clean worktree, `HEAD == upstream`, a resolvable baseline commit, Unity, and a keystore outside the repository. Interactive mode securely prompts once for any missing passwords; non-interactive automation must inject both password environment variables and pass `-NonInteractive`. A successful run writes `e15-artifact-set.json`, the artifact-only gate manifest/log hashes, and hashes for the baseline APK, candidate APK/AAB, and all three provenance sidecars under ignored `Builds/Android/qa-device/e15-artifact-set/`.
+The preflight is read-only and requires a clean worktree, `HEAD == upstream`, the historical `0.1.0` (`1`) baseline source, Unity, and a keystore outside the repository. Interactive mode securely prompts once for any missing passwords; non-interactive automation must inject both password environment variables and pass `-NonInteractive`. A successful run writes `e15-artifact-set.json`, the artifact-only gate manifest/log hashes, and hashes for the baseline APK, candidate APK/AAB, and all three provenance sidecars under ignored `Builds/Android/qa-device/e15-artifact-set/`. Before reporting success, the artifact-set contract re-hashes all six files and both preflight evidence files, verifies their paths, and cross-checks the nested artifact-only manifest against the pushed source revision.
 
 The individual build commands remain available for diagnostics or rebuilding one artifact while developing the workflow:
 
@@ -175,6 +175,9 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass `
   -File tools\android\test-e15-artifact-provenance.ps1
 
 powershell.exe -NoProfile -ExecutionPolicy Bypass `
+  -File tools\android\test-e15-artifact-set-manifest.ps1
+
+powershell.exe -NoProfile -ExecutionPolicy Bypass `
   -File tools\android\test-e15-baseline-provenance.ps1
 
 powershell.exe -NoProfile -ExecutionPolicy Bypass `
@@ -218,11 +221,14 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass `
   -File tools\android\run-e15-block-gate.ps1 `
   -EmulatorSerial "<emulator-serial>" `
   -PhysicalDeviceSerial "<physical-device-serial>" `
+  -ArtifactSetManifestPath "<artifact-set-run>\e15-artifact-set.json" `
   -HeavyWavePerformanceEvidencePath "<evidence-dir>\qa-summary.json" `
   -ConfirmStorePackageReset
 ```
 
-The orchestrator first runs the desktop GPU classification, candidate provenance, baseline provenance, final-manifest, and performance-evidence contract regressions, then performs the following sequence and stops on the first failure:
+Full mode requires the successful manifest from `prepare-e15-release-artifacts.ps1`. Before Unity or ADB mutation, the orchestrator revalidates that manifest against the current pushed HEAD and historical baseline, re-hashes its evidence, and requires its six artifact paths to match the six files selected by the full gate. After all technical checks it repeats the complete contract and records `artifact:artifact-set-stability`; the manifest, all six files, and the artifact-only preflight evidence must remain unchanged until the final record is written.
+
+The orchestrator first runs the desktop GPU classification, candidate provenance, artifact-set, baseline provenance, final-manifest, and performance-evidence contract regressions, then performs the following sequence and stops on the first failure:
 
 1. Run Phase 1–11 and E1–E14 validators plus `E15ProjectSetup.ValidateReadiness`, each in a cold editor process; require both exit code `0` and its `validation passed` Unity-log marker.
 2. Run the full E14 functional campaign/focused gate on the exact candidate code; do not reuse a stale ignored manifest.
@@ -231,7 +237,7 @@ The orchestrator first runs the desktop GPU classification, candidate provenance
 5. Manually traverse campaign, hub, quests, achievements, privacy, settings, both landscape directions, background/foreground, audio routing, and edge-touch placement on the same candidate.
 6. Validate store assets with `tools/store/validate-store-assets.ps1`.
 7. Inspect `git diff --check`, source/asset licenses, generated artifact hashes, and the exact scoped diff.
-8. Require one `technical_gate_passed` manifest containing the exact Git HEAD, step results, and all APK/AAB/provenance hashes. Before success is reported, its contract validator requires every full-gate precondition and every expected step exactly once, verifies that every step passed, and re-hashes all evidence logs inside the declared run directory.
+8. Require one `technical_gate_passed` manifest containing the exact Git HEAD, step results, all APK/AAB/provenance hashes, and the artifact-set manifest SHA-256. Before success is reported, its contract validator requires every full-gate precondition and every expected step exactly once, verifies that every step passed, and re-hashes all evidence logs inside the declared run directory.
 9. Complete `E15_EXPANSION_RELEASE_REPORT.md`, readiness, backlog, task board, roadmap, and release-decision records; then run `E15ProjectSetup.Validate` in a final cold editor process.
 10. Commit once, push `develop`, fetch, and verify `develop == origin/develop`.
 

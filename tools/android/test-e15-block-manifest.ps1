@@ -14,6 +14,7 @@ $artifactHashes = [ordered]@{
     candidateAab = "8" * 64
     candidateApkProvenance = "9" * 64
     candidateAabProvenance = "A" * 64
+    artifactSetManifest = "B" * 64
 }
 $tempBase = [IO.Path]::GetFullPath([IO.Path]::GetTempPath())
 $tempRoot = [IO.Path]::GetFullPath((Join-Path $tempBase ("catguard-e15-manifest-" + [guid]::NewGuid().ToString("N"))))

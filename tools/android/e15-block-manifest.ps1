@@ -15,6 +15,8 @@ function Get-E15RequiredTechnicalGatePreconditionIds {
         "adb",
         "emulator-target",
         "physical-device-target",
+        "artifact-set-manifest",
+        "artifact-set-contract",
         "heavy-wave-performance-evidence"
     )
 }
@@ -24,6 +26,7 @@ function Get-E15RequiredTechnicalGateStepIds {
     foreach ($name in @(
         "test-android-qa-provenance",
         "test-e15-artifact-provenance",
+        "test-e15-artifact-set-manifest",
         "test-e15-baseline-provenance",
         "test-e15-block-manifest",
         "test-e15-performance-evidence")) {
@@ -44,6 +47,7 @@ function Get-E15RequiredTechnicalGateStepIds {
         "store:assets",
         "git:candidate-diff-check",
         "git:post-gate-clean-worktree",
+        "artifact:artifact-set-stability",
         "artifact:hashes")) {
         $ids.Add($id)
     }
@@ -242,7 +246,8 @@ function Test-E15TechnicalGateManifest {
                     "candidateApk",
                     "candidateAab",
                     "candidateApkProvenance",
-                    "candidateAabProvenance"
+                    "candidateAabProvenance",
+                    "artifactSetManifest"
                 )
                 foreach ($hashName in $requiredHashNames) {
                     $property = $hashStep[0].hashes.PSObject.Properties[$hashName]

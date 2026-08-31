@@ -15,6 +15,7 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
 $script:RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..\..")).Path
+. (Join-Path $PSScriptRoot "e15-artifact-set-manifest.ps1")
 $script:Preconditions = New-Object System.Collections.Generic.List[object]
 
 function Add-Precondition {
@@ -302,6 +303,7 @@ $manifest = [pscustomobject]@{
     gitHead = $head
     upstream = $upstream
     baselineCommit = $baselineCommitResolved
+    runRoot = $runRoot
     artifacts = $artifacts
     hashes = $hashes
     artifactPreflightManifestPath = $preflightManifest.FullName
@@ -310,5 +312,19 @@ $manifest = [pscustomobject]@{
     artifactPreflightLogSha256 = (Get-FileHash -LiteralPath $releaseGateLog -Algorithm SHA256).Hash
 }
 $manifest | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $manifestPath -Encoding UTF8
+$manifestContract = Test-E15ArtifactSetManifest `
+    -ManifestPath $manifestPath `
+    -ExpectedGitHead $head `
+    -ExpectedUpstream $upstream `
+    -ExpectedBaselineCommit $baselineCommitResolved `
+    -ExpectedRepositoryRoot $script:RepoRoot `
+    -RequireEvidenceFiles
+if (-not [bool]$manifestContract.passed) {
+    $manifest.state = "artifact_set_contract_failed"
+    $manifest.passed = $false
+    $manifest | Add-Member -NotePropertyName contractReasons -NotePropertyValue $manifestContract.reasons
+    $manifest | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $manifestPath -Encoding UTF8
+    throw "E15 artifact-set manifest contract failed: $($manifestContract.reasons -join ' ')"
+}
 Write-Host "E15 release artifact set prepared from clean pushed HEAD $head."
 Write-Host "Manifest: $manifestPath"

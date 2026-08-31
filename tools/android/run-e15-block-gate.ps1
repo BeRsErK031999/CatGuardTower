@@ -7,6 +7,7 @@ param(
     [string]$CandidateAabPath = "Builds\Android\CatGuardTowerDefense-store.aab",
     [string]$CandidateApkProvenancePath = "Builds\Android\CatGuardTowerDefense-store.apk.provenance.json",
     [string]$CandidateAabProvenancePath = "Builds\Android\CatGuardTowerDefense-store.aab.provenance.json",
+    [string]$ArtifactSetManifestPath = "",
     [string]$PhysicalDeviceSerial = "",
     [string]$EmulatorSerial = "",
     [string]$HeavyWavePerformanceEvidencePath = "",
@@ -20,10 +21,12 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
 $script:RepoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..\..")).Path
+. (Join-Path $PSScriptRoot "e15-artifact-set-manifest.ps1")
 . (Join-Path $PSScriptRoot "e15-block-manifest.ps1")
 $script:Steps = New-Object System.Collections.Generic.List[object]
 $script:Preconditions = New-Object System.Collections.Generic.List[object]
 $script:CandidateBase = ""
+$script:ArtifactSetManifestSha256 = ""
 $resolvedOutputDir = if ([IO.Path]::IsPathRooted($OutputDir)) {
     [IO.Path]::GetFullPath($OutputDir)
 }
@@ -330,20 +333,60 @@ if (-not $PreflightOnly) {
             -Actual $physicalTarget.description
     }
 
-    foreach ($artifact in @(
-        $BaselineApkPath,
-        $BaselineApkProvenancePath,
-        $CandidateApkPath,
-        $CandidateAabPath,
-        $CandidateApkProvenancePath,
-        $CandidateAabProvenancePath)) {
-        $resolved = Resolve-ProjectPath $artifact
+    $expectedArtifactPaths = [ordered]@{
+        baselineApk = Resolve-ProjectPath $BaselineApkPath
+        baselineApkProvenance = Resolve-ProjectPath $BaselineApkProvenancePath
+        candidateApk = Resolve-ProjectPath $CandidateApkPath
+        candidateAab = Resolve-ProjectPath $CandidateAabPath
+        candidateApkProvenance = Resolve-ProjectPath $CandidateApkProvenancePath
+        candidateAabProvenance = Resolve-ProjectPath $CandidateAabProvenancePath
+    }
+    foreach ($artifact in $expectedArtifactPaths.Values) {
         Add-Precondition `
             -Id "artifact:$artifact" `
-            -Passed:(Test-Path -LiteralPath $resolved -PathType Leaf) `
+            -Passed:(Test-Path -LiteralPath $artifact -PathType Leaf) `
             -Expected "existing file" `
-            -Actual $resolved
+            -Actual $artifact
     }
+    $resolvedArtifactSetManifest = if ($ArtifactSetManifestPath) {
+        Resolve-ProjectPath $ArtifactSetManifestPath
+    }
+    else {
+        "missing"
+    }
+    Add-Precondition `
+        -Id "artifact-set-manifest" `
+        -Passed:($resolvedArtifactSetManifest -ne "missing" -and (Test-Path -LiteralPath $resolvedArtifactSetManifest -PathType Leaf)) `
+        -Expected "explicit e15-artifact-set.json from the prepared release artifacts" `
+        -Actual $resolvedArtifactSetManifest
+    $baselineCommitResult = @(& git -C $script:RepoRoot rev-parse "$BaselineCommit^{commit}" 2>$null)
+    $baselineCommitResolved = if ($LASTEXITCODE -eq 0) { ($baselineCommitResult -join "").Trim() } else { "missing" }
+    $artifactSetContract = if ($resolvedArtifactSetManifest -ne "missing" `
+        -and (Test-Path -LiteralPath $resolvedArtifactSetManifest -PathType Leaf)) {
+        Test-E15ArtifactSetManifest `
+            -ManifestPath $resolvedArtifactSetManifest `
+            -ExpectedGitHead $head `
+            -ExpectedUpstream $upstream `
+            -ExpectedBaselineCommit $baselineCommitResolved `
+            -ExpectedRepositoryRoot $script:RepoRoot `
+            -ExpectedArtifactPaths $expectedArtifactPaths `
+            -RequireEvidenceFiles
+    }
+    else {
+        [pscustomobject]@{
+            passed = $false
+            sha256 = ""
+            reasons = @("Artifact-set manifest is missing.")
+        }
+    }
+    if ([bool]$artifactSetContract.passed) {
+        $script:ArtifactSetManifestSha256 = $artifactSetContract.sha256
+    }
+    Add-Precondition `
+        -Id "artifact-set-contract" `
+        -Passed:([bool]$artifactSetContract.passed) `
+        -Expected "artifact set bound to current pushed HEAD, exact files, provenance, and artifact-only preflight" `
+        -Actual $(if ([bool]$artifactSetContract.passed) { "SHA256=$($artifactSetContract.sha256)" } else { $artifactSetContract.reasons -join " " })
     $resolvedPerformanceEvidence = if ($HeavyWavePerformanceEvidencePath) {
         Resolve-ProjectPath $HeavyWavePerformanceEvidencePath
     }
@@ -374,6 +417,7 @@ $developmentApk = Join-Path $script:RepoRoot "Builds\Android\CatGuardTowerDefens
 $desktopRegressionScripts = @(
     "test-android-qa-provenance.ps1",
     "test-e15-artifact-provenance.ps1",
+    "test-e15-artifact-set-manifest.ps1",
     "test-e15-baseline-provenance.ps1",
     "test-e15-block-manifest.ps1",
     "test-e15-performance-evidence.ps1"
@@ -517,15 +561,49 @@ if (-not $postGateClean) {
     throw "E15 block gate changed the source worktree. Inspect: $postGateStatusLog"
 }
 
+$artifactSetContractAfter = Test-E15ArtifactSetManifest `
+    -ManifestPath $resolvedArtifactSetManifest `
+    -ExpectedGitHead $head `
+    -ExpectedUpstream $upstream `
+    -ExpectedBaselineCommit $baselineCommitResolved `
+    -ExpectedRepositoryRoot $script:RepoRoot `
+    -ExpectedArtifactPaths $expectedArtifactPaths `
+    -RequireEvidenceFiles
+$artifactSetStable = [bool]$artifactSetContractAfter.passed `
+    -and $artifactSetContractAfter.sha256 -ieq $script:ArtifactSetManifestSha256
+$script:Steps.Add([pscustomobject]@{
+    id = "artifact:artifact-set-stability"
+    passed = $artifactSetStable
+    exitCode = if ($artifactSetStable) { 0 } else { 1 }
+    requiredPattern = ""
+    evidencePassed = $true
+    evidenceLogPath = ""
+    evidenceLogSha256 = ""
+    durationSeconds = 0
+    logPath = ""
+    logSha256 = ""
+})
+if (-not $artifactSetStable) {
+    Write-Manifest -Passed:$false -State "failed"
+    $reason = if (-not [bool]$artifactSetContractAfter.passed) {
+        $artifactSetContractAfter.reasons -join " "
+    }
+    else {
+        "The artifact-set manifest bytes changed after full-gate preflight."
+    }
+    throw "The E15 artifact set changed during the full gate. $reason"
+}
+
 $artifactHashes = [ordered]@{
     developmentApk = (Get-FileHash -LiteralPath $developmentApk -Algorithm SHA256).Hash
-    baselineApk = (Get-FileHash -LiteralPath (Resolve-ProjectPath $BaselineApkPath) -Algorithm SHA256).Hash
-    baselineApkProvenance = (Get-FileHash -LiteralPath (Resolve-ProjectPath $BaselineApkProvenancePath) -Algorithm SHA256).Hash
-    candidateApk = (Get-FileHash -LiteralPath (Resolve-ProjectPath $CandidateApkPath) -Algorithm SHA256).Hash
-    candidateAab = (Get-FileHash -LiteralPath (Resolve-ProjectPath $CandidateAabPath) -Algorithm SHA256).Hash
-    candidateApkProvenance = (Get-FileHash -LiteralPath (Resolve-ProjectPath $CandidateApkProvenancePath) -Algorithm SHA256).Hash
-    candidateAabProvenance = (Get-FileHash -LiteralPath (Resolve-ProjectPath $CandidateAabProvenancePath) -Algorithm SHA256).Hash
+    baselineApk = (Get-FileHash -LiteralPath $expectedArtifactPaths["baselineApk"] -Algorithm SHA256).Hash
+    baselineApkProvenance = (Get-FileHash -LiteralPath $expectedArtifactPaths["baselineApkProvenance"] -Algorithm SHA256).Hash
+    candidateApk = (Get-FileHash -LiteralPath $expectedArtifactPaths["candidateApk"] -Algorithm SHA256).Hash
+    candidateAab = (Get-FileHash -LiteralPath $expectedArtifactPaths["candidateAab"] -Algorithm SHA256).Hash
+    candidateApkProvenance = (Get-FileHash -LiteralPath $expectedArtifactPaths["candidateApkProvenance"] -Algorithm SHA256).Hash
+    candidateAabProvenance = (Get-FileHash -LiteralPath $expectedArtifactPaths["candidateAabProvenance"] -Algorithm SHA256).Hash
 }
+$artifactHashes["artifactSetManifest"] = $artifactSetContractAfter.sha256
 $script:Steps.Add([pscustomobject]@{
     id = "artifact:hashes"
     passed = $true

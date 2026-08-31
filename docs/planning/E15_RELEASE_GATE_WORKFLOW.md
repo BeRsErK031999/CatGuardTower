@@ -52,16 +52,32 @@ $env:CATGUARD_SIGNING_ROTATION_RECORD_PATH = "$env:USERPROFILE\.catguard\release
 # $env:CATGUARD_KEYTOOL_PATH = "D:\Tools\JDK\bin\keytool.exe"
 ```
 
-The owner must first change both JKS passwords. Then create a schema-v1 dual-password DPAPI bundle under the current Windows user; the command prompts independently for the rotated store and private-key passwords and refuses to overwrite an existing file:
+The preferred owner-assisted path performs the JKS password changes, private-key verification, backup, dual-password bundle creation, and rotation-record registration as one rollback-safe operation. Use a new bundle filename so the retired DPAPI file remains immutable evidence. First inspect the exact external paths without mutation, then rerun with `-ConfirmRotation`; the second command prompts twice for each new password, requires two different values of at least 16 characters, and never puts them in command arguments, parent-process environment variables, or logs:
+
+```powershell
+$env:CATGUARD_ROTATED_SIGNING_CREDENTIAL_PATH = "$env:USERPROFILE\.catguard\release-signing\catguard-upload.v2.dpapi.xml"
+
+powershell.exe -NoProfile -ExecutionPolicy Bypass `
+  -File tools\android\rotate-e15-signing-credentials.ps1 `
+  -LegacyCredentialPath $env:CATGUARD_SIGNING_CREDENTIAL_PATH `
+  -NewCredentialPath $env:CATGUARD_ROTATED_SIGNING_CREDENTIAL_PATH `
+  -PreflightOnly
+
+powershell.exe -NoProfile -ExecutionPolicy Bypass `
+  -File tools\android\rotate-e15-signing-credentials.ps1 `
+  -LegacyCredentialPath $env:CATGUARD_SIGNING_CREDENTIAL_PATH `
+  -NewCredentialPath $env:CATGUARD_ROTATED_SIGNING_CREDENTIAL_PATH `
+  -ConfirmRotation
+```
+
+The transaction accepts only the exact machine-blocked legacy JKS/`PSCredential` pair, verifies the approved certificate before mutation, creates a timestamped pre-rotation JKS backup, changes the private-key and store passwords through child-only environment variables, and proves the private-key password by changing it to a random in-memory probe and back. Any failure restores the original JKS and removes only outputs created by that attempt. Keep the backup offline until the rotated JKS has an independently verified encrypted recovery copy.
+
+If the JKS was rotated separately by the owner, `new-e15-signing-credential-bundle.ps1` and `register-e15-signing-credential-rotation.ps1` remain available as two explicit steps. The legacy one-password `PSCredential` format is rejected by all signed builders:
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass `
   -File tools\android\new-e15-signing-credential-bundle.ps1
-```
 
-The legacy one-password `PSCredential` format is rejected. Only after the JKS and bundle are ready, register their new file fingerprints:
-
-```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass `
   -File tools\android\register-e15-signing-credential-rotation.ps1
 ```
